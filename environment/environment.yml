@@ -1,0 +1,17 @@
+name: thesis-project
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - geopandas
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip:
+      - fpdf2
+      - openpyxl
+      - pytest

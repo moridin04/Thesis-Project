@@ -117,7 +117,11 @@ def _run_consistency_checks(df):
 #Data Integration
 def load_data(combined_csv_path):
     print(f"Data Loading: {combined_csv_path}")
-    df = pd.read_csv(combined_csv_path)
+    try:
+        df = pd.read_csv(combined_csv_path)
+    except UnicodeDecodeError:
+        # Some source exports include Windows-1252 encoded place names.
+        df = pd.read_csv(combined_csv_path, encoding="latin-1")
     
     #Clean Whitespace
     df.columns = df.columns.str.strip()

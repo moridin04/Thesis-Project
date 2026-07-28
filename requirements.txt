@@ -1,8 +1,10 @@
+fpdf2
+geopandas
+matplotlib
 numpy
+openpyxl
 pandas
+pytest
 scikit-learn
 scipy
 seaborn
-matplotlib
-openpyxl
-fpdf2
