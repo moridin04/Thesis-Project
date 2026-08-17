@@ -1,0 +1,4 @@
+return_period,file,crs,feature_count,geometry_types,columns
+5yr,MetroManila_Flood_5year.shp,EPSG:4326,3,MultiPolygon:3,Var; geometry
+25yr,MetroManila_Flood_25year.shp,EPSG:4326,3,MultiPolygon:3,Var; geometry
+100yr,MetroManila_Flood_100year.shp,EPSG:4326,3,MultiPolygon:3,Var; geometry
