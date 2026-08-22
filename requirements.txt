@@ -1,5 +1,6 @@
 fpdf2
 geopandas
+joblib
 matplotlib
 numpy
 openpyxl
