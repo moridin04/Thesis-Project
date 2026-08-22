@@ -14,14 +14,15 @@ The 100-year flood layer is retained for validation but excluded from CSI/DPI/ML
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import subprocess
 import sys
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-import geopandas as gpd
 import joblib
 import numpy as np
 import pandas as pd
@@ -43,10 +44,149 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 warnings.filterwarnings("ignore")
 pd.set_option("display.max_columns", None)
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATA_DIR = SCRIPT_DIR
-DEFAULT_SHP_DIR = SCRIPT_DIR / "metro-manila-shp-to-csv"
-DEFAULT_OUTPUT_DIR = SCRIPT_DIR
+COLAB_CONTENT_DIR = Path("/content")
+
+
+def is_colab() -> bool:
+    """Return True when running inside Google Colab."""
+    if os.environ.get("COLAB_RELEASE_TAG"):
+        return True
+    try:
+        import google.colab  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _resolve_script_dir() -> Path:
+    """Resolve script directory; fall back to /content in Colab notebooks."""
+    try:
+        return Path(__file__).resolve().parent
+    except NameError:
+        return COLAB_CONTENT_DIR if is_colab() else Path.cwd()
+
+
+def get_default_paths() -> tuple[Path, Path, Path]:
+    """Return (data_dir, shp_dir, output_dir) defaults for local or Colab."""
+    if is_colab():
+        content = COLAB_CONTENT_DIR
+        shp_dir = content / "shapefiles"
+        if not shp_dir.exists():
+            shp_dir = content
+        return content, shp_dir, content
+
+    script_dir = _resolve_script_dir()
+    shp_dir = script_dir / "metro-manila-shp-to-csv"
+    if not shp_dir.exists():
+        shp_dir = script_dir
+    return script_dir, shp_dir, script_dir
+
+
+def show_df(df: pd.DataFrame, n: int = 5) -> None:
+    """Pretty-print a dataframe in notebooks when IPython display is available."""
+    try:
+        from IPython.display import display
+
+        display(df.head(n))
+    except ImportError:
+        print(df.head(n).to_string())
+
+
+def setup_colab(
+    install_deps: bool = True,
+    mount_drive: bool = False,
+    drive_data_dir: Optional[str] = None,
+) -> PipelinePaths:
+    """
+    Prepare Google Colab for the pipeline.
+
+    Parameters
+    ----------
+    install_deps:
+        pip-install geopandas, joblib, openpyxl, and scikit-learn.
+    mount_drive:
+        Mount Google Drive at /content/drive.
+    drive_data_dir:
+        Optional Drive folder containing input CSV/shapefiles, e.g.
+        '/content/drive/MyDrive/thesis-data'. When set, used as data_dir and shp_dir.
+
+    Returns
+    -------
+    PipelinePaths configured for Colab (/content by default).
+    """
+    if not is_colab():
+        print("setup_colab() is intended for Google Colab; continuing with local defaults.")
+
+    if install_deps:
+        packages = [
+            "geopandas",
+            "joblib",
+            "openpyxl",
+            "scikit-learn",
+            "rtree",
+            "pyproj",
+            "shapely",
+            "fiona",
+        ]
+        print("Installing Colab dependencies...")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "-q", *packages]
+        )
+        print("Dependencies installed.")
+
+    if mount_drive:
+        from google.colab import drive
+
+        drive.mount("/content/drive")
+
+    if drive_data_dir:
+        base = Path(drive_data_dir)
+        paths = PipelinePaths(
+            data_dir=base,
+            shp_dir=base / "shapefiles" if (base / "shapefiles").exists() else base,
+            output_dir=COLAB_CONTENT_DIR,
+        )
+    else:
+        data_dir, shp_dir, output_dir = get_default_paths()
+        paths = PipelinePaths(data_dir=data_dir, shp_dir=shp_dir, output_dir=output_dir)
+
+    paths.output_dir.mkdir(parents=True, exist_ok=True)
+    print("Colab paths:")
+    print(f"  Data dir:   {paths.data_dir}")
+    print(f"  Shape dir:  {paths.shp_dir}")
+    print(f"  Output dir: {paths.output_dir}")
+    print("\nExpected inputs in data_dir:")
+    print("  - population-dataset.csv          (PSA 2024)")
+    print("  - manila_final_base_dataset_NEW.csv")
+    print("  - manila_barangay_elevation.csv   (optional)")
+    print("\nExpected shapefiles in shp_dir (stage shp only):")
+    print("  - phl_admin4.shp")
+    print("  - MetroManila_Flood_5year.shp")
+    print("  - MetroManila_Flood_25year.shp")
+    print("  - MetroManila_Flood_100year.shp")
+    return paths
+
+
+def _import_geopandas():
+    """Import geopandas lazily so merge/ml stages work without it installed."""
+    try:
+        import geopandas as gpd
+
+        return gpd
+    except ImportError as exc:
+        raise ImportError(
+            "geopandas is required for the shp stage. In Colab run:\n"
+            "  setup_colab(install_deps=True)\n"
+            "or: !pip install geopandas"
+        ) from exc
+
+
+SCRIPT_DIR = _resolve_script_dir()
+_DEFAULT_DATA_DIR, _DEFAULT_SHP_DIR, _DEFAULT_OUTPUT_DIR = get_default_paths()
+DEFAULT_DATA_DIR = _DEFAULT_DATA_DIR
+DEFAULT_SHP_DIR = _DEFAULT_SHP_DIR
+DEFAULT_OUTPUT_DIR = _DEFAULT_OUTPUT_DIR
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -252,12 +392,23 @@ def ensure_output_dir(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+def _maybe_export_excel(df: pd.DataFrame, path: Path) -> None:
+    """Write Excel when openpyxl is available (useful in Colab downloads)."""
+    try:
+        ensure_output_dir(path)
+        df.to_excel(path, index=False)
+        print(f"Saved Excel: {path}")
+    except ImportError:
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Stage 1: Shapefile -> CSV
 # ---------------------------------------------------------------------------
 
 
-def inspect_layer(path: Path, rp: str) -> tuple[gpd.GeoDataFrame, dict]:
+def inspect_layer(path: Path, rp: str) -> tuple:
+    gpd = _import_geopandas()
     flood_raw = gpd.read_file(path)
     diagnostics = {
         "return_period": rp,
@@ -272,7 +423,7 @@ def inspect_layer(path: Path, rp: str) -> tuple[gpd.GeoDataFrame, dict]:
     return flood_raw, diagnostics
 
 
-def apply_hazard_filter(flood: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, str]:
+def apply_hazard_filter(flood, rp: str = "") -> tuple:
     if not APPLY_HAZARD_ATTRIBUTE_FILTER:
         return flood, "No attribute filter applied"
     if not HAZARD_FILTER_RULES:
@@ -285,7 +436,8 @@ def apply_hazard_filter(flood: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, str]
     return flood, "Filter enabled but no configured hazard column found"
 
 
-def union_flood_geometries(flood: gpd.GeoDataFrame, crs) -> gpd.GeoDataFrame:
+def union_flood_geometries(flood, crs):
+    gpd = _import_geopandas()
     if flood.empty:
         return gpd.GeoDataFrame(geometry=[], crs=crs)
     flood = flood.copy()
@@ -304,6 +456,7 @@ def union_flood_geometries(flood: gpd.GeoDataFrame, crs) -> gpd.GeoDataFrame:
 
 def run_shp_to_csv(paths: PipelinePaths) -> pd.DataFrame:
     """Process admin + flood shapefiles into a validated barangay flood CSV."""
+    gpd = _import_geopandas()
     print("\n=== Stage 1: Shapefile to CSV ===")
 
     if not paths.admin_shp.exists():
@@ -625,8 +778,11 @@ def run_merge_dataset(paths: PipelinePaths, flood_df: Optional[pd.DataFrame] = N
     ensure_output_dir(paths.enriched_full_csv)
     df.to_csv(paths.enriched_full_csv, index=False)
     df_ml.to_csv(paths.ml_ready_csv, index=False)
+    _maybe_export_excel(df, paths.enriched_full_csv.with_suffix(".xlsx"))
+    _maybe_export_excel(df_ml, paths.ml_ready_csv.with_suffix(".xlsx"))
     print(f"Saved enriched dataset: {paths.enriched_full_csv}")
     print(f"Saved ML-ready dataset: {paths.ml_ready_csv} ({df_ml.shape})")
+    show_df(df_ml)
     return df_ml
 
 
@@ -746,6 +902,7 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
     ensure_output_dir(paths.dpi_labels_csv)
     df.to_csv(paths.dpi_labels_csv, index=False)
     weights_table.to_csv(paths.output_dir / "entropy_component_weights.csv", index=False)
+    _maybe_export_excel(df, paths.dpi_labels_csv.with_suffix(".xlsx"))
 
     target_col = "DPI Risk Class"
     candidate_features = keep_existing(
@@ -882,6 +1039,7 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
 
     ensure_output_dir(paths.final_predictions_csv)
     df.to_csv(paths.final_predictions_csv, index=False)
+    _maybe_export_excel(df, paths.final_predictions_csv.with_suffix(".xlsx"))
     final_comparison.to_csv(paths.output_dir / "model_comparison_results.csv", index=False)
     cv_results_df.to_csv(paths.output_dir / "cross_validation_results.csv", index=False)
     joblib.dump(best_model, paths.best_model_pkl)
@@ -889,7 +1047,99 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
 
     print(f"Saved final predictions: {paths.final_predictions_csv}")
     print(f"Saved best model: {paths.best_model_pkl}")
+    show_df(df[[
+        "Barangay", "DPI Score 0to100", "DPI Risk Class",
+        "ML Predicted Risk Class", "ML Prediction Confidence",
+    ]].head(10) if "ML Predicted Risk Class" in df.columns else df.head(10))
     return df
+
+
+# ---------------------------------------------------------------------------
+# Pipeline runner (CLI + Colab)
+# ---------------------------------------------------------------------------
+
+
+def run_pipeline(
+    stage: str = "all",
+    data_dir: Optional[Path] = None,
+    shp_dir: Optional[Path] = None,
+    output_dir: Optional[Path] = None,
+    flood_csv: Optional[Path] = None,
+    skip_shp_if_missing: bool = False,
+) -> dict[str, pd.DataFrame]:
+    """
+    Run one or more pipeline stages programmatically (Colab-friendly).
+
+    Returns a dict with keys such as 'flood', 'merged', 'final' for completed stages.
+    """
+    default_data, default_shp, default_out = get_default_paths()
+    paths = PipelinePaths(
+        data_dir=(data_dir or default_data).resolve(),
+        shp_dir=(shp_dir or default_shp).resolve(),
+        output_dir=(output_dir or default_out).resolve(),
+    )
+    paths.output_dir.mkdir(parents=True, exist_ok=True)
+
+    print("Manila Flood Risk Pipeline")
+    if is_colab():
+        print("  Environment: Google Colab")
+    print(f"  Data dir:   {paths.data_dir}")
+    print(f"  Shape dir:  {paths.shp_dir}")
+    print(f"  Output dir: {paths.output_dir}")
+    print(f"  Population: PSA 2024 only ({POPULATION_COL})")
+
+    outputs: dict[str, pd.DataFrame] = {}
+    flood_df: Optional[pd.DataFrame] = None
+    ml_df: Optional[pd.DataFrame] = None
+
+    run_shp = stage in ("all", "shp")
+    run_merge = stage in ("all", "merge")
+    run_ml = stage in ("all", "ml")
+
+    if run_shp:
+        shp_missing = not paths.admin_shp.exists() or any(
+            not p.exists() for p in paths.flood_shps.values()
+        )
+        if shp_missing:
+            if skip_shp_if_missing and paths.resolve_flood_csv().exists():
+                print("Shapefiles missing; using existing flood CSV.")
+            elif flood_csv and Path(flood_csv).exists():
+                print(f"Shapefiles missing; using flood CSV: {flood_csv}")
+            else:
+                raise FileNotFoundError(
+                    "Shapefiles not found. Upload shapefiles to shp_dir, provide flood_csv, "
+                    "or run with stage='merge' and skip_shp_if_missing=True."
+                )
+        else:
+            flood_df = run_shp_to_csv(paths)
+            outputs["flood"] = flood_df
+
+    if run_merge:
+        if flood_csv:
+            flood_df = load_flood_dataset(Path(flood_csv))
+        elif flood_df is None:
+            flood_path = paths.resolve_flood_csv()
+            if flood_path.exists():
+                flood_df = load_flood_dataset(flood_path)
+        ml_df = run_merge_dataset(paths, flood_df=flood_df)
+        outputs["merged"] = ml_df
+
+    if run_ml:
+        final_df = run_thesis_ml(paths, df=ml_df)
+        outputs["final"] = final_df
+
+    print("\nPipeline complete.")
+    if is_colab():
+        print("\nDownload outputs from the Colab file browser (/content/):")
+        for name in [
+            "manila_ml_ready_dataset.csv",
+            "manila_final_DPI_ML_predictions.csv",
+            "best_flood_risk_model.pkl",
+        ]:
+            p = paths.output_dir / name
+            if p.exists():
+                print(f"  - {p}")
+    return outputs
 
 
 # ---------------------------------------------------------------------------
@@ -898,6 +1148,7 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+    default_data, default_shp, default_out = get_default_paths()
     parser = argparse.ArgumentParser(
         description="Manila flood risk pipeline: shp-to-csv -> merge (PSA 2024) -> thesis ML"
     )
@@ -910,19 +1161,19 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=DEFAULT_DATA_DIR,
+        default=default_data,
         help="Directory containing population-dataset.csv and base dataset",
     )
     parser.add_argument(
         "--shp-dir",
         type=Path,
-        default=DEFAULT_SHP_DIR,
+        default=default_shp,
         help="Directory containing shapefiles for stage 1",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=DEFAULT_OUTPUT_DIR,
+        default=default_out,
         help="Directory for pipeline outputs",
     )
     parser.add_argument(
@@ -936,64 +1187,33 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Skip shp stage when shapefiles are missing but flood CSV exists",
     )
+    parser.add_argument(
+        "--colab-setup",
+        action="store_true",
+        help="Install Colab dependencies before running (auto-enabled in Colab for stage shp/all)",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
-    paths = PipelinePaths(
-        data_dir=args.data_dir.resolve(),
-        shp_dir=args.shp_dir.resolve(),
-        output_dir=args.output_dir.resolve(),
-    )
-    paths.output_dir.mkdir(parents=True, exist_ok=True)
 
-    print("Manila Flood Risk Pipeline")
-    print(f"  Data dir:   {paths.data_dir}")
-    print(f"  Shape dir:  {paths.shp_dir}")
-    print(f"  Output dir: {paths.output_dir}")
-    print(f"  Population: PSA 2024 only ({POPULATION_COL})")
+    if args.colab_setup or (is_colab() and args.stage in ("all", "shp")):
+        setup_colab(install_deps=True)
 
-    flood_df: Optional[pd.DataFrame] = None
-    ml_df: Optional[pd.DataFrame] = None
-
-    run_shp = args.stage in ("all", "shp")
-    run_merge = args.stage in ("all", "merge")
-    run_ml = args.stage in ("all", "ml")
-
-    if run_shp:
-        shp_missing = not paths.admin_shp.exists() or any(
-            not p.exists() for p in paths.flood_shps.values()
+    try:
+        run_pipeline(
+            stage=args.stage,
+            data_dir=args.data_dir,
+            shp_dir=args.shp_dir,
+            output_dir=args.output_dir,
+            flood_csv=args.flood_csv,
+            skip_shp_if_missing=args.skip_shp_if_missing,
         )
-        if shp_missing:
-            if args.skip_shp_if_missing and paths.resolve_flood_csv().exists():
-                print("Shapefiles missing; using existing flood CSV.")
-            elif args.flood_csv and args.flood_csv.exists():
-                print(f"Shapefiles missing; using --flood-csv {args.flood_csv}")
-            else:
-                print(
-                    "ERROR: Shapefiles not found. Place .shp files in --shp-dir or run with "
-                    "--stage merge --skip-shp-if-missing when flood CSV already exists.",
-                    file=sys.stderr,
-                )
-                return 1
-        else:
-            flood_df = run_shp_to_csv(paths)
-
-    if run_merge:
-        if args.flood_csv:
-            flood_df = load_flood_dataset(args.flood_csv)
-        elif flood_df is None:
-            flood_path = paths.resolve_flood_csv()
-            if flood_path.exists():
-                flood_df = load_flood_dataset(flood_path)
-        ml_df = run_merge_dataset(paths, flood_df=flood_df)
-
-    if run_ml:
-        run_thesis_ml(paths, df=ml_df)
-
-    print("\nPipeline complete.")
-    return 0
+        return 0
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
