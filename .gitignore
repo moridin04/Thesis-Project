@@ -20,3 +20,17 @@ backend/uploads/
 .env
 .env.local
 .DS_Store
+
+# Web app (SAGIP frontend/backend)
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+backend/.venv/
+backend/venv/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/*.db
+backend/uploads/
+.env
+.env.local
+.DS_Store
