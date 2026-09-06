@@ -6,17 +6,3 @@ __pycache__/
 final_methodology_aligned_results.xlsx
 final_risk_assessment.pdf
 kmeans_cluster_chart.png
-
-# Web app (SAGIP frontend/backend)
-node_modules/
-frontend/dist/
-frontend/dist-ssr/
-backend/.venv/
-backend/venv/
-backend/**/__pycache__/
-backend/.pytest_cache/
-backend/*.db
-backend/uploads/
-.env
-.env.local
-.DS_Store

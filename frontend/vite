@@ -1,9 +1,0 @@
-
-6:53:25 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
-
-  VITE v8.2.2  ready in 117 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
-  ➜  press h + enter to show help
-6:54:23 AM [vite] (client) hmr update /src/index.css, /src/components/public/PublicHeader.jsx
