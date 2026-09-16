@@ -10,6 +10,17 @@ Because the shape-to-CSV/geospatial processing was completed separately in QGIS,
 4. `manila_final_base_dataset_NEW.csv` — administrative/base barangay metadata.
 5. `manila_barangay_elevation.csv` — required QGIS Zonal Statistics output containing barangay-level DEM/DTM elevation statistics.
 
+List of Output Produced by the Pipeline
+manila_barangay_elevation.csv
+manila_barangay_flood_spatial.csv
+manila_barangay_flood_population_elevation_enriched.csv
+manila_ml_ready_dataset.csv
+manila_dpi_rankings.csv
+manila_model_comparison.csv
+manila_feature_importance.csv
+best_model_pipeline.joblib
+
+
 Dashboard File Set:
 barangay_flood_risk_predictions.csv
 manila_barangay_risk_map.geojson
