@@ -6,7 +6,7 @@ export const EXPORT_DISCLAIMER = 'For information purposes only. Not a warning s
 export const EXPORT_COLUMNS = [
   { key: 'barangay', label: 'Barangay name' },
   { key: 'district', label: 'District' },
-  { key: 'priorityScore', label: 'Priority score' },
+  { key: 'priorityScore', label: 'DPI score (0–100)' },
   { key: 'riskLevel', label: 'Risk Priority Class' },
   { key: 'population', label: 'Population (2024)' },
   { key: 'floodPct5yr', label: 'Flood PCT 5yr' },
@@ -43,7 +43,8 @@ function csvEscape(column, value) {
 export function rowsToCsv(rows) {
   const header = EXPORT_COLUMNS.map((column) => column.label).join(',')
   const body = rows.map((row) => EXPORT_COLUMNS.map((column) => csvEscape(column, row[column.key])).join(','))
-  return [header, ...body].join('\n')
+  // BOM so Excel reads the file as UTF-8 (the header contains an en dash).
+  return `\uFEFF${[header, ...body].join('\n')}`
 }
 
 export function buildReportHtml(rows, date = new Date()) {

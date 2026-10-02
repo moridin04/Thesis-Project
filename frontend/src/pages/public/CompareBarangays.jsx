@@ -54,7 +54,7 @@ export default function CompareBarangays() {
   }
 
   const metrics = [
-    { label: 'Priority score', render: (row) => Math.round(row.priorityScore) },
+    { label: 'DPI score (0–100)', render: (row) => Math.round(row.priorityScore) },
     { label: 'Risk priority class', render: (row) => <RiskBadge category={row.riskLevel} /> },
     { label: 'Population (2024)', render: (row) => Math.round(row.population).toLocaleString() },
     { label: '5-year flood coverage', render: (row) => `${row.floodPct5yr.toFixed(1)}%` },

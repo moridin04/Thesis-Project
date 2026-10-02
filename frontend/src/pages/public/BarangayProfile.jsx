@@ -155,6 +155,7 @@ function PriorityGauge({ value }) {
       <p className="-mt-8 text-center">
         <span className="font-display text-4xl font-bold text-foundation">{value}</span>
         <span className="text-sm text-ocean">/100</span>
+        <span className="block text-xs text-ocean">DPI score (0–100)</span>
       </p>
     </div>
   )

@@ -65,7 +65,7 @@ export default function Rankings() {
     <div className="space-y-6">
       <PageHeader
         title="Rankings"
-        subtitle="Barangays ordered by published disaster priority score"
+        subtitle="Barangays ordered by published DPI score (0–100)"
       />
       <div className="flex flex-wrap gap-3">
         <input
@@ -117,7 +117,7 @@ export default function Rankings() {
               <th className="px-4 py-3 text-ocean">Barangay</th>
               <th className="px-4 py-3 text-ocean">District</th>
               <th className="px-4 py-3 text-ocean">Risk</th>
-              <th className="px-4 py-3 text-ocean">Priority score</th>
+              <th className="px-4 py-3 text-ocean">DPI score (0–100)</th>
             </tr>
           </thead>
           <tbody>

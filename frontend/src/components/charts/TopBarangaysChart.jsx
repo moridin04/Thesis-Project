@@ -14,7 +14,7 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div className="card-surface rounded-lg px-3 py-2 text-sm shadow-lg">
       <p className="font-medium text-foundation">{label}</p>
-      <p className="text-ocean">Priority score {Math.round(payload[0].value)}</p>
+      <p className="text-ocean">DPI score (0–100): {Math.round(payload[0].value)}</p>
     </div>
   )
 }

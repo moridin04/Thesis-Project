@@ -14,7 +14,7 @@ export default function PriorityBarangaysTable({ rows }) {
               <th className="px-4 py-3 font-semibold text-ocean">Barangay</th>
               <th className="px-4 py-3 font-semibold text-ocean">District</th>
               <th className="px-4 py-3 font-semibold text-ocean">Risk</th>
-              <th className="px-4 py-3 font-semibold text-ocean">Priority score</th>
+              <th className="px-4 py-3 font-semibold text-ocean">DPI score (0–100)</th>
               <th className="px-4 py-3 font-semibold text-ocean">Population</th>
               <th className="px-4 py-3 font-semibold text-ocean">25-yr flood</th>
             </tr>
