@@ -157,7 +157,7 @@ Thesis-Project/
 - Flood score tiers: ≤5%→0, >5%→2.5, ≥20%→5, ≥50%→7.5, ≥80%→10  
 - CSI = 0.5·5yr + 0.3·25yr + 0.2·100yr scores  
 - DPI = 0.6·CSI + 0.4·Vulnerability_Score  
-- Classes: Low &lt; 3.5 ≤ Moderate &lt; 6.5 ≤ High  
+- Classes: Low &lt; 3.5 ≤ Medium &lt; 6.5 ≤ High  
 
 ### Datasets
 
@@ -305,7 +305,7 @@ Integrated barangay table (interim CSV)
         ↓
 Feature engineering (coverage, density, affected pop, growth)
         ↓
-Deterministic CSI → DPI → Low/Moderate/High classes
+Deterministic CSI → DPI → Low/Medium/High classes
         ↓
 K-Means archetypes (exploratory) + supervised RF/GB/MLP
         ↓
@@ -342,7 +342,7 @@ Frontend Risk Map / Rankings / Profiles / Compare
 | Model artifacts | Implied under `models/` | Only `.gitkeep` there; joblib elsewhere | **Mismatch** |
 | Notebooks | Numbered stages in `experiment_log` spirit | 5/6 notebooks empty; only `04_*` populated (and titled AlertaBayan) | **Mismatch** |
 | Barangay count | UI/mock/API claim **897** (Manila) | Interim has **206 Manila** / **922 NCR**; mock uses 897 | **Mismatch** |
-| Risk labels | Methodology: Low / Moderate / **High** | Frontend mock adds **Critical**; scores look like 0–1 not 0–10 DPI | **Mismatch** |
+| Risk labels | Methodology: Low / Medium / **High** | Frontend mock adds **Critical**; scores look like 0–1 not 0–10 DPI | **Mismatch** |
 | Indicators | Flood coverage, density, affected pop, growth | Mock API uses flood depth, rainfall_index, poverty_index, etc. | **Mismatch** |
 | Public API | Intended to serve published pipeline outputs | Serves `2026.1-mock` hardcoded objects | **Mismatch** |
 | RBAC tiers | Public / staff / admin | Implemented and largely consistent | **Mostly aligned** |

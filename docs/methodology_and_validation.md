@@ -68,7 +68,7 @@ Because externally observed outcome labels (e.g., event inundation confirmations
 To assess the robustness of the DPI ranking to weight selection, a sensitivity analysis is conducted by varying the CSI component weights (e.g., 40/30/30, 50/30/20, 60/25/15) and the CSI-vulnerability balance (e.g., 50/50, 60/40, 70/30). The resulting DPI rankings are compared using Spearman rank correlation. If rank-order stability remains high (rho > 0.90) across configurations, the findings are considered robust to the specific weight choice. If not, weight-sensitivity is reported as a limitation.
 
 ### DPI-Derived Risk Classes (Proxy Labels)
-For classification benchmarks, DPI is thresholded into ordinal risk categories using the following cutoffs: **Low** (DPI < 3.5), **Moderate** (3.5 ≤ DPI < 6.5), and **High** (DPI ≥ 6.5). These threshold values are set to produce a distribution that meaningfully separates the Metro Manila barangay population across risk tiers. These DPI-derived classes are treated as **proxy labels** (benchmark targets), not ground truth.
+For classification benchmarks, DPI is thresholded into ordinal risk categories using the following cutoffs: **Low** (DPI < 3.5), **Medium** (3.5 ≤ DPI < 6.5), and **High** (DPI ≥ 6.5). These threshold values are set to produce a distribution that meaningfully separates the Metro Manila barangay population across risk tiers. These DPI-derived classes are treated as **proxy labels** (benchmark targets), not ground truth.
 
 ## Modeling: Hybrid Unsupervised + Supervised Analysis
 
@@ -89,7 +89,7 @@ For classification benchmarks, DPI is thresholded into ordinal risk categories u
 
 ### Supervised Phase (Index Prediction)
 Supervised models are trained to predict:
-- **Classification**: DPI-derived risk class (Low/Moderate/High)
+- **Classification**: DPI-derived risk class (Low/Medium/High)
 - **Regression**: the continuous DPI score
 
 Benchmarked architectures include:
@@ -114,7 +114,7 @@ To ensure fair comparison and to prevent overstating "prediction of real-world r
    - The **deterministic DPI rule** itself (and its thresholded class) is treated as the core benchmark.
 
 2. **Simple Supervised Baselines**
-   - **Classification**: majority-class (dummy) predictor, logistic regression, a shallow decision tree (max depth = 2), and an **ordinal baseline** ("Ordinal Ridge (rounded)"). Because DPI-derived risk classes are inherently ordered (Low < Moderate < High), an ordinal-aware baseline is included: a Ridge regression model is trained on the numeric ordinal encoding (0/1/2), and its continuous predictions are rounded to the nearest integer and clipped to [0, 2] to produce class labels. This baseline tests whether a simple linear model exploiting ordinal structure can approximate the DPI classification without an explicit multi-class formulation.
+   - **Classification**: majority-class (dummy) predictor, logistic regression, a shallow decision tree (max depth = 2), and an **ordinal baseline** ("Ordinal Ridge (rounded)"). Because DPI-derived risk classes are inherently ordered (Low < Medium < High), an ordinal-aware baseline is included: a Ridge regression model is trained on the numeric ordinal encoding (0/1/2), and its continuous predictions are rounded to the nearest integer and clipped to [0, 2] to produce class labels. This baseline tests whether a simple linear model exploiting ordinal structure can approximate the DPI classification without an explicit multi-class formulation.
    - **Regression**: mean predictor (dummy) and Ridge regression.
 
 All models — baselines and primary — are trained and evaluated on the same train/test split (80/20, stratified by class) to compare performance under identical conditions. To prevent data leakage, feature imputation and standardization are encapsulated within sklearn `Pipeline` objects, ensuring that preprocessing parameters are fit exclusively on training data within each split or cross-validation fold. Critically, **all baseline and primary models are evaluated under the same cross-validation protocols**: 5-fold stratified cross-validation (classification) and 5-fold KFold (regression) for standard generalization estimates, plus GroupKFold cross-validation grouped by city for spatial robustness checks. This ensures that baseline-to-primary comparisons are made under identical evaluation conditions across all protocols. Model improvement is reported as the gain over the dummy baselines (F1 gain for classification, RMSE reduction for regression), establishing a meaningful performance floor.
@@ -132,7 +132,7 @@ The primary performance indicator is:
 - **Balanced Accuracy** — macro-averaged recall across classes, addressing potential class imbalance
 - **F1-score (weighted)** — precision-recall harmonic mean weighted by class support
 - **F1-score (macro)** — unweighted average across classes, ensuring minority-class performance is not masked
-- **Confusion matrices** — reported for the held-out test split (rows = true labels, columns = predicted labels; label order: Low, Moderate, High) to enable inspection of per-class error patterns and systematic misclassification tendencies
+- **Confusion matrices** — reported for the held-out test split (rows = true labels, columns = predicted labels; label order: Low, Medium, High) to enable inspection of per-class error patterns and systematic misclassification tendencies
 
 **Regression metrics reported** (single-split test set, standard CV, and spatial CV):
 - **RMSE** (root mean squared error) — penalizes large deviations
