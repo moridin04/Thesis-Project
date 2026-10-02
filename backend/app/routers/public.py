@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.services import barangay_data
-from app.services.public_data import INDICATORS, METHODOLOGY, RECOMMENDATIONS
+from app.services.public_content import INDICATORS, METHODOLOGY, RECOMMENDATIONS
 from app.services.upload_service import list_approved_barangay_records
 
 router = APIRouter(prefix="/public", tags=["public"])

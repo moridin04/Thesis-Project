@@ -19,7 +19,7 @@ NOTEBOOK_PATH = (
     Path(__file__).resolve().parents[3]
     / "src"
     / "ML-thesis-updated"
-    / "flood_risk_pipeline_manila.ipynb"
+    / "Manila_Barangay_Flood_Risk_Pipeline.ipynb"
 )
 
 
