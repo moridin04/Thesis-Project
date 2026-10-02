@@ -8,7 +8,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import admin, auth, ml_results, operations, public
+from app.routers import admin, auth, ml_results, operations, public, staff
 from app.services.barangay_data import load_barangays
 
 settings = get_settings()
@@ -46,6 +46,7 @@ app.add_middleware(
 
 app.include_router(public.router, prefix="/api")
 app.include_router(ml_results.router, prefix="/api")
+app.include_router(staff.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(operations.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")

@@ -24,6 +24,8 @@ import DashboardIndicators from './pages/dashboard/DashboardIndicators'
 import DashboardRecommendations from './pages/dashboard/DashboardRecommendations'
 import DashboardUpload from './pages/dashboard/DashboardUpload'
 import DashboardModelResults from './pages/dashboard/DashboardModelResults'
+import DashboardBarangays from './pages/dashboard/DashboardBarangays'
+import DashboardBarangayDetail from './pages/dashboard/DashboardBarangayDetail'
 import ReviewUploads from './pages/admin/ReviewUploads'
 import ManageUsers from './pages/admin/ManageUsers'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
@@ -65,6 +67,8 @@ export default function App() {
             <Route path="recommendations" element={<DashboardRecommendations />} />
             <Route path="upload" element={<DashboardUpload />} />
             <Route path="model-results" element={<DashboardModelResults />} />
+            <Route path="barangays" element={<DashboardBarangays />} />
+            <Route path="barangays/:id" element={<DashboardBarangayDetail />} />
           </Route>
         </Route>
 

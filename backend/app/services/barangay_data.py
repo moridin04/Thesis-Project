@@ -59,9 +59,6 @@ def _record(row: pd.Series) -> dict:
         "priority_score": _clean(float(row["DPI_Scaled"])),
         "risk_category": str(row["DPI_Risk_Class"]),
         "dpi_rank": int(row["DPI_Rank"]),
-        "ml_predicted_risk_class": str(row["ML_Predicted_Risk_Class"]),
-        "ml_prediction_confidence": _clean(float(row["ML_Prediction_Confidence"])),
-        "best_model": str(row["Best_Model"]),
         "planning_reference": _text(row.get("Planning_Reference")),
         "drrm_pillar": _text(row.get("DRRM_Pillar")),
         "image_url": None,
@@ -129,6 +126,37 @@ def get_barangay_by_id(barangay_id: str) -> dict | None:
 
 def get_rankings() -> list[dict]:
     return get_all_barangays()
+
+
+def _ml_record(row: pd.Series) -> dict:
+    """Staff-only: ML predictions are in-sample and must never reach public responses."""
+    dpi_class = str(row["DPI_Risk_Class"])
+    ml_class = str(row["ML_Predicted_Risk_Class"])
+    return {
+        "id": row["Barangay"],
+        "name": row["Barangay"],
+        "dpi_rank": int(row["DPI_Rank"]),
+        "dpi_risk_class": dpi_class,
+        "ml_predicted_risk_class": ml_class,
+        "ml_prediction_confidence": _clean(float(row["ML_Prediction_Confidence"])),
+        "model": str(row["Best_Model"]),
+        "agrees_with_dpi": ml_class == dpi_class,
+    }
+
+
+def get_barangay_ml(barangay_id: str) -> dict | None:
+    frame = _frame()
+    match = frame.loc[frame["Barangay"] == barangay_id]
+    if match.empty:
+        return None
+    return _ml_record(match.iloc[0])
+
+
+def list_barangay_ml(differs_only: bool = False) -> list[dict]:
+    records = [_ml_record(row) for _, row in _frame().sort_values("DPI_Rank").iterrows()]
+    if differs_only:
+        records = [record for record in records if not record["agrees_with_dpi"]]
+    return records
 
 
 @lru_cache(maxsize=1)

@@ -5,6 +5,7 @@ import {
   GitCompare,
   LayoutDashboard,
   Lightbulb,
+  ListChecks,
   Upload,
 } from 'lucide-react'
 
@@ -13,6 +14,7 @@ const navItems = [
   { to: '/dashboard/compare', label: 'Compare', icon: GitCompare },
   { to: '/dashboard/indicators', label: 'Indicators', icon: BarChart3 },
   { to: '/dashboard/recommendations', label: 'Recommendations', icon: Lightbulb },
+  { to: '/dashboard/barangays', label: 'Barangays', icon: ListChecks },
   { to: '/dashboard/model-results', label: 'Model Results', icon: BrainCircuit },
   { to: '/dashboard/upload', label: 'Upload Data', icon: Upload },
 ]

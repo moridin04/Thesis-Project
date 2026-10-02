@@ -23,7 +23,6 @@ function toBarangayView(row) {
     floodPct5yr: Number(row.flood_pct_5yr) || 0,
     floodPct25yr: Number(row.flood_pct_25yr) || 0,
     dpiRank: row.dpi_rank,
-    bestModel: row.best_model,
     planningReference: row.planning_reference || '',
     drrmPillar: row.drrm_pillar || '',
     imageUrl: row.image_url || null,
