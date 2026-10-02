@@ -76,4 +76,14 @@ def test_ml_results_endpoint_is_public(client: TestClient):
     body = response.json()
     assert [m["model"] for m in body["models"] if m["selected"]] == ["Gradient Boosting"]
     assert body["n_test"] == 180
-    assert body["confusion_matrices"] == {}
+
+    matrices = body["confusion_matrices"]
+    assert set(matrices) == {m["model"] for m in body["models"]}
+    for cells in matrices.values():
+        assert len(cells) == 9
+    gb_high = {
+        cell["predicted"]: cell["count"]
+        for cell in matrices["Gradient Boosting"]
+        if cell["actual"] == "High"
+    }
+    assert gb_high == {"High": 56, "Low": 0, "Medium": 4}

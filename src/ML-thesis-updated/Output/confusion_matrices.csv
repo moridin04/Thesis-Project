@@ -1,0 +1,28 @@
+Model,Actual,Predicted,Count
+Random Forest,High,High,55
+Random Forest,High,Low,0
+Random Forest,High,Medium,5
+Random Forest,Low,High,0
+Random Forest,Low,Low,55
+Random Forest,Low,Medium,5
+Random Forest,Medium,High,3
+Random Forest,Medium,Low,4
+Random Forest,Medium,Medium,53
+Gradient Boosting,High,High,56
+Gradient Boosting,High,Low,0
+Gradient Boosting,High,Medium,4
+Gradient Boosting,Low,High,0
+Gradient Boosting,Low,Low,56
+Gradient Boosting,Low,Medium,4
+Gradient Boosting,Medium,High,4
+Gradient Boosting,Medium,Low,3
+Gradient Boosting,Medium,Medium,53
+MLP,High,High,57
+MLP,High,Low,0
+MLP,High,Medium,3
+MLP,Low,High,0
+MLP,Low,Low,56
+MLP,Low,Medium,4
+MLP,Medium,High,3
+MLP,Medium,Low,2
+MLP,Medium,Medium,55
