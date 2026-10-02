@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart2, Database, FileText, Info, LayoutDashboard, List, Menu } from 'lucide-react'
+import { BarChart2, Database, FileText, LayoutDashboard, List, Menu } from 'lucide-react'
 import PublicHeader from '../components/public/PublicHeader'
 import SidebarSkyline from '../components/public/SidebarSkyline'
 
@@ -10,7 +10,6 @@ const links = [
   { to: '/compare', label: 'Compare', icon: BarChart2, match: '/compare' },
   { to: '/rankings', label: 'Priority List', icon: List, match: '/rankings' },
   { to: '/methodology', label: 'Data Sources', icon: Database, match: '/methodology' },
-  { to: '/about', label: 'About', icon: Info, match: '/about' },
 ]
 
 const tagline = ['People', 'Places', 'Progress', 'Together']
@@ -60,8 +59,8 @@ export default function PublicInsightsLayout() {
         </div>
       </nav>
       <div className="mt-auto pt-6">
-        {/* Hidden below 766px: header 77 + menu 420 + skyline/tagline block 268.4 no longer fit. */}
-        <SidebarSkyline className="text-pale opacity-30 [@media(max-height:765.98px)]:hidden" />
+        {/* Hidden below 698px: header 77 + menu 352 + skyline/tagline block 268.4 no longer fit. */}
+        <SidebarSkyline className="text-pale opacity-30 [@media(max-height:697.98px)]:hidden" />
         <p className="pb-6 pl-6 pt-4 text-xs font-medium uppercase leading-[1.8] tracking-[0.3em] text-white/60">
           {tagline.map((word) => (
             <span key={word} className="block">
