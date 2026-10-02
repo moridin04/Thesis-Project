@@ -61,8 +61,8 @@ export default function PublicDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Public Dashboard"
-        subtitle="City-wide flood priority overview for published AGOS outputs"
+        title="Manila Flood Priority Overview"
+        subtitle="How Manila's barangays compare on flood priority, based on published AGOS outputs"
       />
       {loading ? <p className="text-sm text-ocean">Loading overview…</p> : null}
       {error ? <p className="text-sm text-accent">{error}</p> : null}

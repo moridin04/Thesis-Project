@@ -16,7 +16,7 @@ const projectLinks = [
 ]
 
 const resourceLinks = [
-  { to: '/overview', label: 'Dashboard' },
+  { to: '/overview', label: 'Overview' },
   { to: '/compare', label: 'Compare' },
   { to: '/indicators', label: 'Indicators' },
   { to: '/recommendations', label: 'Recommendations' },

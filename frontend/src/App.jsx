@@ -40,6 +40,7 @@ export default function App() {
       <Route path="risk-map" element={<Navigate to="/priority-map" replace />} />
 
       <Route element={<PublicInsightsLayout />}>
+        <Route path="overview" element={<PublicDashboard />} />
         <Route path="rankings" element={<Rankings />} />
         <Route path="barangays/:id" element={<BarangayProfile />} />
         <Route path="compare" element={<CompareBarangays />} />
@@ -47,7 +48,6 @@ export default function App() {
       </Route>
 
       <Route element={<PublicLayout />}>
-        <Route path="overview" element={<PublicDashboard />} />
         <Route path="indicators" element={<Indicators />} />
         <Route path="methodology" element={<Methodology />} />
         <Route path="recommendations" element={<Recommendations />} />

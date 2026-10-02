@@ -43,10 +43,10 @@ const features = [
   },
   {
     number: '02',
-    title: 'Review the Dashboard',
+    title: 'Review the Overview',
     body: 'See citywide summaries of published risk classifications, indicator trends, and barangay counts per risk level.',
     to: '/overview',
-    linkLabel: 'View Dashboard',
+    linkLabel: 'View Overview',
     icon: LayoutDashboard,
   },
   {
@@ -173,7 +173,7 @@ export default function Landing() {
             <Map className="h-3.5 w-3.5" aria-hidden />
           </Link>
           <Link to="/overview" className="btn-secondary hero-carousel__btn hero-carousel__btn-secondary">
-            View Dashboard
+            View Overview
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
