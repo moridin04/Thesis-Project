@@ -28,22 +28,25 @@ export default function PublicInsightsLayout() {
 
   const sidebar = (
     <div className="flex h-full flex-col bg-foundation text-white">
-      <nav className="flex-1 space-y-1 px-2 pt-4" aria-label="Insights">
-        {links.map((item) => {
-          const Icon = item.icon
-          const active = isActive(item.match)
-          return (
-            <NavLink
-              key={item.label}
-              to={item.to}
-              className={navClass(active)}
-              onClick={() => setOpen(false)}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {item.label}
-            </NavLink>
-          )
-        })}
+      <nav className="flex-1 px-2" aria-label="Insights">
+        {/* Header height = --public-header-height plus its 1px bottom border. */}
+        <div className="space-y-1 pt-4 lg:sticky lg:top-[calc(var(--public-header-height)+1px)] lg:max-h-[calc(100vh-var(--public-header-height)-1px)] lg:overflow-y-auto">
+          {links.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.match)
+            return (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                className={navClass(active)}
+                onClick={() => setOpen(false)}
+              >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                {item.label}
+              </NavLink>
+            )
+          })}
+        </div>
       </nav>
       <div className="relative mt-auto px-4 pb-6 pt-8">
         <svg
