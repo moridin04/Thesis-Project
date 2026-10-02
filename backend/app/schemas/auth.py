@@ -9,8 +9,9 @@ from app.security import validate_password_strength, validate_username
 
 
 class LoginRequest(BaseModel):
-    username: str = Field(min_length=1, max_length=32)
-    password: str = Field(min_length=1, max_length=128)
+    # Only emptiness is checked here; format and length rules would leak via 422 details.
+    username: str = Field(min_length=1)
+    password: str = Field(min_length=1)
 
 
 class TokenResponse(BaseModel):

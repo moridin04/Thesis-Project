@@ -18,6 +18,7 @@ from app.schemas.auth import (
 from app.security import REFRESH_COOKIE_NAME
 from app.services.audit_service import record_audit_log
 from app.services.auth_service import (
+    LoginFailed,
     clear_refresh_cookie,
     login_account,
     refresh_session,
@@ -45,11 +46,12 @@ def login(
             actor_username=account.username,
         )
         return AuthResponse(access_token=access_token, account=account)
-    except HTTPException:
+    except LoginFailed as exc:
         record_audit_log(
             db,
             action="login_failed",
             actor_username=payload.username.strip().lower()[:32],
+            details=exc.reason,
         )
         raise
 

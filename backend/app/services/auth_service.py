@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 
@@ -11,6 +12,7 @@ from app.models.account import Account
 from app.schemas.auth import AccountPublic
 from app.security import (
     GENERIC_AUTH_ERROR,
+    GENERIC_RATE_LIMIT_ERROR,
     REFRESH_COOKIE_NAME,
     REFRESH_COOKIE_PATH,
     ROLE_ADMIN,
@@ -31,6 +33,18 @@ settings = get_settings()
 _login_attempts: dict[str, deque[datetime]] = defaultdict(deque)
 LOGIN_RATE_LIMIT = 8
 LOGIN_RATE_WINDOW = timedelta(minutes=15)
+# No stored password can be this long (creation caps at 128), so longer input always fails.
+MAX_LOGIN_PASSWORD_LENGTH = 1024
+# Verified when the username is unknown so response time does not reveal whether it exists.
+_DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(32))
+
+
+class LoginFailed(HTTPException):
+    """Login failure with a server-side reason for the audit log; the reason is never sent."""
+
+    def __init__(self, status_code: int, detail: str, reason: str) -> None:
+        super().__init__(status_code=status_code, detail=detail)
+        self.reason = reason
 
 
 def _serialize_account(account: Account) -> AccountPublic:
@@ -71,9 +85,10 @@ def _enforce_login_rate_limit(username: str) -> None:
     while attempts and now - attempts[0] > LOGIN_RATE_WINDOW:
         attempts.popleft()
     if len(attempts) >= LOGIN_RATE_LIMIT:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=GENERIC_AUTH_ERROR,
+        raise LoginFailed(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            GENERIC_RATE_LIMIT_ERROR,
+            reason="rate_limited",
         )
     attempts.append(now)
 
@@ -85,19 +100,24 @@ def authenticate_account(
     password: str,
 ) -> Account:
     normalized = normalize_username(username)
-    account = db.query(Account).filter(Account.username == normalized).first()
+    account = db.query(Account).filter(Account.username == normalized).first() if normalized else None
 
-    if (
-        account is None
-        or not account.is_active
-        or account.role not in VALID_ROLES
-        or not verify_password(password, account.password_hash)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=GENERIC_AUTH_ERROR,
-        )
-    return account
+    # Exactly one hash verification on every path keeps response times uniform.
+    too_long = len(password) > MAX_LOGIN_PASSWORD_LENGTH
+    candidate_hash = account.password_hash if account is not None and not too_long else _DUMMY_PASSWORD_HASH
+    password_ok = verify_password(password[:MAX_LOGIN_PASSWORD_LENGTH], candidate_hash)
+
+    if account is None:
+        reason = "unknown_user"
+    elif too_long or not password_ok:
+        reason = "wrong_password"
+    elif not account.is_active:
+        reason = "inactive_account"
+    elif account.role not in VALID_ROLES:
+        reason = "invalid_role"
+    else:
+        return account
+    raise LoginFailed(status.HTTP_401_UNAUTHORIZED, GENERIC_AUTH_ERROR, reason=reason)
 
 
 def login_account(
