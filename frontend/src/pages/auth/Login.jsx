@@ -11,6 +11,7 @@ import { homePathForRole } from '../../config/permissions'
 import { RedirectIfAuthenticated } from '../../auth/RoleRoute'
 
 const NETWORK_NOTICE = 'Unable to reach the AGOS API. Start the backend on port 8000 and try again.'
+const RATE_LIMIT_NOTICE = 'Too many attempts. Please try again later.'
 
 const inputClassName =
   'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-4 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
@@ -22,12 +23,14 @@ function LoginForm() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [networkNotice, setNetworkNotice] = useState('')
+  const [rateLimited, setRateLimited] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
     if (submitting) return
     setNetworkNotice('')
+    setRateLimited(false)
     setSubmitting(true)
     try {
       const account = await login({ username, password })
@@ -40,9 +43,10 @@ function LoginForm() {
       }
       navigate(next, { replace: true })
     } catch (err) {
-      // Credential failures (any HTTP response) are deliberately silent; only a missing
-      // response (server down / network error) is surfaced.
+      // Credential failures stay silent. Only 429 (fixed frontend text, never the backend
+      // body) and a missing response (server down / network error) are surfaced.
       if (!err?.response) setNetworkNotice(NETWORK_NOTICE)
+      else if (err.response.status === 429) setRateLimited(true)
     } finally {
       setSubmitting(false)
     }
@@ -111,6 +115,16 @@ function LoginForm() {
           <p role="alert" className="mt-5 rounded-xl border border-[color:var(--risk-high)]/30 bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)] px-4 py-3 text-sm text-foundation">
             {networkNotice}
           </p>
+        ) : null}
+
+        {rateLimited ? (
+          <div
+            role="status"
+            className="mt-5 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-sm text-foundation"
+          >
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+            <p>{RATE_LIMIT_NOTICE}</p>
+          </div>
         ) : null}
 
         <button
