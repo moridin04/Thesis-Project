@@ -107,7 +107,7 @@ export const methodologySections = [
   },
   {
     title: 'Risk classification',
-    body: 'Gradient Boosting is the single model selected for the full City of Manila dataset, based on training cross-validation. The same model is stored for every barangay; it is not chosen separately per barangay. Held-out test results are reported only after that selection.',
+    body: 'Three models (Random Forest, Gradient Boosting and MLP) were trained and compared using cross-validation on the training data. Gradient Boosting scored highest and was selected, and it is the model applied to every barangay.',
   },
   {
     title: 'Limitations',

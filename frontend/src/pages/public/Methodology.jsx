@@ -13,7 +13,7 @@ function useModelSummarySentence() {
       .then((summary) => {
         if (!active || summary?.correct == null || !summary?.n_test) return
         setSentence(
-          `On ${summary.n_test} held-out barangays the model had not seen, it classified ${summary.correct} correctly (${summary.percentage}%).`,
+          `On ${summary.n_test} held-out barangays it had not seen, it reproduced the DPI-derived class for ${summary.correct} (${summary.percentage}%).`,
         )
       })
       .catch(() => {})
