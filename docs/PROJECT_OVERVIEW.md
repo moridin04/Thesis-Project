@@ -157,7 +157,7 @@ Thesis-Project/
 - Flood score tiers: ≤5%→0, >5%→2.5, ≥20%→5, ≥50%→7.5, ≥80%→10  
 - CSI = 0.5·5yr + 0.3·25yr + 0.2·100yr scores  
 - DPI = 0.6·CSI + 0.4·Vulnerability_Score  
-- Classes: Low &lt; 3.5 ≤ Medium &lt; 6.5 ≤ High  
+- Classes: tertile split of `DPI_Scaled` (0–100) via `pd.qcut`: Low (bottom third) / Medium (middle third) / High (top third), 299 each. Relative within Metro Manila, not absolute risk.  
 
 ### Datasets
 

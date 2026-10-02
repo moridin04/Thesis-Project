@@ -68,7 +68,7 @@ Because externally observed outcome labels (e.g., event inundation confirmations
 To assess the robustness of the DPI ranking to weight selection, a sensitivity analysis is conducted by varying the CSI component weights (e.g., 40/30/30, 50/30/20, 60/25/15) and the CSI-vulnerability balance (e.g., 50/50, 60/40, 70/30). The resulting DPI rankings are compared using Spearman rank correlation. If rank-order stability remains high (rho > 0.90) across configurations, the findings are considered robust to the specific weight choice. If not, weight-sensitivity is reported as a limitation.
 
 ### DPI-Derived Risk Classes (Proxy Labels)
-For classification benchmarks, DPI is thresholded into ordinal risk categories using the following cutoffs: **Low** (DPI < 3.5), **Medium** (3.5 ≤ DPI < 6.5), and **High** (DPI ≥ 6.5). These threshold values are set to produce a distribution that meaningfully separates the Metro Manila barangay population across risk tiers. These DPI-derived classes are treated as **proxy labels** (benchmark targets), not ground truth.
+For classification benchmarks, `DPI_Scaled` (DPI rescaled to 0–100) is split into ordinal risk categories using tertiles (`pd.qcut`): **Low** (lowest third), **Medium** (middle third), and **High** (highest third), giving 299 barangays per class. These classes are relative rankings within Metro Manila, not absolute risk levels. These DPI-derived classes are treated as **proxy labels** (benchmark targets), not ground truth.
 
 ## Modeling: Hybrid Unsupervised + Supervised Analysis
 
