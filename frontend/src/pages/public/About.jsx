@@ -63,14 +63,13 @@ export default function About() {
         <h1 className="font-display text-3xl font-bold text-foundation sm:text-4xl">
           AGOS — Analytics and Geospatial Overview for Safety
         </h1>
-        <p className="text-sm font-medium text-foundation">
-          A Barangay-Level Flood Risk Prioritization and Decision Support Platform
-        </p>
-        <p className="text-sm italic text-ocean">Daloy ng datos tungo sa mas handang pamayanan.</p>
       </header>
 
       <section className="space-y-2">
         <h2 className="font-display text-lg font-semibold text-foundation">Innovation summary</h2>
+        <p className="pb-1 text-sm font-medium text-foundation">
+          A Barangay-Level Flood Risk Prioritization and Decision Support Platform
+        </p>
         <p className="text-sm leading-relaxed text-ocean">
           AGOS is a web-based decision-support platform that transforms scattered flood-related data
           into clear, practical, and actionable barangay-level information. It combines flood-hazard
@@ -89,20 +88,21 @@ export default function About() {
         />
       </section>
 
-      <p className="text-sm font-medium text-foundation">National University – Manila</p>
-
       <section className="space-y-3">
-        <h2 className="font-display text-lg font-semibold text-foundation">Project team</h2>
+        <div className="space-y-1">
+          <h2 className="font-display text-lg font-semibold text-foundation">Project team</h2>
+          <p className="text-xs text-muted">National University – Manila</p>
+        </div>
         <InfoTable
           caption="AGOS project team and roles"
           columns={['Name', 'Role']}
           rows={team.map((row) => [row.name, row.role])}
         />
-        <p className="text-sm leading-relaxed text-ocean">
-          Thesis Adviser: Prof. Armida P. Salazar, Faculty, College of Computing and Information
-          Technologies (CCIT)
-        </p>
       </section>
+
+      <p className="py-2 text-center text-sm italic text-ocean">
+        Daloy ng datos tungo sa mas handang pamayanan.
+      </p>
 
       <p className="disclaimer-soft px-4 py-3 text-sm leading-relaxed">
         AGOS does not replace official warning systems or professional judgment. It provides
