@@ -43,9 +43,9 @@ const calculationSteps = [
 ]
 
 const profileDataSources = [
-  { label: 'Hazard (e.g., flood maps)' },
-  { label: 'Exposure (e.g. population data)' },
-  { label: 'Vulnerability (e.g., built environment)' },
+  { label: 'Hazard: LiPAD 5-year and 25-year flood hazard data' },
+  { label: 'Exposure: PSA 2020 and 2024 population' },
+  { label: 'Vulnerability: DTM-derived elevation and population density' },
 ]
 
 function FitToData({ data }) {
@@ -306,8 +306,8 @@ export default function BarangayProfile() {
           <h2 className="font-display text-lg font-semibold text-foundation">Data Source</h2>
           <ul className="mt-4 space-y-3 text-sm text-ocean">
             {profileDataSources.map((item) => (
-              <li key={item.label} className="flex items-center gap-2">
-                <Database className="h-4 w-4 shrink-0" aria-hidden />
+              <li key={item.label} className="flex items-start gap-2">
+                <Database className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {item.label}
               </li>
             ))}
