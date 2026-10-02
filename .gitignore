@@ -37,3 +37,6 @@ backend/uploads/
 
 # Large source shapefile - keep local, share via Drive
 src/ML-thesis/metro-manila-shp-to-csv/phl_admin4.*
+
+# Large source shapefile - keep local, share via Drive
+src/ML-thesis/metro-manila-shp-to-csv/phl_admin4.*
