@@ -16,7 +16,7 @@ export default function PriorityBarangaysTable({ rows }) {
               <th className="px-4 py-3 font-semibold text-ocean">Risk</th>
               <th className="px-4 py-3 font-semibold text-ocean">DPI</th>
               <th className="px-4 py-3 font-semibold text-ocean">Population</th>
-              <th className="px-4 py-3 font-semibold text-ocean">Flood depth</th>
+              <th className="px-4 py-3 font-semibold text-ocean">25-yr flood</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-pale/50 bg-white">
@@ -36,7 +36,9 @@ export default function PriorityBarangaysTable({ rows }) {
                   {formatPopulation(row.population)}
                 </td>
                 <td className="px-4 py-3 tabular-nums text-ocean">
-                  {row.floodDepthM.toFixed(1)} m
+                  {row.floodPct25yr != null
+                    ? `${Number(row.floodPct25yr).toFixed(1)}%`
+                    : '—'}
                 </td>
               </tr>
             ))}

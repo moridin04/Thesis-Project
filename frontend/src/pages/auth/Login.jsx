@@ -1,12 +1,21 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, Eye, EyeOff, LoaderCircle } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  Lock,
+  User,
+} from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
 import { homePathForRole } from '../../config/permissions'
 import { RedirectIfAuthenticated } from '../../auth/RoleRoute'
-import sagipLogo from '../../assets/sagip-logo.png'
 
 const GENERIC_ERROR = 'Invalid username or password.'
+
+const inputClassName =
+  'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-10 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
 
 function LoginForm() {
   const { login } = useAuth()
@@ -37,7 +46,7 @@ function LoginForm() {
       const status = err?.response?.status
       if (!err?.response) {
         setError(
-          'Unable to reach the SAGIP API. Start the backend on port 8000 and try again.',
+          'Unable to reach the AGOS API. Start the backend on port 8000 and try again.',
         )
       } else if (status === 429) {
         setError('Too many login attempts. Please wait and try again.')
@@ -50,93 +59,87 @@ function LoginForm() {
   }
 
   return (
-    <div className="card-surface w-full max-w-md rounded-3xl p-8 shadow-lg">
-      <div className="flex items-center gap-3">
-        <img
-          src={sagipLogo}
-          alt="SAGIP Manila logo"
-          width={120}
-          height={74}
-          className="brand-mark max-h-10"
-          decoding="async"
-        />
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-action">
-            Authorized Personnel Access
-          </p>
-          <h1 className="font-display mt-0.5 text-2xl font-semibold tracking-tight text-foundation">
-            SAGIP Staff Portal
-          </h1>
-        </div>
+    <div className="w-full max-w-[420px] rounded-3xl border border-white/40 bg-white/70 p-8 shadow-2xl shadow-foundation/10 backdrop-blur-xl md:p-10">
+      <h1 className="font-display text-xl font-bold tracking-tight text-foundation md:text-2xl">
+        AGOS Staff Portal
+      </h1>
+      <p className="mt-1.5 mb-5 text-sm text-gray-500">Sign in to continue</p>
+
+      <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-sm text-foundation">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+        <p>Restricted to authorized AGOS personnel only.</p>
       </div>
 
-      <div className="disclaimer-soft mt-4 flex gap-3 px-4 py-3 text-sm">
-        <AlertTriangle className="disclaimer-soft__icon mt-0.5 h-4 w-4" aria-hidden />
-        <p>
-          This portal is restricted to authorized SAGIP personnel. Access and
-          administrative actions may be recorded for security and accountability.
-        </p>
-      </div>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-5">
+          <div>
+            <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <div className="relative">
+              <User
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                aria-hidden
+              />
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                className={inputClassName}
+              />
+            </div>
+          </div>
 
-      <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-ocean">
-            Username
-          </label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            autoComplete="username"
-            required
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ocean">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="input-field pr-12"
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foundation"
-              onClick={() => setShowPassword((value) => !value)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <div className="relative">
+              <Lock
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                aria-hidden
+              />
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className={inputClassName}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition hover:text-foundation"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
         {error ? (
-          <p className="rounded-xl border border-[color:var(--risk-high)]/30 bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)] px-4 py-3 text-sm text-foundation">
+          <p className="mt-5 rounded-xl border border-[color:var(--risk-high)]/30 bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)] px-4 py-3 text-sm text-foundation">
             {error}
           </p>
         ) : null}
 
-        <button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-70">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-foundation py-3 font-semibold text-white shadow-lg shadow-foundation/20 transition-all hover:scale-[1.01] hover:bg-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus-ring)] disabled:pointer-events-none disabled:opacity-70"
+        >
           {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
           Sign In
         </button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-ocean">
-        <Link to="/" className="font-medium text-action hover:text-[color:var(--primary-hover)]">
-          Return to Public Website
-        </Link>
-      </p>
     </div>
   )
 }

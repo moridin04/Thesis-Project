@@ -1,9 +1,9 @@
 import PagePlaceholder from '../../components/PagePlaceholder'
 
-export default function UserRiskMap() {
+export default function UserPriorityMap() {
   return (
     <PagePlaceholder
-      title="Risk Map"
+      title="Priority Map"
       description="Interactive map of Manila barangays colored by predicted flood risk and DPI."
     />
   )

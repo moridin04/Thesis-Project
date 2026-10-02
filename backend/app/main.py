@@ -50,4 +50,4 @@ app.include_router(admin.router, prefix="/api")
 
 @app.get("/api/health")
 def health_check() -> dict[str, str]:
-    return {"status": "ok", "service": "SAGIP Manila API"}
+    return {"status": "ok", "service": "AGOS Manila API"}

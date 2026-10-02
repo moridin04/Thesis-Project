@@ -8,7 +8,7 @@ const pageMeta = {
     subtitle: 'Flood risk intelligence for Manila barangays',
   },
   '/map': {
-    title: 'Risk Map',
+    title: 'Priority Map',
     subtitle: 'Spatial flood risk layers',
   },
   '/alerts': {

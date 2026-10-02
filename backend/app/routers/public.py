@@ -4,14 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services.public_data import (
-    BARANGAYS,
-    INDICATORS,
-    METHODOLOGY,
-    OVERVIEW,
-    RECOMMENDATIONS,
-    RISK_DISTRIBUTION,
-)
+from app.services import barangay_data
+from app.services.public_data import INDICATORS, METHODOLOGY, RECOMMENDATIONS
 from app.services.upload_service import list_approved_barangay_records
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -26,35 +20,29 @@ def get_approved_upload_barangays(
 
 @router.get("/overview")
 def get_overview() -> dict:
-    return {
-        **OVERVIEW,
-        "risk_distribution": RISK_DISTRIBUTION,
-        "priority_barangays": sorted(
-            BARANGAYS, key=lambda item: item["risk_score"], reverse=True
-        )[:5],
-    }
+    return barangay_data.get_overview_stats()
 
 
 @router.get("/barangays")
 def list_barangays() -> list[dict]:
-    return BARANGAYS
+    return barangay_data.get_all_barangays()
 
 
 @router.get("/barangays/{barangay_id}")
 def get_barangay(barangay_id: str) -> dict:
-    for barangay in BARANGAYS:
-        if barangay["id"] == barangay_id:
-            return barangay
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Barangay not found.")
+    record = barangay_data.get_barangay_by_id(barangay_id)
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Barangay not found.")
+    return record
 
 
 @router.get("/rankings")
 def get_rankings() -> list[dict]:
-    return sorted(BARANGAYS, key=lambda item: item["risk_score"], reverse=True)
+    return barangay_data.get_rankings()
 
 
 @router.get("/indicators")
-def get_indicators() -> list[dict]:
+def get_indicators() -> dict:
     return INDICATORS
 
 

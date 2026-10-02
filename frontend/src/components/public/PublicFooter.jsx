@@ -1,17 +1,16 @@
 import { Link } from 'react-router-dom'
 import { ArrowUp, Phone } from 'lucide-react'
-import { BRAND } from '../../auth/config'
-import sagipLogoLight from '../../assets/sagip-logo-transparent.png'
+import agosLogoWhite from '../../assets/agos-logo-white.png'
 
 const siteMapLinks = [
   { to: '/', label: 'Home' },
-  { to: '/risk-map', label: 'Risk Map' },
+  { to: '/priority-map', label: 'Priority Map' },
   { to: '/rankings', label: 'Rankings' },
   { to: '/methodology', label: 'Methodology' },
 ]
 
 const projectLinks = [
-  { to: '/#team-credits', label: 'About the Team' },
+  { to: '/about', label: 'About the Team' },
   { to: '/methodology', label: 'Data Sources' },
   { to: '/#feedback-cta', label: 'Give Feedback' },
 ]
@@ -66,7 +65,7 @@ export default function PublicFooter() {
           <div className="public-footer__brand">
             <div className="public-footer__brand-row">
               <img
-                src={sagipLogoLight}
+                src={agosLogoWhite}
                 alt=""
                 width={160}
                 height={98}
@@ -75,7 +74,7 @@ export default function PublicFooter() {
               />
             </div>
             <p className="public-footer__mission">
-              Empowering barangay-level flood risk planning through spatial analytics.
+              A Barangay-Level Flood Risk Prioritization and Decision Support Platform
             </p>
             <div className="public-footer__social" aria-label="Social media">
               {socialLinks.map((item) => (
@@ -145,7 +144,7 @@ export default function PublicFooter() {
 
         <div className="public-footer__bottom">
           <p className="public-footer__copyright">
-            © 2025-2026 SAGIP Team, Thesis Project. All Rights Reserved.
+            © 2025-2026 AGOS Team, Thesis Project. All Rights Reserved.
           </p>
           <button type="button" className="public-footer__back-to-top" onClick={scrollToTop}>
             <ArrowUp className="h-3.5 w-3.5" aria-hidden />

@@ -11,7 +11,7 @@ import {
 
 const navItems = [
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/app/risk-map', label: 'Risk Map', icon: Map },
+  { to: '/priority-map', label: 'Priority Map', icon: Map },
   { to: '/app/rankings', label: 'Rankings', icon: ListOrdered },
   { to: '/app/barangays/sample', label: 'Barangay Detail', icon: Building2 },
   { to: '/app/methodology', label: 'Methodology', icon: BookOpen },

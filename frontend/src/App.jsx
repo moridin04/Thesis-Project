@@ -2,15 +2,17 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
 import RoleRoute from './auth/RoleRoute'
 import PublicLayout from './layouts/PublicLayout'
+import PublicInsightsLayout from './layouts/PublicInsightsLayout'
 import AuthLayout from './layouts/AuthLayout'
 import DashboardLayout from './layouts/DashboardLayout'
 import AdminLayout from './layouts/AdminLayout'
 import Landing from './pages/public/Landing'
 import PublicDashboard from './pages/public/PublicDashboard'
-import RiskMap from './pages/public/RiskMap'
+import PriorityMap from './pages/public/PriorityMap'
 import Rankings from './pages/public/Rankings'
 import BarangayProfile from './pages/public/BarangayProfile'
 import CompareBarangays from './pages/public/CompareBarangays'
+import About from './pages/public/About'
 import Indicators from './pages/public/Indicators'
 import Methodology from './pages/public/Methodology'
 import Recommendations from './pages/public/Recommendations'
@@ -31,12 +33,18 @@ export default function App() {
       <Route index element={<Landing />} />
       <Route path="unauthorized" element={<Unauthorized />} />
 
-      <Route element={<PublicLayout />}>
-        <Route path="overview" element={<PublicDashboard />} />
-        <Route path="risk-map" element={<RiskMap />} />
+      <Route path="priority-map" element={<PriorityMap />} />
+      <Route path="risk-map" element={<Navigate to="/priority-map" replace />} />
+
+      <Route element={<PublicInsightsLayout />}>
         <Route path="rankings" element={<Rankings />} />
         <Route path="barangays/:id" element={<BarangayProfile />} />
         <Route path="compare" element={<CompareBarangays />} />
+        <Route path="about" element={<About />} />
+      </Route>
+
+      <Route element={<PublicLayout />}>
+        <Route path="overview" element={<PublicDashboard />} />
         <Route path="indicators" element={<Indicators />} />
         <Route path="methodology" element={<Methodology />} />
         <Route path="recommendations" element={<Recommendations />} />

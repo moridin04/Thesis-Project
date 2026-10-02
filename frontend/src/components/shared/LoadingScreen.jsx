@@ -1,4 +1,4 @@
-import sagipLogo from '../../assets/sagip-logo.png'
+import agosLogo from '../../assets/agos-logo-transparent.png'
 import { BRAND } from '../../auth/config'
 
 export default function LoadingScreen({ message = 'Loading…' }) {
@@ -6,8 +6,8 @@ export default function LoadingScreen({ message = 'Loading…' }) {
     <div className="flex min-h-[50vh] items-center justify-center">
       <div className="card-surface flex flex-col items-center gap-4 px-8 py-10">
         <img
-          src={sagipLogo}
-          alt="SAGIP Manila logo"
+          src={agosLogo}
+          alt="AGOS Manila logo"
           width={120}
           height={74}
           className="brand-mark max-h-12"

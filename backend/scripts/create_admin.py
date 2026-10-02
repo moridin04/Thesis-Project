@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create or update a SAGIP administrator account (username-based)."""
+"""Create or update an AGOS administrator account (username-based)."""
 
 from __future__ import annotations
 

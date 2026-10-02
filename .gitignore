@@ -34,3 +34,6 @@ backend/uploads/
 .env
 .env.local
 .DS_Store
+
+# Large source shapefile - keep local, share via Drive
+src/ML-thesis/metro-manila-shp-to-csv/phl_admin4.*

@@ -1,6 +1,6 @@
 export const appMeta = {
-  name: 'SAGIP Manila',
-  acronym: 'Spatial Analytics for GIS-Based Inundation Prioritization',
+  name: 'AGOS Manila',
+  acronym: 'Analytics and Geospatial Overview for Safety',
   version: '0.1.0',
   city: 'City of Manila',
 }

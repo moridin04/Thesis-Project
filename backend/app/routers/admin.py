@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import require_admin
 from app.models.account import Account
+from app.models.upload import DatasetUpload
 from app.permissions import ACCOUNT_MANAGE, DATASET_PUBLISH
 from app.schemas.auth import (
     AccountCreateRequest,
@@ -16,6 +17,7 @@ from app.schemas.auth import (
     AccountStatusUpdate,
 )
 from app.security import ROLE_ADMIN, ROLE_STAFF
+from app.services import barangay_data
 from app.services.audit_service import record_audit_log
 from app.schemas.upload import UploadPublic, UploadRejectRequest
 from app.services.auth_service import create_account
@@ -64,14 +66,22 @@ def reject_upload_endpoint(
 @router.get("/dashboard")
 def admin_dashboard(
     current_account: Annotated[Account, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, Any]:
+    pending = (
+        db.query(DatasetUpload).filter(DatasetUpload.status == "pending").count()
+    )
+    overview = barangay_data.get_overview_stats()
+    model = barangay_data.get_model_evaluation()
     return {
-        "message": "SAGIP Administration dashboard",
+        "message": "AGOS Administration dashboard",
         "account_id": current_account.id,
-        "published_dataset_version": "2026.1-mock",
-        "pending_approvals": 2,
-        "high_risk_barangays": 142,
-        "latest_model_f1": 0.912,
+        "published_dataset_version": barangay_data.DATASET_VERSION,
+        "pending_approvals": pending,
+        "high_risk_barangays": overview["high_priority_count"],
+        "latest_model_name": model["model_name"],
+        "latest_model_f1_macro_cv": model["f1_macro_cv"],
+        "latest_model_metric": model["metric"],
     }
 
 

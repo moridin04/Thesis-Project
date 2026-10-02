@@ -1,12 +1,18 @@
 import { BRAND } from '../../auth/config'
-import sagipLogo from '../../assets/sagip-logo.png'
+import agosLogo from '../../assets/agos-logo-transparent.png'
+import agosLogoWhite from '../../assets/agos-logo-white.png'
 
-export default function BrandLogo() {
+/**
+ * @param {{ variant?: 'default' | 'white' }} props
+ * `white` = white wordmark for dark surfaces (footer already uses its own asset).
+ */
+export default function BrandLogo({ variant = 'default' }) {
+  const src = variant === 'white' ? agosLogoWhite : agosLogo
   return (
     <div className="flex items-center gap-3 sm:gap-3.5">
       <img
-        src={sagipLogo}
-        alt="SAGIP Manila logo"
+        src={src}
+        alt="AGOS Manila logo"
         width={160}
         height={98}
         className="brand-mark"

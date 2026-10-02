@@ -13,6 +13,7 @@ from app.models.account import Account
 from app.models.upload import DatasetUpload
 from app.schemas.upload import UploadPublic
 from app.services.audit_service import record_audit_log
+from app.services.barangay_data import get_barangay_by_id
 
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
 VALID_STATUSES = {"pending", "approved", "rejected"}
@@ -28,14 +29,29 @@ def _slugify(value: str) -> str:
 
 
 def _barangay_record_for_upload(upload: DatasetUpload) -> dict:
+    matched = get_barangay_by_id(upload.barangay_name)
+    if matched is None:
+        return {
+            "id": upload.id,
+            "barangay": upload.barangay_name,
+            "district": None,
+            "riskLevel": None,
+            "dpi": None,
+            "population": None,
+            "floodPct25yr": None,
+            "elevationMean": None,
+            "match_status": "Unmatched — requires manual review",
+        }
     return {
-        "id": upload.id,
-        "barangay": upload.barangay_name,
-        "district": "Pending district",
-        "riskLevel": "Moderate",
-        "dpi": 0.72,
-        "population": 12000,
-        "floodDepthM": 1.2,
+        "id": matched["id"],
+        "barangay": matched["name"],
+        "district": matched["district"],
+        "riskLevel": matched["risk_category"],
+        "dpi": matched["dpi"],
+        "population": matched["population_2024"],
+        "floodPct25yr": matched["flood_pct_25yr"],
+        "elevationMean": matched["elevation_mean"],
+        "match_status": "matched",
     }
 
 

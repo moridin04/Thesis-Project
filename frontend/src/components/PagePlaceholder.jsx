@@ -9,7 +9,7 @@ export default function PagePlaceholder({ title, description }) {
       <h2 className="font-display text-xl font-semibold text-heading">{title}</h2>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-body">
         {description ??
-          'Placeholder page for the SAGIP Manila thesis prototype. Content will be added in a later sprint.'}
+          'Placeholder page for the AGOS Manila thesis prototype. Content will be added in a later sprint.'}
       </p>
     </div>
   )

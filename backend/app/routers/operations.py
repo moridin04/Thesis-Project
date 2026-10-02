@@ -16,8 +16,9 @@ from app.permissions import (
     REPORT_PREPARE,
 )
 from app.schemas.upload import UploadPublic
+from app.models.upload import DatasetUpload
+from app.services import barangay_data
 from app.services.audit_service import record_audit_log
-from app.services.public_data import BARANGAYS
 from app.services.upload_service import create_upload, list_uploads_for_user
 
 router = APIRouter(prefix="/operations", tags=["operations"])
@@ -26,14 +27,18 @@ router = APIRouter(prefix="/operations", tags=["operations"])
 @router.get("/dashboard")
 def operations_dashboard(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, Any]:
+    pending = (
+        db.query(DatasetUpload).filter(DatasetUpload.status == "pending").count()
+    )
     return {
-        "message": "SAGIP operational dashboard",
+        "message": "AGOS operational dashboard",
         "account_id": current_account.id,
         "role": current_account.role,
-        "published_dataset_version": "2026.1-mock",
-        "pending_submissions": 2,
-        "draft_barangay_changes": 1,
+        "published_dataset_version": barangay_data.DATASET_VERSION,
+        "pending_submissions": pending,
+        "draft_barangay_changes": 0,
     }
 
 
@@ -41,7 +46,7 @@ def operations_dashboard(
 def operations_barangays(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
 ) -> list[dict[str, Any]]:
-    return BARANGAYS
+    return barangay_data.get_all_barangays()
 
 
 @router.get("/uploads", response_model=list[UploadPublic])
@@ -76,10 +81,11 @@ def operations_datasets(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
 ) -> dict[str, Any]:
     return {
-        "published": {"version": "2026.1-mock", "status": "published"},
-        "drafts": [
-            {"id": "draft-1", "status": "pending_review", "name": "Rainfall update"},
-        ],
+        "published": {
+            "version": barangay_data.DATASET_VERSION,
+            "status": "published",
+        },
+        "drafts": [],
     }
 
 
@@ -117,10 +123,12 @@ def upload_dataset_draft(
 def operations_model_results(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
 ) -> dict[str, Any]:
+    model = barangay_data.get_model_evaluation()
     return {
-        "model_name": "Random Forest",
-        "f1_score": 0.912,
-        "status": "draft",
+        "model_name": model["model_name"],
+        "f1_macro_cv": model["f1_macro_cv"],
+        "metric": model["metric"],
+        "status": "selected",
     }
 
 
@@ -143,7 +151,7 @@ def submit_model(
 def operations_reports(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
 ) -> dict[str, Any]:
-    return {"drafts": [{"id": "r1", "status": "draft", "title": "Citywide summary"}]}
+    return {"drafts": []}
 
 
 @router.post("/report-drafts")
@@ -165,7 +173,7 @@ def create_report_draft(
 def operations_content(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
 ) -> dict[str, Any]:
-    return {"drafts": [{"id": "c1", "status": "draft", "title": "Methodology update"}]}
+    return {"drafts": []}
 
 
 @router.post("/content-drafts")

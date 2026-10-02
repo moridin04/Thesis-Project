@@ -10,7 +10,7 @@ export default function BarangayDetail() {
       description={
         barangayId
           ? `Detail profile for barangay “${barangayId}” — indicators, risk drivers, and scenario impacts.`
-          : 'Select a barangay from Rankings or the Risk Map to view its detailed risk profile.'
+          : 'Select a barangay from Rankings or the Priority Map to view its detailed risk profile.'
       }
     />
   )

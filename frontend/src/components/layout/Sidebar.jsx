@@ -10,7 +10,7 @@ import {
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
-  { to: '/map', label: 'Risk Map', icon: Map },
+  { to: '/priority-map', label: 'Priority Map', icon: Map },
   { to: '/alerts', label: 'Alerts', icon: AlertTriangle },
   { to: '/models', label: 'Models', icon: Activity },
   { to: '/settings', label: 'Settings', icon: Settings },

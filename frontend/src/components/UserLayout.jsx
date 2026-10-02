@@ -7,8 +7,8 @@ const pageMeta = {
     title: 'Dashboard',
     subtitle: 'City-wide flood risk overview',
   },
-  '/app/risk-map': {
-    title: 'Risk Map',
+  '/priority-map': {
+    title: 'Priority Map',
     subtitle: 'Spatial flood risk visualization',
   },
   '/app/rankings': {

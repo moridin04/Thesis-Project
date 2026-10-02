@@ -9,9 +9,10 @@ import UserMenu from './UserMenu'
 
 const publicNavItems = [
   { to: '/', label: 'Home', end: true },
-  { to: '/risk-map', label: 'Risk Map' },
+  { to: '/priority-map', label: 'Priority Map' },
   { to: '/rankings', label: 'Rankings' },
   { to: '/methodology', label: 'Methodology' },
+  { to: '/about', label: 'About' },
 ]
 
 const workspaceNavItems = [
@@ -106,7 +107,7 @@ export default function PublicHeader() {
       <div className="public-header__bar">
         <Link
           to="/"
-          aria-label="SAGIP Manila home"
+          aria-label="AGOS Manila home"
           className="public-header__brand min-w-0 shrink-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus-ring)]"
         >
           <BrandLogo />

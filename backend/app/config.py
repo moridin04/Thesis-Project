@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
-    app_name: str = "SAGIP Manila API"
-    database_url: str = "sqlite:///./sagip.db"
+    app_name: str = "AGOS Manila API"
+    database_url: str = "sqlite:///./agos.db"
     jwt_access_secret: str
     jwt_refresh_secret: str
     access_token_expire_minutes: int = 15

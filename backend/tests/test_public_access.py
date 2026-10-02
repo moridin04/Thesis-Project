@@ -10,13 +10,16 @@ from tests.conftest import admin_account, client, create_account, db_session, st
 def test_public_overview_without_authentication(client: TestClient):
     response = client.get("/api/public/overview")
     assert response.status_code == 200
-    assert response.json()["system_name"] == "SAGIP Manila"
+    assert response.json()["system_name"] == "AGOS Manila"
     assert "password_hash" not in response.text.lower()
 
 
 def test_public_barangays_without_authentication(client: TestClient):
-    assert client.get("/api/public/barangays").status_code == 200
-    assert client.get("/api/public/barangays/baseco-compound").status_code == 200
+    listing = client.get("/api/public/barangays")
+    assert listing.status_code == 200
+    detail = client.get("/api/public/barangays/310")
+    assert detail.status_code == 200
+    assert detail.json()["district"] == "District III"
 
 
 def test_no_public_registration(client: TestClient):
@@ -65,7 +68,7 @@ def test_login_does_not_trust_client_role(client: TestClient, staff_account):
 def test_admin_login_succeeds(client: TestClient, admin_account):
     response = client.post(
         "/api/auth/login",
-        json={"username": "sagip_admin", "password": "AdminPass1234"},
+        json={"username": "agos_admin", "password": "AdminPass1234"},
     )
     assert response.status_code == 200
     assert response.json()["account"]["role"] == "admin"
@@ -114,7 +117,7 @@ def test_passwords_stored_as_hashes(db_session: Session):
 def test_invalid_username_rejected_on_create(client: TestClient, admin_account):
     token = client.post(
         "/api/auth/login",
-        json={"username": "sagip_admin", "password": "AdminPass1234"},
+        json={"username": "agos_admin", "password": "AdminPass1234"},
     ).json()["access_token"]
     response = client.post(
         "/api/admin/accounts",

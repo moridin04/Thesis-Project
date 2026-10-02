@@ -79,7 +79,7 @@ def create_account(
 def admin_account(db_session: Session) -> Account:
     return create_account(
         db_session,
-        username="sagip_admin",
+        username="agos_admin",
         password="AdminPass1234",
         role=ROLE_ADMIN,
         full_name="Admin User",

@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
-import { notifyBarangayDataChanged } from '../data/barangayData'
 import {
   createAccount,
   fetchAccounts,
@@ -104,7 +103,6 @@ export function UploadDataProvider({ children }) {
       setUploads((current) =>
         current.map((item) => (item.id === uploadId ? record : item)),
       )
-      notifyBarangayDataChanged()
       await refreshAuditLogs()
       return record
     },

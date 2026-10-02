@@ -4,7 +4,7 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 
-  /* SAGIP 5-color palette — Tailwind utility aliases */
+  /* AGOS 5-color palette — Tailwind utility aliases */
   --color-foundation: #003135;
   --color-ocean: #406467;
   --color-muted: #6d8588;
@@ -24,7 +24,7 @@
 }
 
 :root {
-  /* —— Official SAGIP 5-color palette —— */
+  /* —— Official AGOS 5-color palette —— */
   --color-darkest: #003135;
   --color-primary: #024950;
   --color-accent: #964734;
@@ -88,13 +88,13 @@
   --color-accent-rust: var(--color-accent);
   --color-teal-bright: var(--color-secondary);
   --color-teal-tint: var(--color-tint);
-  --sagip-foundation: var(--color-darkest);
-  --sagip-ocean: var(--text-body);
-  --sagip-risk: var(--color-accent);
-  --sagip-action: var(--color-secondary);
-  --sagip-pale: var(--color-tint);
-  --sagip-ink: var(--color-darkest);
-  --sagip-surface: var(--background);
+  --agos-foundation: var(--color-darkest);
+  --agos-ocean: var(--text-body);
+  --agos-risk: var(--color-accent);
+  --agos-action: var(--color-secondary);
+  --agos-pale: var(--color-tint);
+  --agos-ink: var(--color-darkest);
+  --agos-surface: var(--background);
 }
 
 * {
@@ -379,11 +379,22 @@ main h2,
 .page-shell-auth {
   background:
     radial-gradient(
-      ellipse 60% 45% at 50% 0%,
-      var(--color-tint-soft) 0%,
+      ellipse 55% 40% at 15% 10%,
+      color-mix(in srgb, var(--color-tint) 55%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 45% at 85% 75%,
+      color-mix(in srgb, var(--color-secondary) 22%, transparent) 0%,
       transparent 55%
     ),
-    var(--background-soft);
+    linear-gradient(
+      145deg,
+      var(--color-darkest) 0%,
+      var(--color-primary) 28%,
+      var(--color-tint) 62%,
+      #ffffff 100%
+    );
   color: var(--text-heading);
 }
 
@@ -925,7 +936,7 @@ html:not(.js) .fade-in-section {
   }
 }
 
-/* —— Why SAGIP Matters (context / problem statement) —— */
+/* —— Why AGOS Matters (context / problem statement) —— */
 /* —— Section surfaces —— */
 .section-white {
   background-color: var(--background);
@@ -1125,10 +1136,15 @@ html:not(.js) .fade-in-section {
 
 .header-tagline-line {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-primary);
   white-space: nowrap;
+}
+
+/* White wordmark on dark auth gradient */
+.page-shell-auth .header-tagline-line {
+  color: color-mix(in srgb, white 88%, var(--color-tint));
 }
 
 .landing-eyebrow {
@@ -1576,7 +1592,7 @@ html:not(.js) .fade-in-section {
   }
 }
 
-/* —— Flood story: mosaic + Why SAGIP —— */
+/* —— Flood story: mosaic + Why AGOS —— */
 .flood-story.landing-section {
   padding-top: 4rem;
   padding-bottom: 4rem;

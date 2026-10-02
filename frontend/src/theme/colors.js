@@ -1,4 +1,4 @@
-/** SAGIP Manila semantic color tokens — single source of truth for JS consumers */
+/** AGOS Manila semantic color tokens — single source of truth for JS consumers */
 export const colors = {
   darkest: '#003135',
   primary: '#024950',
@@ -42,28 +42,20 @@ export const colors = {
  * Brand palette colors are not used for dangerous risk states.
  */
 export const riskColors = {
-  Critical: '#991B1B',
   High: '#C2410C',
-  Moderate: '#B8893D',
+  Medium: '#B8893D',
   Low: colors.primary,
-  'Very Low': '#8EB8BC',
 }
 
 export const riskBadgeClasses = {
-  Critical:
-    'bg-[color-mix(in_srgb,var(--risk-very-high)_14%,white)] text-[var(--risk-very-high)] ring-[color-mix(in_srgb,var(--risk-very-high)_30%,white)]',
   High: 'bg-[color-mix(in_srgb,var(--risk-high)_12%,white)] text-[var(--risk-high)] ring-[color-mix(in_srgb,var(--risk-high)_28%,white)]',
-  Moderate:
+  Medium:
     'bg-[color-mix(in_srgb,var(--risk-moderate)_16%,white)] text-[color-mix(in_srgb,var(--risk-moderate)_82%,black)] ring-[color-mix(in_srgb,var(--risk-moderate)_38%,white)]',
   Low: 'bg-[color-mix(in_srgb,var(--primary)_12%,white)] text-[var(--primary)] ring-[color-mix(in_srgb,var(--primary)_28%,white)]',
-  'Very Low':
-    'bg-[color-mix(in_srgb,var(--risk-very-low)_18%,white)] text-[color-mix(in_srgb,var(--risk-very-low)_75%,black)] ring-[color-mix(in_srgb,var(--risk-very-low)_35%,white)]',
 }
 
 export const riskLegend = [
-  { label: 'Critical', color: riskColors.Critical },
-  { label: 'High', color: riskColors.High },
-  { label: 'Moderate', color: riskColors.Moderate },
-  { label: 'Low', color: riskColors.Low },
-  { label: 'Very Low', color: riskColors['Very Low'] },
+  { label: 'Low Priority', level: 'Low', color: riskColors.Low },
+  { label: 'Medium Priority', level: 'Medium', color: riskColors.Medium },
+  { label: 'High Priority', level: 'High', color: riskColors.High },
 ]

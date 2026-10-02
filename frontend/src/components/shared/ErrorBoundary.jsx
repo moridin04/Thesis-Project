@@ -11,7 +11,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('SAGIP render error:', error, info)
+    console.error('AGOS render error:', error, info)
   }
 
   render() {
@@ -39,7 +39,7 @@ export default class ErrorBoundary extends Component {
             }}
           >
             <h1 style={{ margin: '0 0 0.75rem', fontSize: '1.25rem' }}>
-              SAGIP Manila failed to load
+              AGOS Manila failed to load
             </h1>
             <p style={{ margin: '0 0 1rem', lineHeight: 1.5 }}>
               The page hit a JavaScript error. Try a hard refresh (Cmd+Shift+R) or open{' '}

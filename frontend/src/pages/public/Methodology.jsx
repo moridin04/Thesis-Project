@@ -1,5 +1,5 @@
 import PageHeader from '../../components/shared/PageHeader'
-import { methodologySections } from '../../data/mockData'
+import { methodologySections } from '../../data/siteContent'
 import { BRAND } from '../../auth/config'
 
 export default function Methodology() {
@@ -15,7 +15,15 @@ export default function Methodology() {
             <h2 className="font-display text-lg font-semibold text-foundation">
               {section.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-ocean">{section.body}</p>
+            {section.points ? (
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ocean">
+                {section.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm leading-relaxed text-ocean">{section.body}</p>
+            )}
           </section>
         ))}
       </div>

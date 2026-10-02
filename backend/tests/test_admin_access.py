@@ -66,7 +66,7 @@ def test_staff_cannot_publish_datasets(client: TestClient, staff_account):
 
 
 def test_admin_can_access_admin_endpoints(client: TestClient, admin_account):
-    token = _login(client, "sagip_admin", "AdminPass1234")
+    token = _login(client, "agos_admin", "AdminPass1234")
     response = client.get(
         "/api/admin/dashboard",
         headers={"Authorization": f"Bearer {token}"},
@@ -75,7 +75,7 @@ def test_admin_can_access_admin_endpoints(client: TestClient, admin_account):
 
 
 def test_admin_can_publish_dataset(client: TestClient, admin_account):
-    token = _login(client, "sagip_admin", "AdminPass1234")
+    token = _login(client, "agos_admin", "AdminPass1234")
     response = client.post(
         "/api/admin/datasets/d1/publish",
         headers={"Authorization": f"Bearer {token}"},
@@ -136,7 +136,7 @@ def test_token_type_interchange_rejected(client: TestClient, staff_account):
 
 
 def test_logout_and_password_hash_never_returned(client: TestClient, admin_account):
-    token = _login(client, "sagip_admin", "AdminPass1234")
+    token = _login(client, "agos_admin", "AdminPass1234")
     assert client.post("/api/auth/logout").status_code == 200
     accounts = client.get(
         "/api/admin/accounts",
@@ -147,7 +147,7 @@ def test_logout_and_password_hash_never_returned(client: TestClient, admin_accou
 
 
 def test_cannot_deactivate_final_admin(client: TestClient, admin_account):
-    token = _login(client, "sagip_admin", "AdminPass1234")
+    token = _login(client, "agos_admin", "AdminPass1234")
     response = client.patch(
         f"/api/admin/accounts/{admin_account.id}/status",
         headers={"Authorization": f"Bearer {token}"},

@@ -60,7 +60,7 @@ export default function HeroMapPreview() {
         strokeLinejoin="round"
       />
 
-      {/* Moderate risk — amber */}
+      {/* Medium priority — amber */}
       <path
         d="M148 178 L162 132 L220 158 L208 204 L168 216 Z"
         fill="var(--risk-moderate)"

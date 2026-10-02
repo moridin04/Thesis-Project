@@ -14,7 +14,7 @@ import {
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/risk-map', label: 'Risk Map', icon: Map },
+  { to: '/priority-map', label: 'Priority Map', icon: Map },
   { to: '/rankings', label: 'Rankings', icon: ListOrdered },
   { to: '/barangays/sample', label: 'Barangay Detail', icon: Building2 },
   { to: '/indicators', label: 'Indicators', icon: SlidersHorizontal },

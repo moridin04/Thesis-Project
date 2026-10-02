@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   Mail,
 } from 'lucide-react'
+import SourceLink from '../../components/shared/SourceLink'
 import PublicHeader from '../../components/public/PublicHeader'
 import PublicFooter from '../../components/public/PublicFooter'
 import HeroCarousel from '../../components/public/HeroCarousel'
@@ -34,10 +35,10 @@ import {
 const features = [
   {
     number: '01',
-    title: 'Explore the Risk Map',
+    title: 'Explore the Priority Map',
     body: 'View the geographic distribution of published flood-risk classifications across Manila’s barangays.',
-    to: '/risk-map',
-    linkLabel: 'Explore Risk Map',
+    to: '/priority-map',
+    linkLabel: 'Explore Priority Map',
     icon: Map,
   },
   {
@@ -157,18 +158,18 @@ export default function Landing() {
           id="landing-hero-heading"
           className="hero-carousel__title public-page-heading font-display"
         >
-          SAGIP Manila
+          AGOS Manila
         </h1>
         <p className="hero-carousel__lead">
-          SAGIP is a barangay-level flood risk mapping and disaster prioritization
+          AGOS is a barangay-level flood risk mapping and disaster prioritization
           platform. It uses spatial analytics and barangay-level indicators to
           visualize, classify, and prioritize flood risk, supporting
           disaster-preparedness planning at the community level.
         </p>
 
         <div className="hero-carousel__actions">
-          <Link to="/risk-map" className="btn-primary hero-carousel__btn">
-            Explore Risk Map
+          <Link to="/priority-map" className="btn-primary hero-carousel__btn">
+            Explore Priority Map
             <Map className="h-3.5 w-3.5" aria-hidden />
           </Link>
           <Link to="/overview" className="btn-secondary hero-carousel__btn hero-carousel__btn-secondary">
@@ -183,14 +184,14 @@ export default function Landing() {
         </div>
       </HeroCarousel>
 
-      {/* Flood impact mosaic + Why SAGIP Matters */}
+      {/* Flood impact mosaic + Why AGOS Matters */}
       <section
         className="flood-story landing-section fade-in-section section-white relative z-10"
         aria-labelledby="flood-story-heading"
       >
         <div className="landing-section-inner">
           <header className="flood-story__header">
-            <span className="flood-story__eyebrow">Why SAGIP Matters</span>
+            <span className="flood-story__eyebrow">Why AGOS Matters</span>
             <h2 id="flood-story-heading" className="flood-story__title">
               The Everyday Cost of Flooding
             </h2>
@@ -236,31 +237,42 @@ export default function Landing() {
               <p>
                 Livelihoods, transport, and daily routines are disrupted again and
                 again — often with little warning and even less coordinated response.
-                SAGIP exists to change that: giving residents and responders clear,
+                AGOS exists to change that: giving residents and responders clear,
                 data-driven visibility into flood risk before it becomes a crisis.
               </p>
 
               <div className="flood-story__stats">
-                {/* TODO: verify with sourced data — placeholder only */}
                 <article className="flood-story__stat-card">
                   <Droplets className="flood-story__stat-icon" aria-hidden />
-                  <span className="flood-story__stat-number">80%</span>
-                  <span className="flood-story__stat-label">
-                    of Metro Manila is prone to flooding
-                  </span>
+                  <p className="flood-story__stat-label">
+                    ~44 km² (about 7%) of Metro Manila is flood-prone under normal
+                    conditions. During extreme events such as Typhoon Ondoy (2009),
+                    flooding covered over 30% of the region, affecting more than
+                    4 million people.
+                  </p>
+                  <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <SourceLink href="https://www.herdin.ph">Source: HERDIN, DOH</SourceLink>
+                    <span aria-hidden>·</span>
+                    <SourceLink href="https://doi.org/10.11520/JSHWR.24.0.8.0">
+                      Source: Gilbuena (2011), Journal of Structural and Hydraulic Water
+                      Resources, DOI: 10.11520/JSHWR.24.0.8.0
+                    </SourceLink>
+                  </p>
                 </article>
-                {/* TODO: verify with sourced data — placeholder only */}
                 <article className="flood-story__stat-card">
                   <CalendarClock className="flood-story__stat-icon" aria-hidden />
-                  <span className="flood-story__stat-number">20+</span>
-                  <span className="flood-story__stat-label">
-                    major flood events recorded per year
-                  </span>
+                  <p className="flood-story__stat-label">
+                    The Philippines experiences an average of 19–20 tropical cyclones
+                    annually (PAGASA).
+                  </p>
+                  <p className="mt-3">
+                    <SourceLink href="https://www.pagasa.dost.gov.ph">Source: PAGASA</SourceLink>
+                  </p>
                 </article>
               </div>
 
               <Link to="/methodology" className="flood-story__cta">
-                Learn how SAGIP prioritizes flood risk
+                Learn how AGOS prioritizes flood risk
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
@@ -279,7 +291,7 @@ export default function Landing() {
             id="what-you-can-do-heading"
             className="landing-section-heading public-page-heading"
           >
-            What You Can Do with SAGIP
+            What You Can Do with AGOS
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-relaxed text-body">
             Explore interactive maps, barangay profiles, rankings, comparisons,
@@ -315,21 +327,21 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Who is SAGIP for */}
+      {/* Who is AGOS for */}
       <section
         id="audiences"
-        aria-labelledby="who-is-sagip-for-heading"
+        aria-labelledby="who-is-agos-for-heading"
         className="fade-in-section section-white landing-section relative z-10 border-t border-[color:var(--border-subtle)]"
       >
         <div className="landing-section-inner">
           <h2
-            id="who-is-sagip-for-heading"
+            id="who-is-agos-for-heading"
             className="landing-section-heading public-page-heading"
           >
-            Who Is SAGIP For?
+            Who Is AGOS For?
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-body sm:text-base">
-            SAGIP is a planning and decision-support prototype. It supports
+            AGOS is a planning and decision-support prototype. It supports
             exploration and discussion; it is not a real-time warning service and
             should be read alongside official advisories.
           </p>
@@ -375,10 +387,10 @@ export default function Landing() {
             id="feedback-cta-heading"
             className="feedback-cta__heading public-page-heading font-display text-3xl font-semibold sm:text-4xl"
           >
-            Help Us Improve SAGIP
+            Help Us Improve AGOS
           </h2>
           <p className="feedback-cta__subtext">
-            SAGIP is a work in progress. Your input helps us refine how flood
+            AGOS is a work in progress. Your input helps us refine how flood
             risk is visualized and prioritized.
           </p>
           <div className="feedback-cta__actions">
@@ -415,10 +427,10 @@ export default function Landing() {
             id="team-credits-heading"
             className="team-credits__heading public-page-heading font-display text-3xl font-semibold sm:text-4xl"
           >
-            The Team Behind SAGIP
+            The Team Behind AGOS
           </h2>
           <p className="team-credits__intro">
-            SAGIP Manila is a thesis project developed by:
+            AGOS Manila is a thesis project developed by:
           </p>
           <div className="team-grid">
             {teamMembers.map((member, index) => (

@@ -1,7 +1,7 @@
 /** PLACEHOLDER — replace with real survey URLs before launch */
 export const feedbackLinks = {
-  user: 'https://example.com/sagip-user-feedback',
-  expert: 'https://example.com/sagip-expert-feedback',
+  user: 'https://example.com/agos-user-feedback',
+  expert: 'https://example.com/agos-expert-feedback',
 }
 
 export const teamMembers = [

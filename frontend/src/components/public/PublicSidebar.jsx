@@ -11,7 +11,7 @@ import {
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/risk-map', label: 'Risk Map', icon: Map },
+  { to: '/priority-map', label: 'Priority Map', icon: Map },
   { to: '/rankings', label: 'Rankings', icon: ListOrdered },
   { to: '/compare', label: 'Compare', icon: GitCompare },
   { to: '/indicators', label: 'Indicators', icon: SlidersHorizontal },
@@ -25,9 +25,9 @@ export default function PublicSidebar() {
       <div className="border-b border-slate-200 px-5 py-5">
         <NavLink to="/">
           <span className="font-display text-lg font-semibold text-slate-900">
-            SAGIP Manila
+            AGOS Manila
           </span>
-          <p className="text-xs text-slate-500">Flood Risk Mapping and Prioritization</p>
+          <p className="text-xs text-slate-500">Flood priority mapping and prioritization</p>
         </NavLink>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">

@@ -13,7 +13,7 @@ from app.config import get_settings
 settings = get_settings()
 password_hasher = PasswordHash.recommended()
 
-REFRESH_COOKIE_NAME = "sagip_refresh_token"
+REFRESH_COOKIE_NAME = "agos_refresh_token"
 REFRESH_COOKIE_PATH = "/api/auth"
 GENERIC_AUTH_ERROR = "Invalid username or password."
 ROLE_STAFF = "staff"

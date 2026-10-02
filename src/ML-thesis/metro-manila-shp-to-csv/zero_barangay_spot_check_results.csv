@@ -1,0 +1,12 @@
+Barangay,Barangay_No,Check_Group,Layers_Checked,Geometry_Valid_Before,Geometry_Valid_After_Repair,Within_Flood_Layer_Extent,Intersects_Any_Flood_Feature,Intersection_Area_Sqm,Barangay_Land_Area_Sqm,Layer_Detail,Conclusion
+Barangay 188,188,Group1_both_5yr_25yr_zero,5yr+25yr,True,True,True,False,0.0,13971.383923794712,5yr: within_extent=True; 5yr: no intersection | 25yr: within_extent=True; 25yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 546,546,Group1_both_5yr_25yr_zero,5yr+25yr,True,True,True,False,0.0,15943.440644061331,5yr: within_extent=True; 5yr: no intersection | 25yr: within_extent=True; 25yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 547,547,Group1_both_5yr_25yr_zero,5yr+25yr,True,True,True,False,0.0,27923.841611993168,5yr: within_extent=True; 5yr: no intersection | 25yr: within_extent=True; 25yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 549,549,Group1_both_5yr_25yr_zero,5yr+25yr,True,True,True,False,0.0,13935.586316122388,5yr: within_extent=True; 5yr: no intersection | 25yr: within_extent=True; 25yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 573,573,Group1_both_5yr_25yr_zero,5yr+25yr,True,True,True,False,0.0,15713.889464559714,5yr: within_extent=True; 5yr: no intersection | 25yr: within_extent=True; 25yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 120,120,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,16996.943565507496,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 36,36,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,11737.514043887146,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 38,38,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,13942.730749931197,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 552,552,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,16887.91332474251,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 554,554,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,27784.046615815434,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
+Barangay 778,778,Group2_5yr_only_zero,5yr,True,True,True,False,0.0,15673.67886898533,5yr: within_extent=True; 5yr: no intersection,CONFIRMED TRUE ZERO
