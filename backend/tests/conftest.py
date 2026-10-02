@@ -23,6 +23,15 @@ from app.security import (  # noqa: E402
     hash_password,
     validate_username,
 )
+from app.services import auth_service  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def reset_login_rate_limit() -> Generator[None, None, None]:
+    # The limiter is process-global; without a reset, login counts leak across tests.
+    auth_service._login_attempts.clear()
+    yield
+    auth_service._login_attempts.clear()
 
 
 @pytest.fixture()
@@ -94,4 +103,15 @@ def staff_account(db_session: Session) -> Account:
         password="StaffPass1234",
         role=ROLE_STAFF,
         full_name="Staff User",
+    )
+
+
+@pytest.fixture()
+def auth_account(db_session: Session) -> Account:
+    return create_account(
+        db_session,
+        username="auth_tester",
+        password="TestOnlyPass1234",
+        role=ROLE_STAFF,
+        full_name="Auth Tester",
     )
