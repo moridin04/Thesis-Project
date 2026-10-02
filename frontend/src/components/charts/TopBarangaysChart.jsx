@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { colors } from '../../theme/colors'
 
@@ -15,6 +15,17 @@ export default function TopBarangaysChart({ rows }) {
   const activeRef = useRef(null)
   const [tip, setTip] = useState(null)
   const [atEnd, setAtEnd] = useState(false)
+  const [overflows, setOverflows] = useState(false)
+  const stretch = rows.length <= VISIBLE_ROWS
+
+  const scrollRef = useCallback((el) => {
+    if (!el) return undefined
+    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   function showTip(el, row) {
     activeRef.current = { el, row }
@@ -35,27 +46,28 @@ export default function TopBarangaysChart({ rows }) {
     if (activeRef.current) showTip(activeRef.current.el, activeRef.current.row)
   }
 
-  const showFade = rows.length > VISIBLE_ROWS && !atEnd
+  const showFade = overflows && !atEnd
 
   return (
-    <div ref={rootRef} className="relative">
-      <div className="relative">
-        {/* Fixed at the Top 5 height: 5 rows of 2rem plus 4 gaps of 0.25rem. */}
+    <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col">
+      {/* Fills the card; never shorter than the Top 5 height (5 rows of 2rem plus 4 gaps of 0.25rem). */}
+      <div className="relative min-h-[11rem] flex-1">
         <div
+          ref={scrollRef}
           role="region"
           tabIndex={0}
           aria-label="Highest DPI barangays, scrollable"
           onScroll={handleScroll}
-          className={`h-[11rem] overflow-y-auto rounded-lg outline-none [scrollbar-color:var(--color-pale)_transparent] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${GUTTER}`}
+          className={`absolute inset-0 overflow-y-auto rounded-lg outline-none [scrollbar-color:var(--color-pale)_transparent] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${GUTTER}`}
         >
-          <ol className="space-y-1">
+          <ol className={`flex flex-col gap-1 ${stretch ? 'h-full' : ''}`}>
             {rows.map((row) => {
               const score = Math.round(row.priorityScore)
               return (
-                <li key={row.id}>
+                <li key={row.id} className={`flex ${stretch ? 'max-h-14 min-h-8 flex-1' : ''}`}>
                   <Link
                     to={`/barangays/${encodeURIComponent(row.id)}`}
-                    className={`${COLUMNS} rounded-lg px-1 py-1.5 outline-none transition hover:bg-[var(--color-secondary-soft)] focus-visible:bg-[var(--color-secondary-soft)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring)]`}
+                    className={`${COLUMNS} w-full rounded-lg px-1 py-1.5 outline-none transition hover:bg-[var(--color-secondary-soft)] focus-visible:bg-[var(--color-secondary-soft)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring)]`}
                     aria-label={`${row.barangay}, ${row.district}, ${row.riskLevel} priority, DPI score ${score}. Open profile`}
                     onMouseEnter={(event) => showTip(event.currentTarget, row)}
                     onMouseLeave={hideTip}

@@ -259,7 +259,7 @@ export default function PublicDashboard() {
                     onSelect={togglePriority}
                   />
                 </div>
-                <div className="card-surface min-w-0 rounded-2xl p-5 xl:col-span-3">
+                <div className="card-surface flex min-w-0 flex-col rounded-2xl p-5 xl:col-span-3">
                   <h2 className="mb-4 font-display text-lg font-semibold text-foundation">
                     Highest DPI barangays
                   </h2>
