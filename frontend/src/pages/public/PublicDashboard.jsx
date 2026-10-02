@@ -263,7 +263,7 @@ export default function PublicDashboard() {
                   <h2 className="mb-4 font-display text-lg font-semibold text-foundation">
                     Highest DPI barangays
                   </h2>
-                  <TopBarangaysChart rows={topRows} />
+                  <TopBarangaysChart key={`${query}|${district}|${priority}|${top}`} rows={topRows} />
                 </div>
               </section>
 
