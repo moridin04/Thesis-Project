@@ -32,11 +32,10 @@ def _clean(value):
 
 
 def _record(row: pd.Series) -> dict:
-    barangay_no = int(row["Barangay_No"])
     district = row.get("District")
     return {
-        "id": str(barangay_no),
-        "barangay_no": barangay_no,
+        "id": row["Barangay"],
+        "barangay_no": int(row["Barangay_No"]),
         "name": row["Barangay"],
         "district": None if pd.isna(district) else str(district),
         "population_2020": _clean(float(row["Population_2020"])),
@@ -51,6 +50,7 @@ def _record(row: pd.Series) -> dict:
         "vulnerability": _clean(float(row["Vulnerability"])),
         "dpi": _clean(float(row["DPI"])),
         "dpi_scaled": _clean(float(row["DPI_Scaled"])),
+        "priority_score": _clean(float(row["DPI_Scaled"])),
         "risk_category": str(row["DPI_Risk_Class"]),
         "dpi_rank": int(row["DPI_Rank"]),
         "ml_predicted_risk_class": str(row["ML_Predicted_Risk_Class"]),
@@ -60,14 +60,50 @@ def _record(row: pd.Series) -> dict:
     }
 
 
+def validate_barangay_keys(frame: pd.DataFrame) -> None:
+    """Fail loudly if `Barangay` cannot serve as the unique record key."""
+    names = frame["Barangay"]
+    blank = names.isna() | (names.astype(str).str.strip() == "")
+    if blank.any():
+        rows = [int(i) for i in frame.index[blank]]
+        raise ValueError(f"Barangay values must be non-empty; blank or null at rows {rows}.")
+    duplicated = sorted(names[names.duplicated(keep=False)].astype(str).unique())
+    if duplicated:
+        raise ValueError(f"Barangay values must be unique; duplicates found: {duplicated}.")
+
+
+def attach_districts_by_barangay_no(predictions: pd.DataFrame, districts: pd.DataFrame) -> pd.DataFrame:
+    """Join districts on Barangay_No, the only place Barangay_No is used as a key.
+
+    The mapping CSV lists one row per barangay number and has no Barangay name column,
+    so suffixed barangays ("Barangay 659-A") inherit the district of their parent number.
+    """
+    duplicated_numbers = sorted(
+        int(n) for n in districts.loc[districts["Barangay_No"].duplicated(keep=False), "Barangay_No"].unique()
+    )
+    if duplicated_numbers:
+        raise ValueError(f"District mapping has duplicate Barangay_No values: {duplicated_numbers}.")
+    merged = predictions.merge(districts, on="Barangay_No", how="left")
+    if len(merged) != len(predictions):
+        raise ValueError(f"District join changed the row count from {len(predictions)} to {len(merged)}.")
+    missing = sorted(merged.loc[merged["District"].isna(), "Barangay"].astype(str))
+    if missing:
+        raise ValueError(f"No district mapped for barangays: {missing}.")
+    return merged
+
+
 @lru_cache(maxsize=1)
 def _frame() -> pd.DataFrame:
     predictions = pd.read_csv(PREDICTIONS_CSV)
+    validate_barangay_keys(predictions)
     districts = pd.read_csv(DISTRICT_CSV)
     predictions["Barangay_No"] = pd.to_numeric(predictions["Barangay_No"], errors="coerce").astype("Int64")
     districts["Barangay_No"] = pd.to_numeric(districts["Barangay_No"], errors="coerce").astype("Int64")
-    merged = predictions.merge(districts, on="Barangay_No", how="left")
-    return merged
+    return attach_districts_by_barangay_no(predictions, districts)
+
+
+def load_barangays() -> None:
+    _frame()
 
 
 def get_all_barangays() -> list[dict]:
@@ -77,12 +113,7 @@ def get_all_barangays() -> list[dict]:
 
 def get_barangay_by_id(barangay_id: str) -> dict | None:
     frame = _frame()
-    key = str(barangay_id).strip()
-    numeric = pd.to_numeric(key, errors="coerce")
-    if pd.notna(numeric):
-        match = frame.loc[frame["Barangay_No"] == int(numeric)]
-    else:
-        match = frame.loc[frame["Barangay"].astype(str).str.lower() == key.lower()]
+    match = frame.loc[frame["Barangay"] == barangay_id]
     if match.empty:
         return None
     return _record(match.iloc[0])

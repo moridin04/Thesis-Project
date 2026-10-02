@@ -9,6 +9,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.config import get_settings
 from app.database import init_db
 from app.routers import admin, auth, operations, public
+from app.services.barangay_data import load_barangays
 
 settings = get_settings()
 
@@ -16,6 +17,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    load_barangays()
     yield
 
 

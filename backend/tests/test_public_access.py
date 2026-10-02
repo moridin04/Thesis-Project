@@ -17,7 +17,7 @@ def test_public_overview_without_authentication(client: TestClient):
 def test_public_barangays_without_authentication(client: TestClient):
     listing = client.get("/api/public/barangays")
     assert listing.status_code == 200
-    detail = client.get("/api/public/barangays/310")
+    detail = client.get("/api/public/barangays/Barangay%20310")
     assert detail.status_code == 200
     assert detail.json()["district"] == "District III"
 
