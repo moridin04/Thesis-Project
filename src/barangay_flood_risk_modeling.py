@@ -299,7 +299,7 @@ def run_ml_pipeline(df):
         if dpi_score >= 6.5:
             return "High"
         if dpi_score >= 3.5:
-            return "Moderate"
+            return "Medium"
         return "Low"
 
     df["DPI_Risk_Class"] = df["DPI"].apply(dpi_to_risk_class)
@@ -404,8 +404,8 @@ def run_ml_pipeline(df):
         print(f"  Could not compute stability: {e}")
 
     #Supervised Phase - Benchmarking (classification + regression)
-    #Ordinal mapping (not alphabetical LabelEncoder) so Low=0 < Moderate=1 < High=2
-    ordinal_map = {"Low": 0, "Moderate": 1, "High": 2}
+    #Ordinal mapping (not alphabetical LabelEncoder) so Low=0 < Medium=1 < High=2
+    ordinal_map = {"Low": 0, "Medium": 1, "High": 2}
     inverse_ordinal_map = {v: k for k, v in ordinal_map.items()}
     y_class = df["DPI_Risk_Class"].map(ordinal_map).astype(int).to_numpy()
     y_reg = df["DPI"].astype(float).to_numpy()
@@ -727,7 +727,7 @@ def run_validation_checks(df):
     print("\nValidation & Consistency Checks")
     print("  Note: DPI is treated as the deterministic proxy label (not external ground truth).")
     dist = df['DPI_Risk_Class_Proxy'].value_counts(normalize=True) * 100
-    print(f"  DPI Risk Distribution: High {dist.get('High',0):.1f}% | Mod {dist.get('Moderate',0):.1f}% | Low {dist.get('Low',0):.1f}%")
+    print(f"  DPI Risk Distribution: High {dist.get('High',0):.1f}% | Med {dist.get('Medium',0):.1f}% | Low {dist.get('Low',0):.1f}%")
 
     #3A) Monotonic sanity checks (data-driven construct validation)
     print("\n  Monotonic Sanity Checks (Spearman correlations with DPI)")
@@ -805,13 +805,13 @@ def get_recommendation(row):
             return "Priority Zone: Severe flood exposure despite lower density. Prioritize land-use restrictions and structural flood mitigation."
         else:
             return "Priority Zone: High logic-based DPI. Immediate intervention recommended."
-    elif risk == "Moderate":
+    elif risk == "Medium":
         if 'HighExposure' in archetype:
-            return "Watch Zone: Moderate DPI with significant flood exposure. Monitor and prepare preemptive drainage/infrastructure improvements."
+            return "Watch Zone: Medium DPI with significant flood exposure. Monitor and prepare preemptive drainage/infrastructure improvements."
         elif 'HighDensity' in archetype:
-            return "Watch Zone: Moderate DPI with high population density. Strengthen community preparedness and early warning coverage."
+            return "Watch Zone: Medium DPI with high population density. Strengthen community preparedness and early warning coverage."
         else:
-            return "Watch Zone: Moderate risk. Continue monitoring non-linear risk factors and seasonal flood patterns."
+            return "Watch Zone: Medium risk. Continue monitoring non-linear risk factors and seasonal flood patterns."
     else:
         if 'HighExposure' in archetype:
             return "Low Priority overall, but notable flood exposure detected. Periodic review recommended."
@@ -863,7 +863,7 @@ def generate_pdf_report(df, pipeline_results=None):
         dist = df['DPI_Risk_Class'].value_counts()
         pdf.set_font("Helvetica", size=10)
         pdf.cell(pw, 7, text=f"Total Barangays Analyzed: {total}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        for cat in ['High', 'Moderate', 'Low']:
+        for cat in ['High', 'Medium', 'Low']:
             cnt = dist.get(cat, 0)
             pdf.cell(pw, 7, text=f"  {cat} Risk: {cnt} ({cnt/total:.1%})", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         # DPI descriptive statistics
@@ -1020,7 +1020,7 @@ def generate_pdf_report(df, pipeline_results=None):
             pdf.set_font("Helvetica", style="B", size=10)
             pdf.cell(pw, 7, text="Classification (target: DPI_Risk_Class)", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.set_font("Helvetica", size=8)
-            pdf.cell(pw, 5, text="Label mapping: Low=0, Moderate=1, High=2",
+            pdf.cell(pw, 5, text="Label mapping: Low=0, Medium=1, High=2",
                      new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             c_w = [38, 22, 22, 22, 22, 22]
             pdf.set_font("Helvetica", style="B", size=7)
@@ -1040,7 +1040,7 @@ def generate_pdf_report(df, pipeline_results=None):
             pdf.cell(pw, 7, text="Confusion Matrices (held-out test split)",
                      new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.set_font("Helvetica", size=8)
-            pdf.cell(pw, 5, text="Rows = true label, Cols = predicted. Order: [Low(0), Moderate(1), High(2)]",
+            pdf.cell(pw, 5, text="Rows = true label, Cols = predicted. Order: [Low(0), Medium(1), High(2)]",
                      new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln(1)
             # Select best primary classifier by F1-weighted on test split
@@ -1079,7 +1079,7 @@ def generate_pdf_report(df, pipeline_results=None):
                  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(2)
 
-        for category in ['High', 'Moderate', 'Low']:
+        for category in ['High', 'Medium', 'Low']:
             pdf.set_font("Helvetica", style="B", size=11)
             pdf.cell(pw, 8, text=f"{category} Risk", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln(1)

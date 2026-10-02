@@ -336,7 +336,7 @@ Frontend Risk Map / Rankings / Profiles / Compare
 | Model card | Should describe model I/O & metrics | Stub only | **Major** |
 | Experiment log | Should record runs | Stub only | **Major** |
 | Git LFS | Should track large binaries | No `.gitattributes`; large tif/joblib/pdf in repo | **Mismatch** with guidance doc |
-| DPI formula | CSI 50/30/20; DPI 60/40; classes 3.5/6.5 | Matched in `barangay_flood_risk_modeling.py` | **Aligned** (primary pipeline) |
+| Risk classes | Methodology: tertiles of `DPI_Scaled` via `pd.qcut` (Low/Medium/High, 299 each) | Notebook in `src/ML-thesis-updated/` uses qcut. `src/barangay_flood_risk_modeling.py` still uses fixed 3.5/6.5 cutoffs on a 0–10 score | **Mismatch** (script is the earlier implementation; app data comes from the notebook) |
 | Alternate pipeline | Same methodology assumed | `manila_flood_risk_pipeline.py` excludes 100-yr, uses PSA 2024 + entropy DPI + qcut | **Conflict** between pipelines |
 | Population vintage | Methodology emphasizes PSA **2020** | Interim uses `Population_2020`; Manila pipeline insists PSA **2024** | **Conflict** |
 | Model artifacts | Implied under `models/` | Only `.gitkeep` there; joblib elsewhere | **Mismatch** |
