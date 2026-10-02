@@ -1,20 +1,24 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart2, Database, FileText, List, Menu } from 'lucide-react'
+import { BarChart2, Database, FileText, Info, List, Menu } from 'lucide-react'
 import PublicHeader from '../components/public/PublicHeader'
+import SidebarSkyline from '../components/public/SidebarSkyline'
 
 const links = [
   { to: '/barangays/Barangay%20310', label: 'Barangay Profiles', icon: FileText, match: '/barangays' },
   { to: '/compare', label: 'Compare', icon: BarChart2, match: '/compare' },
   { to: '/rankings', label: 'Priority List', icon: List, match: '/rankings' },
   { to: '/methodology', label: 'Data Sources', icon: Database, match: '/methodology' },
+  { to: '/about', label: 'About', icon: Info, match: '/about' },
 ]
 
-function navClass(active) {
-  return `flex items-center gap-3 rounded-r-lg px-4 py-2.5 text-sm font-medium transition ${
+const tagline = ['People', 'Places', 'Progress', 'Together']
+
+function pillClass(active) {
+  return `flex min-h-15 items-center gap-5 rounded-lg px-4 text-base font-medium transition ${
     active
-      ? 'border-l-2 border-secondary bg-white/10 text-white'
-      : 'border-l-2 border-transparent text-white/75 hover:bg-white/5 hover:text-white'
+      ? 'bg-white/10 text-white'
+      : 'text-white/75 group-hover:bg-white/5 group-hover:text-white'
   }`
 }
 
@@ -28,9 +32,10 @@ export default function PublicInsightsLayout() {
 
   const sidebar = (
     <div className="flex h-full flex-col bg-foundation text-white">
-      <nav className="flex-1 px-2" aria-label="Insights">
-        {/* Header height = --public-header-height plus its 1px bottom border. */}
-        <div className="space-y-1 pt-4 lg:sticky lg:top-[calc(var(--public-header-height)+1px)] lg:max-h-[calc(100vh-var(--public-header-height)-1px)] lg:overflow-y-auto">
+      <nav className="flex-1" aria-label="Insights">
+        {/* Header height = --public-header-height plus its 1px bottom border.
+            Max height also reserves 9.5rem for the tagline block so the menu never slides under the header. */}
+        <div className="flex flex-col gap-2 pt-5 lg:sticky lg:top-[calc(var(--public-header-height)+1px)] lg:max-h-[calc(100vh-var(--public-header-height)-1px-9.5rem)] lg:overflow-y-auto">
           {links.map((item) => {
             const Icon = item.icon
             const active = isActive(item.match)
@@ -38,29 +43,29 @@ export default function PublicInsightsLayout() {
               <NavLink
                 key={item.label}
                 to={item.to}
-                className={navClass(active)}
+                className="group relative block px-3"
                 onClick={() => setOpen(false)}
               >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                {item.label}
+                {active ? (
+                  <span className="absolute inset-y-0 left-0 w-1.5 bg-secondary" aria-hidden="true" />
+                ) : null}
+                <span className={pillClass(active)}>
+                  <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                  {item.label}
+                </span>
               </NavLink>
             )
           })}
         </div>
       </nav>
-      <div className="relative mt-auto px-4 pb-6 pt-8">
-        <svg
-          viewBox="0 0 240 70"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 w-full text-white/15"
-          aria-hidden
-        >
-          <path
-            fill="currentColor"
-            d="M0 70V42h18v-16h14v16h10V28h22v14h8V18h16v24h12V34h20v8h16V22h18v20h14V40h18v30H0z"
-          />
-        </svg>
-        <p className="relative text-center text-[0.62rem] font-semibold uppercase leading-tight tracking-[0.14em] text-white/80">
-          Data for a safer, stronger Manila
+      <div className="mt-auto pt-6">
+        <SidebarSkyline className="text-pale opacity-30 [@media(max-height:699.98px)]:hidden" />
+        <p className="pb-6 pl-6 pt-4 text-xs font-medium uppercase leading-[1.8] tracking-[0.3em] text-white/60">
+          {tagline.map((word) => (
+            <span key={word} className="block">
+              {word}
+            </span>
+          ))}
         </p>
       </div>
     </div>
@@ -80,7 +85,7 @@ export default function PublicInsightsLayout() {
               aria-label="Close menu"
               onClick={() => setOpen(false)}
             />
-            <aside className="relative h-full w-64 shadow-xl">{sidebar}</aside>
+            <aside className="relative h-full w-64 overflow-y-auto bg-foundation shadow-xl">{sidebar}</aside>
           </div>
         ) : null}
 
