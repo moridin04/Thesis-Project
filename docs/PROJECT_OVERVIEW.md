@@ -18,7 +18,7 @@
 | `docs/experiment_log.md` | **Stub** | Empty template |
 | `docs/git_lfs.md` | **Stub** | Generic guidance; no tracked-path list |
 
-**Practical authority for methodology:** use `docs/methodology_and_validation.md` + implementation in `src/barangay_flood_risk_modeling.py`.  
+**Practical authority for methodology:** use `docs/methodology_and_validation.md` + the final notebook `src/ML-thesis-updated/Manila_Barangay_Flood_Risk_Pipeline.ipynb` (source of the data the app serves). `src/barangay_flood_risk_modeling.py` is the earlier script implementation.  
 **Practical authority for RBAC:** `docs/RBAC-reviewer-note.md` largely matches `backend/app/security.py`, `permissions.py`, and frontend route guards.
 
 ---
@@ -141,7 +141,7 @@ Thesis-Project/
 
 | File | Role |
 |---|---|
-| `src/barangay_flood_risk_modeling.py` | **Primary implementation**: load data, engineer features, CSI/DPI, clustering, RF/GB/MLP class+reg, sensitivity, PDF export (~1137 lines). Aligns closely with `methodology_and_validation.md`. |
+| `src/barangay_flood_risk_modeling.py` | **Earlier script implementation**: load data, engineer features, CSI/DPI, clustering, RF/GB/MLP class+reg, sensitivity, PDF export (~1137 lines). Uses fixed 3.5/6.5 class cutoffs; the final notebook uses tertiles (`qcut`). |
 | `src/main.py` | Entry: load interim CSV → indices → ML → sensitivity → validation → export → PDF |
 | `src/features/calculate_dpi.py` | Re-exports `calculate_indices` |
 | `src/features/build_features.py` | Re-exports `engineer_features` |
@@ -374,7 +374,7 @@ Independent of docs:
 
 | Concern | Prefer |
 |---|---|
-| How DPI *should* work | `docs/methodology_and_validation.md` + `src/barangay_flood_risk_modeling.py` |
+| How DPI *should* work | `docs/methodology_and_validation.md` + final notebook in `src/ML-thesis-updated/` |
 | How RBAC works | `docs/RBAC-reviewer-note.md` + `backend/app/security.py` / `permissions.py` + `frontend/src/App.jsx` |
 | What the web app currently shows | `frontend/src/data/mockOverview.js` + `backend/app/services/public_data.py` |
 | What data the main pipeline reads | `data/interim/MetroManila_Combined_Flood_Population-new.csv` via `src/utils/paths.py` |
