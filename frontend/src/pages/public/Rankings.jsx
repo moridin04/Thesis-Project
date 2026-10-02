@@ -117,7 +117,7 @@ export default function Rankings() {
               <th className="px-4 py-3 text-ocean">Barangay</th>
               <th className="px-4 py-3 text-ocean">District</th>
               <th className="px-4 py-3 text-ocean">Risk</th>
-              <th className="px-4 py-3 text-ocean">Score</th>
+              <th className="px-4 py-3 text-ocean">Priority score</th>
             </tr>
           </thead>
           <tbody>
@@ -133,7 +133,7 @@ export default function Rankings() {
                   <td className="px-4 py-3 text-foundation">{row.dpiRank}</td>
                   <td className="px-4 py-3">
                     <Link
-                      to={`/barangays/${row.id}`}
+                      to={`/barangays/${encodeURIComponent(row.id)}`}
                       className="font-medium text-ocean hover:text-action"
                     >
                       {row.barangay}
@@ -144,7 +144,7 @@ export default function Rankings() {
                     <RiskBadge category={row.riskLevel} />
                   </td>
                   <td className="px-4 py-3 tabular-nums">
-                    {(row.dpi * 100).toFixed(0)}%
+                    {Math.round(row.priorityScore)}
                   </td>
                 </tr>
               ))

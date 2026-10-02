@@ -4,7 +4,7 @@ import { BarChart2, Database, FileText, List, Menu } from 'lucide-react'
 import PublicHeader from '../components/public/PublicHeader'
 
 const links = [
-  { to: '/barangays/310', label: 'Barangay Profiles', icon: FileText, match: '/barangays' },
+  { to: '/barangays/Barangay%20310', label: 'Barangay Profiles', icon: FileText, match: '/barangays' },
   { to: '/compare', label: 'Compare', icon: BarChart2, match: '/compare' },
   { to: '/rankings', label: 'Priority List', icon: List, match: '/rankings' },
   { to: '/methodology', label: 'Data Sources', icon: Database, match: '/methodology' },

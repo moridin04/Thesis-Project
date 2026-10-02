@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { MapPinned, Search } from 'lucide-react'
 import { riskLegend } from '../../theme/colors'
 
@@ -152,12 +152,6 @@ export default function FloodRiskOverviewPanel() {
             Search
           </button>
         </div>
-        <Link
-          to="/barangays/baseco-compound"
-          className="inline-flex text-sm font-medium text-action hover:text-pale"
-        >
-          View sample barangay profile
-        </Link>
       </form>
     </aside>
   )

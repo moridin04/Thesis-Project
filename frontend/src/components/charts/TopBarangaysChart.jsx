@@ -14,7 +14,7 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div className="card-surface rounded-lg px-3 py-2 text-sm shadow-lg">
       <p className="font-medium text-foundation">{label}</p>
-      <p className="text-ocean">DPI {(payload[0].value * 100).toFixed(0)}%</p>
+      <p className="text-ocean">Priority score {Math.round(payload[0].value)}</p>
     </div>
   )
 }
@@ -35,8 +35,7 @@ export default function TopBarangaysChart({ data }) {
           />
           <XAxis
             type="number"
-            domain={[0, 1]}
-            tickFormatter={(v) => `${Math.round(v * 100)}%`}
+            domain={[0, 100]}
             tick={{ fill: colors.ocean, fontSize: 12 }}
             axisLine={false}
             tickLine={false}
@@ -54,7 +53,7 @@ export default function TopBarangaysChart({ data }) {
             content={<ChartTooltip />}
           />
           <Bar
-            dataKey="dpi"
+            dataKey="priorityScore"
             fill={colors.action}
             radius={[0, 8, 8, 0]}
             barSize={18}

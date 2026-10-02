@@ -45,7 +45,7 @@ export default function PublicDashboard() {
 
   const topBarangays = (overview?.priority_barangays ?? []).map((row) => ({
     barangay: row.name,
-    dpi: row.dpi,
+    priorityScore: row.priority_score,
   }))
 
   const rankingRows = (overview?.priority_barangays ?? []).map((row) => ({
@@ -53,7 +53,7 @@ export default function PublicDashboard() {
     barangay: row.name,
     district: row.district,
     riskLevel: row.risk_category,
-    dpi: row.dpi,
+    priorityScore: row.priority_score,
     population: row.population_2024,
     floodPct25yr: row.flood_pct_25yr,
   }))

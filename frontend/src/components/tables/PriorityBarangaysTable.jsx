@@ -14,7 +14,7 @@ export default function PriorityBarangaysTable({ rows }) {
               <th className="px-4 py-3 font-semibold text-ocean">Barangay</th>
               <th className="px-4 py-3 font-semibold text-ocean">District</th>
               <th className="px-4 py-3 font-semibold text-ocean">Risk</th>
-              <th className="px-4 py-3 font-semibold text-ocean">DPI</th>
+              <th className="px-4 py-3 font-semibold text-ocean">Priority score</th>
               <th className="px-4 py-3 font-semibold text-ocean">Population</th>
               <th className="px-4 py-3 font-semibold text-ocean">25-yr flood</th>
             </tr>
@@ -30,7 +30,7 @@ export default function PriorityBarangaysTable({ rows }) {
                   <RiskBadge category={row.riskLevel} />
                 </td>
                 <td className="px-4 py-3 tabular-nums text-foundation">
-                  {(row.dpi * 100).toFixed(0)}%
+                  {Math.round(row.priorityScore)}
                 </td>
                 <td className="px-4 py-3 tabular-nums text-ocean">
                   {formatPopulation(row.population)}

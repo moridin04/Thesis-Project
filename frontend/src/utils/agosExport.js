@@ -6,7 +6,7 @@ export const EXPORT_DISCLAIMER = 'For information purposes only. Not a warning s
 export const EXPORT_COLUMNS = [
   { key: 'barangay', label: 'Barangay name' },
   { key: 'district', label: 'District' },
-  { key: 'dpi', label: 'DPI Score' },
+  { key: 'priorityScore', label: 'Priority score' },
   { key: 'riskLevel', label: 'Risk Priority Class' },
   { key: 'population', label: 'Population (2024)' },
   { key: 'floodPct5yr', label: 'Flood PCT 5yr' },

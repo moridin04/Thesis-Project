@@ -176,7 +176,7 @@ export default function BarangayProfile() {
   const hazardScore = profile.hazardScore ?? Math.round((profile.dpi ?? 0) * 100)
   const exposureScore = profile.exposureScore ?? Math.round((profile.dpi ?? 0) * 100)
   const vulnerabilityScore = profile.vulnerabilityScore ?? Math.round((profile.dpi ?? 0) * 100)
-  const priorityScore = profile.priorityScore ?? Math.round((profile.dpi ?? 0) * 100)
+  const priorityScore = Math.round(profile.priorityScore)
 
   const band = (score) => (score >= 67 ? 'High' : score >= 34 ? 'Medium' : 'Low')
   const factors = [

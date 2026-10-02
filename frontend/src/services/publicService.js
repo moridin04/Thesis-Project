@@ -16,7 +16,7 @@ function toBarangayView(row) {
     hazardScore: Math.round(hazard * 100),
     exposureScore: Math.round(exposure * 100),
     vulnerabilityScore: Math.round(vulnerability * 100),
-    priorityScore: Math.round(Number(row.dpi_scaled) || 0),
+    priorityScore: Number(row.priority_score) || 0,
     population: Number(row.population_2024) || 0,
     populationDensity: Number(row.population_density_per_hectare) || 0,
     populationChangePct: Number(row.population_change_2020_2024_pct) || 0,
@@ -40,7 +40,7 @@ export async function fetchPublicBarangays() {
 }
 
 export async function fetchPublicBarangay(id) {
-  const { data } = await api.get(`/public/barangays/${id}`)
+  const { data } = await api.get(`/public/barangays/${encodeURIComponent(id)}`)
   return toBarangayView(data)
 }
 

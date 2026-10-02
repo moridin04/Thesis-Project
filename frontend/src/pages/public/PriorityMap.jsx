@@ -322,7 +322,7 @@ export default function PriorityMap() {
           />
           {selected ? (
             <Link
-              to={`/barangays/${selected.id}`}
+              to={`/barangays/${encodeURIComponent(selected.id)}`}
               className="mb-4 flex items-center justify-between gap-2"
             >
               <span>
