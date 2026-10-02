@@ -13,8 +13,27 @@ import {
   Waves,
 } from 'lucide-react'
 import BarangayPhoto from '../../components/shared/BarangayPhoto'
+import RiskBadge from '../../components/shared/RiskBadge'
 import { fetchPublicBarangay } from '../../services/publicService'
 import { riskColors } from '../../theme/colors'
+
+const priorityCopy = {
+  High: {
+    reason:
+      'This barangay is in the High class: the combined effects of hazard, exposure, and vulnerability place it in the top third of Manila barangays.',
+    gauge: 'Higher relative priority',
+  },
+  Medium: {
+    reason:
+      'This barangay is in the Medium class: the combined effects of hazard, exposure, and vulnerability place it in the middle third of Manila barangays.',
+    gauge: 'Medium relative priority',
+  },
+  Low: {
+    reason:
+      'This barangay is in the Low class: the combined effects of hazard, exposure, and vulnerability place it in the bottom third of Manila barangays.',
+    gauge: 'Lower relative priority',
+  },
+}
 
 const calculationSteps = [
   'Normalize indicators',
@@ -182,11 +201,16 @@ export default function BarangayProfile() {
   const factors = [
     { icon: Waves, label: 'Flood coverage', tag: band(hazardScore), bar: 'bg-[var(--risk-high)]', width: hazardScore },
     { icon: Users, label: 'Affected population estimate', tag: band(exposureScore), bar: 'bg-[var(--risk-moderate)]', width: exposureScore },
-    { icon: Building2, label: 'Population density', tag: band(exposureScore), bar: 'bg-[var(--risk-moderate)]', width: Math.min(100, exposureScore) },
+    { icon: Building2, label: 'Population density', tag: `${Number(profile.populationDensity).toFixed(1)} per ha`, bar: 'bg-[var(--risk-moderate)]', width: 100 },
     { icon: Mountain, label: 'Mean elevation', tag: profile.elevationMean == null ? '—' : `${Number(profile.elevationMean).toFixed(2)} m`, bar: 'bg-secondary', width: 100 },
   ]
 
   const headingName = profile.barangay.replace(/^Barangay\s+/i, '')
+  const copy = priorityCopy[profile.riskLevel]
+  const pillars = profile.drrmPillar
+    .split(';')
+    .map((pillar) => pillar.trim())
+    .filter(Boolean)
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -209,8 +233,8 @@ export default function BarangayProfile() {
         <div className="rounded-2xl border border-pale bg-white p-5">
           <h2 className="font-display text-xl font-semibold text-foundation">Why this priority?</h2>
           <p className="mt-2 text-sm text-ocean">
-            This barangay has higher relative risk due to the combined effects of hazard, exposure,
-            and vulnerability.
+            {copy?.reason ??
+              'Relative risk reflects the combined effects of hazard, exposure, and vulnerability.'}
           </p>
           <div className="mt-5 space-y-4">
             <ScoreBar icon={Waves} label="Hazard" value={hazardScore} barClass="bg-[var(--risk-high)]" />
@@ -224,7 +248,7 @@ export default function BarangayProfile() {
           <div className="mt-2">
             <PriorityGauge value={priorityScore} />
           </div>
-          <p className="mt-2 text-sm font-semibold text-accent">Higher relative priority</p>
+          {copy ? <p className="mt-2 text-sm font-semibold text-accent">{copy.gauge}</p> : null}
           <p className="text-xs text-ocean">Compared to other Manila barangays</p>
         </div>
       </section>
@@ -298,6 +322,44 @@ export default function BarangayProfile() {
             </li>
           </ul>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-pale bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-foundation">Planning reference</h2>
+          {profile.riskLevel ? <RiskBadge category={profile.riskLevel} /> : null}
+        </div>
+        <p className="mt-1 text-xs text-ocean">
+          Illustrative planning reference, not an official directive.
+        </p>
+        {profile.planningReference || pillars.length ? (
+          <dl className="mt-4 grid gap-4 text-sm md:grid-cols-[2fr_1fr]">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-ocean">
+                Suggested planning actions
+              </dt>
+              <dd className="mt-1 leading-relaxed text-foundation">
+                {profile.planningReference || '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-ocean">DRRM pillars</dt>
+              <dd className="mt-1">
+                {pillars.length ? (
+                  <ul className="space-y-1 text-foundation">
+                    {pillars.map((pillar) => (
+                      <li key={pillar}>{pillar}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  '—'
+                )}
+              </dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="mt-4 text-sm text-ocean">No planning reference is available for this barangay.</p>
+        )}
       </section>
 
       <BarangayPhoto

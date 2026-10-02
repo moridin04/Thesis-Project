@@ -12,6 +12,8 @@ export const EXPORT_COLUMNS = [
   { key: 'floodPct5yr', label: 'Flood PCT 5yr' },
   { key: 'floodPct25yr', label: 'Flood PCT 25yr' },
   { key: 'elevationMean', label: 'Elevation_Mean' },
+  { key: 'planningReference', label: 'Planning_Reference' },
+  { key: 'drrmPillar', label: 'DRRM_Pillar' },
 ]
 
 export function exportDateStamp(date = new Date()) {

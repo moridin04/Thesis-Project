@@ -99,7 +99,7 @@ export const indicatorSections = [
 export const methodologySections = [
   {
     title: 'Data sources',
-    body: 'OpenStreetMap boundaries, PSA census tables, and approved rainfall scenario layers.',
+    body: 'LiPAD 5-year and 25-year flood hazard data, PSA 2020 and 2024 population, barangay administrative data, and DTM-derived elevation.',
   },
   {
     title: 'Preprocessing',
@@ -111,7 +111,7 @@ export const methodologySections = [
   },
   {
     title: 'Limitations',
-    body: 'Prototype outputs use approved mock and sample datasets and must not be treated as forecasts.',
+    body: 'Outputs are planning-support classifications based on the finalized dataset. They are not forecasts or real-time warnings and do not replace official advisories.',
   },
   {
     title: 'Data Governance and Validation',

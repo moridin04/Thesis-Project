@@ -24,6 +24,8 @@ function toBarangayView(row) {
     floodPct25yr: Number(row.flood_pct_25yr) || 0,
     dpiRank: row.dpi_rank,
     bestModel: row.best_model,
+    planningReference: row.planning_reference || '',
+    drrmPillar: row.drrm_pillar || '',
     imageUrl: row.image_url || null,
     elevationMean: row.elevation_mean == null ? null : Number(row.elevation_mean),
   }

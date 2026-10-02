@@ -48,6 +48,20 @@ def test_real_csv_has_897_unique_barangays():
     assert frame["District"].notna().all()
 
 
+@pytest.mark.parametrize(
+    ("barangay_id", "risk_category"),
+    [("Barangay%20310", "High"), ("Barangay%20246", "Medium"), ("Barangay%20685", "Low")],
+)
+def test_planning_reference_and_drrm_pillar_present(
+    client: TestClient, barangay_id: str, risk_category: str
+):
+    record = client.get(f"/api/public/barangays/{barangay_id}").json()
+    assert record["risk_category"] == risk_category
+    for field in ("planning_reference", "drrm_pillar"):
+        assert isinstance(record[field], str)
+        assert record[field].strip()
+
+
 def test_priority_score_equals_dpi_scaled(client: TestClient):
     record = client.get("/api/public/barangays/Barangay%20649").json()
     expected = barangay_data._frame().set_index("Barangay").loc["Barangay 649", "DPI_Scaled"]

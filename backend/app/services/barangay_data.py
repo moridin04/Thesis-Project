@@ -31,6 +31,12 @@ def _clean(value):
     return value
 
 
+def _text(value) -> str | None:
+    if value is None or pd.isna(value) or not str(value).strip():
+        return None
+    return str(value).strip()
+
+
 def _record(row: pd.Series) -> dict:
     district = row.get("District")
     return {
@@ -56,6 +62,8 @@ def _record(row: pd.Series) -> dict:
         "ml_predicted_risk_class": str(row["ML_Predicted_Risk_Class"]),
         "ml_prediction_confidence": _clean(float(row["ML_Prediction_Confidence"])),
         "best_model": str(row["Best_Model"]),
+        "planning_reference": _text(row.get("Planning_Reference")),
+        "drrm_pillar": _text(row.get("DRRM_Pillar")),
         "image_url": None,
     }
 
