@@ -10,8 +10,7 @@ import { useAuth } from '../../auth/useAuth'
 import { homePathForRole } from '../../config/permissions'
 import { RedirectIfAuthenticated } from '../../auth/RoleRoute'
 
-const GENERIC_ERROR = 'Invalid username or password.'
-const RATE_LIMIT_ERROR = 'Too many attempts. Please try again later.'
+const NETWORK_NOTICE = 'Unable to reach the AGOS API. Start the backend on port 8000 and try again.'
 
 const inputClassName =
   'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-4 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
@@ -22,13 +21,13 @@ function LoginForm() {
   const location = useLocation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [networkNotice, setNetworkNotice] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
     if (submitting) return
-    setError('')
+    setNetworkNotice('')
     setSubmitting(true)
     try {
       const account = await login({ username, password })
@@ -41,14 +40,9 @@ function LoginForm() {
       }
       navigate(next, { replace: true })
     } catch (err) {
-      // Never render backend text here: only the two fixed messages (plus a network notice).
-      if (!err?.response) {
-        setError(
-          'Unable to reach the AGOS API. Start the backend on port 8000 and try again.',
-        )
-      } else {
-        setError(err.response.status === 429 ? RATE_LIMIT_ERROR : GENERIC_ERROR)
-      }
+      // Credential failures (any HTTP response) are deliberately silent; only a missing
+      // response (server down / network error) is surfaced.
+      if (!err?.response) setNetworkNotice(NETWORK_NOTICE)
     } finally {
       setSubmitting(false)
     }
@@ -113,9 +107,9 @@ function LoginForm() {
           </div>
         </div>
 
-        {error ? (
+        {networkNotice ? (
           <p role="alert" className="mt-5 rounded-xl border border-[color:var(--risk-high)]/30 bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)] px-4 py-3 text-sm text-foundation">
-            {error}
+            {networkNotice}
           </p>
         ) : null}
 
