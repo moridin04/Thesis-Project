@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.services import ml_results
 from app.services.ml_results import FEATURE_META, TOP_N, get_ml_results
-from tests.conftest import client
+from tests.conftest import admin_account, client, staff_account
 
 
 @pytest.fixture()
@@ -69,9 +69,27 @@ def test_missing_required_column_raises(tmp_path):
         ml_results._read_csv(path, ml_results.MODEL_COMPARISON_COLUMNS)
 
 
-def test_ml_results_endpoint_is_public(client: TestClient):
+def _token(client: TestClient, username: str, password: str) -> str:
+    response = client.post("/api/auth/login", json={"username": username, "password": password})
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
+
+def test_ml_results_requires_authentication(client: TestClient):
+    assert client.get("/api/ml/results").status_code == 401
+
+
+def test_ml_results_for_admin(client: TestClient, admin_account):
+    token = _token(client, "agos_admin", "AdminPass1234")
+    response = client.get("/api/ml/results", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert len(response.json()["models"]) == 3
+
+
+def test_ml_results_for_staff(client: TestClient, staff_account):
     get_ml_results.cache_clear()
-    response = client.get("/api/ml/results")
+    token = _token(client, "staff01", "StaffPass1234")
+    response = client.get("/api/ml/results", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     body = response.json()
     assert [m["model"] for m in body["models"] if m["selected"]] == ["Gradient Boosting"]
@@ -87,3 +105,14 @@ def test_ml_results_endpoint_is_public(client: TestClient):
         if cell["actual"] == "High"
     }
     assert gb_high == {"High": 56, "Low": 0, "Medium": 4}
+
+
+def test_public_model_summary_is_minimal(client: TestClient):
+    response = client.get("/api/public/model-summary")
+    assert response.status_code == 200
+    assert response.json() == {
+        "selected_model": "Gradient Boosting",
+        "n_test": 180,
+        "correct": 165,
+        "percentage": 91.7,
+    }

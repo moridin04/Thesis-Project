@@ -1,9 +1,33 @@
-import ModelResultsSection from '../../components/ml/ModelResultsSection'
+import { useEffect, useState } from 'react'
 import PageHeader from '../../components/shared/PageHeader'
 import { methodologySections } from '../../data/siteContent'
 import { BRAND } from '../../auth/config'
+import { fetchPublicModelSummary } from '../../services/publicService'
+
+function useModelSummarySentence() {
+  const [sentence, setSentence] = useState('')
+
+  useEffect(() => {
+    let active = true
+    fetchPublicModelSummary()
+      .then((summary) => {
+        if (!active || summary?.correct == null || !summary?.n_test) return
+        setSentence(
+          `On ${summary.n_test} held-out barangays the model had not seen, it classified ${summary.correct} correctly (${summary.percentage}%).`,
+        )
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return sentence
+}
 
 export default function Methodology() {
+  const summarySentence = useModelSummarySentence()
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -23,12 +47,16 @@ export default function Methodology() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm leading-relaxed text-ocean">{section.body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ocean">
+                {section.body}
+                {section.title === 'Risk classification' && summarySentence
+                  ? ` ${summarySentence}`
+                  : null}
+              </p>
             )}
           </section>
         ))}
       </div>
-      <ModelResultsSection />
       <p className="disclaimer-soft px-4 py-3 text-sm leading-relaxed">
         {BRAND.disclaimer}
       </p>

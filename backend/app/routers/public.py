@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.services import barangay_data
+from app.services.ml_results import get_model_summary
 from app.services.public_content import INDICATORS, METHODOLOGY, RECOMMENDATIONS
 from app.services.upload_service import list_approved_barangay_records
 
@@ -49,6 +50,11 @@ def get_indicators() -> dict:
 @router.get("/methodology")
 def get_methodology() -> dict:
     return METHODOLOGY
+
+
+@router.get("/model-summary")
+def get_public_model_summary() -> dict:
+    return get_model_summary()
 
 
 @router.get("/recommendations")

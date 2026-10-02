@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   BarChart3,
+  BrainCircuit,
   GitCompare,
   LayoutDashboard,
   Lightbulb,
@@ -12,6 +13,7 @@ const navItems = [
   { to: '/dashboard/compare', label: 'Compare', icon: GitCompare },
   { to: '/dashboard/indicators', label: 'Indicators', icon: BarChart3 },
   { to: '/dashboard/recommendations', label: 'Recommendations', icon: Lightbulb },
+  { to: '/dashboard/model-results', label: 'Model Results', icon: BrainCircuit },
   { to: '/dashboard/upload', label: 'Upload Data', icon: Upload },
 ]
 

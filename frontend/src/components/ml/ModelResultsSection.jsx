@@ -52,8 +52,6 @@ export default function ModelResultsSection() {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display text-lg font-semibold text-foundation">Model results</h2>
-
       <SelectionCallout selectionNote={results.selectionNote} nTest={results.nTest} models={models} />
 
       <SectionCard

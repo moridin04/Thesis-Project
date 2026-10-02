@@ -44,6 +44,11 @@ export async function fetchPublicBarangay(id) {
   return toBarangayView(data)
 }
 
+export async function fetchPublicModelSummary() {
+  const { data } = await api.get('/public/model-summary')
+  return data
+}
+
 export async function fetchPublicRankings() {
   const { data } = await api.get('/public/rankings')
   return data.map(toBarangayView)

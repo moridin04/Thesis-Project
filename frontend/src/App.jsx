@@ -23,6 +23,7 @@ import DashboardCompare from './pages/dashboard/DashboardCompare'
 import DashboardIndicators from './pages/dashboard/DashboardIndicators'
 import DashboardRecommendations from './pages/dashboard/DashboardRecommendations'
 import DashboardUpload from './pages/dashboard/DashboardUpload'
+import DashboardModelResults from './pages/dashboard/DashboardModelResults'
 import ReviewUploads from './pages/admin/ReviewUploads'
 import ManageUsers from './pages/admin/ManageUsers'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="indicators" element={<DashboardIndicators />} />
             <Route path="recommendations" element={<DashboardRecommendations />} />
             <Route path="upload" element={<DashboardUpload />} />
+            <Route path="model-results" element={<DashboardModelResults />} />
           </Route>
         </Route>
 

@@ -192,6 +192,21 @@ def _selection_note(models: list[dict], selected: str) -> str:
     return note
 
 
+def get_model_summary() -> dict:
+    """Public, minimal summary: selected model and its held-out accuracy count."""
+    results = get_ml_results()
+    selected = next(m["model"] for m in results["models"] if m["selected"])
+    cells = results["confusion_matrices"].get(selected, [])
+    correct = sum(cell["count"] for cell in cells if cell["actual"] == cell["predicted"]) if cells else None
+    n_test = results["n_test"]
+    return {
+        "selected_model": selected,
+        "n_test": n_test,
+        "correct": correct,
+        "percentage": round(100 * correct / n_test, 1) if correct is not None and n_test else None,
+    }
+
+
 @lru_cache(maxsize=1)
 def get_ml_results() -> dict:
     comparison = _read_csv(MODEL_COMPARISON_CSV, MODEL_COMPARISON_COLUMNS)
