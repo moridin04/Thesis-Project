@@ -1,3 +1,4 @@
+import ModelResultsSection from '../../components/ml/ModelResultsSection'
 import PageHeader from '../../components/shared/PageHeader'
 import { methodologySections } from '../../data/siteContent'
 import { BRAND } from '../../auth/config'
@@ -27,6 +28,7 @@ export default function Methodology() {
           </section>
         ))}
       </div>
+      <ModelResultsSection />
       <p className="disclaimer-soft px-4 py-3 text-sm leading-relaxed">
         {BRAND.disclaimer}
       </p>
