@@ -6,7 +6,6 @@ import 'leaflet/dist/leaflet.css'
 import {
   Building2,
   Database,
-  Link2,
   Mountain,
   Shield,
   Users,
@@ -37,8 +36,10 @@ const priorityCopy = {
 
 const calculationSteps = [
   'Normalize indicators',
+  // Source: entropy_component_weights.csv (Hazard 0.192859, Exposure 0.749503, Vulnerability 0.057638). Update if the pipeline is re-run.
   'Apply entropy weights (Hazard 0.19, Exposure 0.75, Vulnerability 0.06)',
-  'Compute composite DPI score',
+  'Compute the composite DPI score',
+  'Rescale to 0-100 across Manila barangays',
   'Rank among Manila barangays',
 ]
 
@@ -166,7 +167,6 @@ export default function BarangayProfile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [trailOpen, setTrailOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -279,27 +279,17 @@ export default function BarangayProfile() {
         </div>
 
         <div className="rounded-2xl border border-pale bg-white p-5">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between text-left"
-            onClick={() => setTrailOpen((open) => !open)}
-            aria-expanded={trailOpen}
-          >
-            <h2 className="font-display text-lg font-semibold text-foundation">View Calculation Trail</h2>
-            <span className="text-ocean">{trailOpen ? '–' : '›'}</span>
-          </button>
-          {trailOpen ? (
-            <ol className="mt-4 space-y-3">
-              {calculationSteps.map((step, index) => (
-                <li key={step} className="flex items-start gap-3 text-sm text-ocean">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foundation text-xs font-semibold text-white">
-                    {index + 1}
-                  </span>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          ) : null}
+          <h2 className="font-display text-lg font-semibold text-foundation">How the score is calculated</h2>
+          <ol className="mt-4 space-y-3">
+            {calculationSteps.map((step, index) => (
+              <li key={step} className="flex items-start gap-3 text-sm text-ocean">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foundation text-xs font-semibold text-white">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
         </div>
 
         <div className="rounded-2xl border border-pale bg-white p-5">
@@ -311,16 +301,6 @@ export default function BarangayProfile() {
                 {item.label}
               </li>
             ))}
-            <li>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 font-medium text-action hover:underline"
-                onClick={() => setTrailOpen(true)}
-              >
-                <Link2 className="h-4 w-4" aria-hidden />
-                View Calculation Trail
-              </button>
-            </li>
           </ul>
         </div>
       </section>
