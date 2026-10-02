@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
-  Eye,
-  EyeOff,
   LoaderCircle,
   Lock,
   User,
@@ -15,7 +13,7 @@ import { RedirectIfAuthenticated } from '../../auth/RoleRoute'
 const GENERIC_ERROR = 'Invalid username or password.'
 
 const inputClassName =
-  'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-10 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
+  'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-4 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
 
 function LoginForm() {
   const { login } = useAuth()
@@ -23,7 +21,6 @@ function LoginForm() {
   const location = useLocation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -106,21 +103,13 @@ function LoginForm() {
               <input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type="password"
                 autoComplete="current-password"
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className={inputClassName}
               />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition hover:text-foundation"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
             </div>
           </div>
         </div>
