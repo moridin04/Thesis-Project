@@ -44,10 +44,10 @@ export default function App() {
         <Route path="rankings" element={<Rankings />} />
         <Route path="barangays/:id" element={<BarangayProfile />} />
         <Route path="compare" element={<CompareBarangays />} />
-        <Route path="about" element={<About />} />
       </Route>
 
       <Route element={<PublicLayout />}>
+        <Route path="about" element={<About />} />
         <Route path="indicators" element={<Indicators />} />
         <Route path="methodology" element={<Methodology />} />
         <Route path="recommendations" element={<Recommendations />} />
