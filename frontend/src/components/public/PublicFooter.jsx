@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowUp, Phone } from 'lucide-react'
 import agosLogoWhite from '../../assets/agos-logo-white.png'
 
@@ -58,6 +58,13 @@ function scrollToTop() {
 }
 
 export default function PublicFooter() {
+  const { pathname } = useLocation()
+
+  /* ScrollToTop only reacts to path changes, so Home on "/" scrolls up here instead. */
+  function handleHomeClick() {
+    if (pathname === '/') scrollToTop()
+  }
+
   return (
     <footer className="public-footer">
       <div className="public-footer__container">
@@ -97,7 +104,11 @@ export default function PublicFooter() {
             <ul className="public-footer__link-list">
               {siteMapLinks.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className="public-footer__link">
+                  <Link
+                    to={item.to}
+                    className="public-footer__link"
+                    onClick={item.to === '/' ? handleHomeClick : undefined}
+                  >
                     {item.label}
                   </Link>
                 </li>
