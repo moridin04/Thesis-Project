@@ -118,7 +118,7 @@ function BoundaryMap({ selectedName, onSelect, riskByName }) {
       scrollWheelZoom
     >
       <TileLayer
-        attribution='&copy; OpenStreetMap &copy; CARTO'
+        attribution='&copy; OpenStreetMap contributors, &copy; CARTO'
         url={BASEMAP_URL}
       />
       {data ? (
