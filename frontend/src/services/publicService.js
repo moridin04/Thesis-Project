@@ -8,6 +8,7 @@ function toBarangayView(row) {
     id: String(row.id),
     barangay: row.name,
     district: row.district || 'Unassigned',
+    area: row.area || '',
     dpi: Number(row.dpi) || 0,
     riskLevel: row.risk_category,
     hazard,

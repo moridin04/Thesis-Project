@@ -46,7 +46,8 @@ export default function Rankings() {
       const matchesQuery =
         !needle ||
         row.barangay.toLowerCase().includes(needle) ||
-        row.district.toLowerCase().includes(needle)
+        row.district.toLowerCase().includes(needle) ||
+        row.area.toLowerCase().includes(needle)
       const matchesDistrict = district === 'All districts' || row.district === district
       const matchesPriority = priority === 'All priority levels' || row.riskLevel === level
       return matchesQuery && matchesDistrict && matchesPriority
@@ -110,14 +111,16 @@ export default function Rankings() {
         ))}
       </ul>
       <div className="card-surface overflow-hidden">
-        <table className="min-w-full text-left text-sm">
+        {/* Below 640px the columns are fixed so all five fit the card: widths cover the "Rank" and
+            "Barangay" headers, the "Medium" badge and "(0–100)"; District takes the rest and wraps. */}
+        <table className="min-w-full text-left text-sm max-sm:w-full max-sm:table-fixed">
           <thead className="bg-surface">
             <tr>
-              <th className="px-4 py-3 text-ocean">Rank</th>
-              <th className="px-4 py-3 text-ocean">Barangay</th>
-              <th className="px-4 py-3 text-ocean">District</th>
-              <th className="px-4 py-3 text-ocean">Risk</th>
-              <th className="px-4 py-3 text-ocean">DPI score (0–100)</th>
+              <th className="px-4 py-3 text-ocean max-sm:w-[2.875rem] max-sm:px-1.5">Rank</th>
+              <th className="px-4 py-3 text-ocean max-sm:w-[4.875rem] max-sm:px-1.5">Barangay</th>
+              <th className="px-4 py-3 text-ocean max-sm:px-1.5">District</th>
+              <th className="px-4 py-3 text-ocean max-sm:w-20 max-sm:px-1.5">Risk</th>
+              <th className="px-4 py-3 text-ocean max-sm:w-[4.25rem] max-sm:px-1.5">DPI score (0–100)</th>
             </tr>
           </thead>
           <tbody>
@@ -128,26 +131,37 @@ export default function Rankings() {
                 </td>
               </tr>
             ) : (
-              pageRows.map((row) => (
-                <tr key={row.id} className="border-t border-pale/60">
-                  <td className="px-4 py-3 text-foundation">{row.dpiRank}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      to={`/barangays/${encodeURIComponent(row.id)}`}
-                      className="font-medium text-ocean hover:text-action"
-                    >
-                      {row.barangay}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-ocean">{row.district}</td>
-                  <td className="px-4 py-3">
-                    <RiskBadge category={row.riskLevel} />
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">
-                    {Math.round(row.priorityScore)}
-                  </td>
-                </tr>
-              ))
+              pageRows.map((row) => {
+                const districtLabel = row.area ? `${row.district} - ${row.area}` : row.district
+                return (
+                  <tr key={row.id} className="border-t border-pale/60">
+                    <td className="px-4 py-3 text-foundation max-sm:px-1.5">{row.dpiRank}</td>
+                    <td className="px-4 py-3 max-sm:px-1.5">
+                      <Link
+                        to={`/barangays/${encodeURIComponent(row.id)}`}
+                        className="font-medium text-ocean hover:text-action"
+                      >
+                        {row.barangay}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-ocean max-sm:break-words max-sm:px-1.5" title={districtLabel}>
+                      {row.district}
+                      {row.area ? (
+                        <>
+                          <span className="max-sm:hidden"> -</span>{' '}
+                          <span className="max-sm:block">{row.area}</span>
+                        </>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 max-sm:px-1.5">
+                      <RiskBadge category={row.riskLevel} />
+                    </td>
+                    <td className="px-4 py-3 tabular-nums max-sm:px-1.5">
+                      {Math.round(row.priorityScore)}
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
