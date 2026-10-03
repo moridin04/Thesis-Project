@@ -14,6 +14,7 @@ PREDICTIONS_CSV = (
     / "barangay_flood_risk_predictions.csv"
 )
 DISTRICT_CSV = Path(__file__).resolve().parents[1] / "data" / "manila_barangay_district_mapping.csv"
+AREA_CSV = Path(__file__).resolve().parents[1] / "data" / "manila_barangay_area_mapping.csv"
 DATASET_VERSION = "barangay_flood_risk_predictions"
 NOTEBOOK_PATH = (
     Path(__file__).resolve().parents[3]
@@ -62,6 +63,21 @@ def _record(row: pd.Series) -> dict:
         "planning_reference": _text(row.get("Planning_Reference")),
         "drrm_pillar": _text(row.get("DRRM_Pillar")),
         "image_url": None,
+        "area": _areas().get(row["Barangay"]),
+    }
+
+
+@lru_cache(maxsize=1)
+def _areas() -> dict[str, str]:
+    """Area names keyed by the published barangay name; never by Barangay_No (818 and 818-A differ)."""
+    areas = pd.read_csv(AREA_CSV, dtype=str)
+    duplicated = sorted(areas.loc[areas["Barangay"].duplicated(keep=False), "Barangay"].unique())
+    if duplicated:
+        raise ValueError(f"Area mapping has duplicate Barangay values: {duplicated}.")
+    return {
+        name: area
+        for name, area in zip(areas["Barangay"], areas["Area"])
+        if _text(area) is not None
     }
 
 
@@ -109,6 +125,7 @@ def _frame() -> pd.DataFrame:
 
 def load_barangays() -> None:
     _frame()
+    _areas()
 
 
 def get_all_barangays() -> list[dict]:
