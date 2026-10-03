@@ -22,6 +22,15 @@ import { usePublicBarangays } from '../../hooks/usePublicBarangays'
 import { buildReportHtml, downloadTextFile, exportBasename, rowsToCsv } from '../../utils/agosExport'
 import 'leaflet/dist/leaflet.css'
 
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim()
+const BASEMAP_URL = CARTO_API_KEY
+  ? `https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key=${encodeURIComponent(CARTO_API_KEY)}`
+  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+
+if (!CARTO_API_KEY) {
+  console.warn('VITE_CARTO_API_KEY is not set; the Priority Map basemap is loading without a CARTO API key.')
+}
+
 function FitToData({ data }) {
   const map = useMap()
   useEffect(() => {
@@ -110,7 +119,7 @@ function BoundaryMap({ selectedName, onSelect, riskByName }) {
     >
       <TileLayer
         attribution='&copy; OpenStreetMap &copy; CARTO'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url={BASEMAP_URL}
       />
       {data ? (
         <GeoJSON
