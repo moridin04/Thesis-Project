@@ -20,16 +20,8 @@ import PublicHeader from '../../components/public/PublicHeader'
 import { riskColors } from '../../theme/colors'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
 import { buildReportHtml, downloadTextFile, exportBasename, rowsToCsv } from '../../utils/agosExport'
+import { CARTO_ATTRIBUTION, CARTO_TILE_URL } from '../../components/public/cartoBasemap'
 import 'leaflet/dist/leaflet.css'
-
-const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim()
-const BASEMAP_URL = CARTO_API_KEY
-  ? `https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key=${encodeURIComponent(CARTO_API_KEY)}`
-  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-
-if (!CARTO_API_KEY) {
-  console.warn('VITE_CARTO_API_KEY is not set; the Priority Map basemap is loading without a CARTO API key.')
-}
 
 function FitToData({ data }) {
   const map = useMap()
@@ -118,8 +110,8 @@ function BoundaryMap({ selectedName, onSelect, riskByName }) {
       scrollWheelZoom
     >
       <TileLayer
-        attribution='&copy; OpenStreetMap contributors, &copy; CARTO'
-        url={BASEMAP_URL}
+        attribution={CARTO_ATTRIBUTION}
+        url={CARTO_TILE_URL}
       />
       {data ? (
         <GeoJSON
