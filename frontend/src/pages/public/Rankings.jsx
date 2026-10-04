@@ -4,6 +4,7 @@ import PageHeader from '../../components/shared/PageHeader'
 import RiskBadge from '../../components/shared/RiskBadge'
 import { fetchPublicRankings } from '../../services/publicService'
 import { riskLegend } from '../../theme/colors'
+import { districtAreaLabel } from '../../utils/districtLabel'
 
 const PAGE_SIZE = 20
 
@@ -132,7 +133,8 @@ export default function Rankings() {
               </tr>
             ) : (
               pageRows.map((row) => {
-                const districtLabel = row.area ? `${row.district} - ${row.area}` : row.district
+                const districtLabel = districtAreaLabel(row.district, row.area)
+                const area = row.area?.trim()
                 return (
                   <tr key={row.id} className="border-t border-pale/60">
                     <td className="px-4 py-3 text-foundation max-sm:px-1.5">{row.dpiRank}</td>
@@ -146,10 +148,10 @@ export default function Rankings() {
                     </td>
                     <td className="px-4 py-3 text-ocean max-sm:break-words max-sm:px-1.5" title={districtLabel}>
                       {row.district}
-                      {row.area ? (
+                      {area ? (
                         <>
                           <span className="max-sm:hidden"> -</span>{' '}
-                          <span className="max-sm:block">{row.area}</span>
+                          <span className="max-sm:block">{area}</span>
                         </>
                       ) : null}
                     </td>

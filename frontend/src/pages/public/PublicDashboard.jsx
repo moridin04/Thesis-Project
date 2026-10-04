@@ -25,7 +25,7 @@ function countLevel(rows, level) {
   return rows.filter((row) => row.riskLevel === level).length
 }
 
-export default function PublicDashboard() {
+export default function PublicDashboard({ showArea = false }) {
   const { rows: barangays, loading: isLoading, error: loadError } = usePublicBarangays()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -246,7 +246,7 @@ export default function PublicDashboard() {
                 <h2 className="mb-4 font-display text-lg font-semibold text-foundation">
                   Top {topRows.length} priority barangays
                 </h2>
-                <PriorityBarangaysTable rows={topRows} />
+                <PriorityBarangaysTable rows={topRows} showArea={showArea} />
               </section>
             </>
           )}

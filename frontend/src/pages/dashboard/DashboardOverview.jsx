@@ -1,5 +1,5 @@
 import PublicDashboard from '../public/PublicDashboard'
 
 export default function DashboardOverview() {
-  return <PublicDashboard />
+  return <PublicDashboard showArea />
 }

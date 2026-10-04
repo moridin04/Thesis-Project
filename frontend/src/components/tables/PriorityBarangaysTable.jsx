@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import RiskBadge from '../shared/RiskBadge'
+import { compareDistrictArea, districtAreaParts } from '../../utils/districtLabel'
 
 const RISK_ORDER = { Low: 0, Medium: 1, High: 2 }
 
@@ -18,7 +19,8 @@ function formatPopulation(n) {
   return n.toLocaleString('en-PH')
 }
 
-function compare(a, b, column) {
+function compare(a, b, column, showArea) {
+  if (showArea && column.key === 'district') return compareDistrictArea(a, b)
   const x = a[column.key]
   const y = b[column.key]
   if (column.type === 'text') return String(x).localeCompare(String(y), 'en', { numeric: true })
@@ -29,12 +31,12 @@ function compare(a, b, column) {
   return x - y
 }
 
-export default function PriorityBarangaysTable({ rows }) {
+export default function PriorityBarangaysTable({ rows, showArea = false }) {
   const navigate = useNavigate()
   const [sort, setSort] = useState({ key: 'priorityScore', dir: 'desc' })
   const sortColumn = columns.find((column) => column.key === sort.key)
   const sorted = [...rows].sort((a, b) => {
-    const result = compare(a, b, sortColumn)
+    const result = compare(a, b, sortColumn, showArea)
     return sort.dir === 'asc' ? result : -result
   })
 
@@ -93,7 +95,18 @@ export default function PriorityBarangaysTable({ rows }) {
                     {row.barangay}
                   </Link>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-ocean">{row.district}</td>
+                {showArea ? (
+                  <td className="px-4 py-3 text-ocean">
+                    {districtAreaParts(row.district, row.area).map((part, index) => (
+                      <Fragment key={part}>
+                        {index ? ' ' : null}
+                        <span className="whitespace-nowrap">{part}</span>
+                      </Fragment>
+                    ))}
+                  </td>
+                ) : (
+                  <td className="whitespace-nowrap px-4 py-3 text-ocean">{row.district}</td>
+                )}
                 <td className="px-4 py-3">
                   <RiskBadge category={row.riskLevel} />
                 </td>
