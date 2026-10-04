@@ -97,12 +97,15 @@
   --color-priority-medium-text: color-mix(in srgb, var(--color-priority-medium) 50%, black);
   --color-priority-low-text: color-mix(in srgb, var(--color-priority-low) 50%, black);
 
-  /* Approve / Reject use the Low and High priority fills with --color-darkest text.
-     Ink contrast: approve 5.45 / hover 4.66 / active 4.30; reject 4.32 / hover 3.70 / active 3.43. */
-  --action-approve: var(--color-priority-low);
+  /* Approve = Vulnerability bar colour, Reject = Hazard bar colour (Barangay Profile score bars).
+     Approve text is --color-darkest (white fails at 3.02): 4.66 / hover 4.00 / active 3.67.
+     Reject text is white (ink fails at 2.18): 6.47 / hover 7.29 / active 7.75. */
+  --action-approve: var(--color-secondary);
+  --action-approve-text: var(--color-darkest);
   --action-approve-hover: color-mix(in srgb, var(--action-approve) 92%, black);
   --action-approve-active: color-mix(in srgb, var(--action-approve) 88%, black);
-  --action-reject: var(--color-priority-high);
+  --action-reject: var(--risk-high);
+  --action-reject-text: var(--text-on-primary);
   --action-reject-hover: color-mix(in srgb, var(--action-reject) 92%, black);
   --action-reject-active: color-mix(in srgb, var(--action-reject) 88%, black);
 
@@ -697,11 +700,11 @@ main h2,
 .btn-approve,
 .btn-reject {
   border: 1.5px solid transparent;
-  color: var(--color-darkest);
 }
 
 .btn-approve {
   background-color: var(--action-approve);
+  color: var(--action-approve-text);
 }
 
 .btn-approve:hover:not(:disabled) {
@@ -719,6 +722,7 @@ main h2,
 
 .btn-reject {
   background-color: var(--action-reject);
+  color: var(--action-reject-text);
 }
 
 .btn-reject:hover:not(:disabled) {
