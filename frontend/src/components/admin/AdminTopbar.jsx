@@ -1,11 +1,17 @@
+// Top bar meant for the older components/AdminLayout shell.
+// The live admin pages use PublicHeader instead of this bar.
+// The signed-in name comes from useAuth.
+
 import { LogOut } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 
+// Title, an Admin tag, and a link back to the public site.
 export default function AdminTopbar({ title, subtitle }) {
   const { account, logout } = useAuth()
   const navigate = useNavigate()
 
+  // Signs out through useAuth, then opens the login page.
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })

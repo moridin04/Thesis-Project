@@ -1,3 +1,7 @@
+// Staff list of the DPI class beside the model-predicted class.
+// App.jsx mounts this at /dashboard/barangays for staff and admin.
+// Rows come from fetchStaffBarangayMlList in staffService.
+// Search and the differs-only filter run in the browser.
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../../components/shared/PageHeader'
@@ -6,6 +10,7 @@ import MlAgreementBadge from '../../components/staff/MlAgreementBadge'
 import { IN_SAMPLE_NOTE } from '../../components/staff/mlNotes'
 import { fetchStaffBarangayMlList } from '../../services/staffService'
 
+// Table of rank, both classes, confidence, and whether they agree.
 export default function DashboardBarangays() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)

@@ -1,3 +1,7 @@
+// Groups selection notes, scores, importance, and confusion matrices.
+// Dashboard model results is the only page that renders it.
+// All numbers come from the useMlResults hook.
+
 import { useState } from 'react'
 import { useMlResults } from '../../hooks/useMlResults'
 import ConfusionMatrixHeatmap from './ConfusionMatrixHeatmap'
@@ -5,6 +9,7 @@ import FeatureImportanceChart from './FeatureImportanceChart'
 import ModelComparisonTable from './ModelComparisonTable'
 import SelectionCallout from './SelectionCallout'
 
+// Titled card used for the comparison table and the matrices.
 function SectionCard({ title, subtitle, note, action, children }) {
   return (
     <section className="card-surface space-y-3 p-5">
@@ -36,6 +41,7 @@ function ImportanceCard({ title, subtitle, controls, children }) {
   )
 }
 
+// Loads results, then stacks the four model sections.
 export default function ModelResultsSection() {
   const { results, loading, error } = useMlResults()
   const [importanceModel, setImportanceModel] = useState('')
@@ -58,6 +64,7 @@ export default function ModelResultsSection() {
     results
   const selectedModel = models.find((model) => model.selected)?.model ?? ''
   const importanceModels = Object.keys(featureImportance)
+  // Keep the chosen model, else the selected one, else the first.
   const activeImportanceModel =
     importanceModel && featureImportance[importanceModel]
       ? importanceModel

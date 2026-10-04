@@ -1,3 +1,7 @@
+// Top bar for public pages, the dashboard, and the admin area.
+// Those layouts, plus Landing and the priority map, render it.
+// Visible links depend on useAuth and config/navRoles.
+
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
@@ -22,15 +26,18 @@ const workspaceNavItems = [
 
 const SCROLL_THRESHOLD = 24
 
+// Role links, a mobile menu, and the scroll progress strip.
 export default function PublicHeader() {
   const { isAuthenticated, role, loading } = useAuth()
   const navRole = navRoleFromAuth(isAuthenticated, role)
   const [menuPath, setMenuPath] = useState(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const location = useLocation()
+  // The menu is stored per path, so a route change closes it.
   const open = menuPath === location.pathname
   const menuId = 'public-mobile-nav'
 
+  // Dashboard and Admin links appear only for roles listed on each item.
   const navItems = [
     ...publicNavItems,
     ...workspaceNavItems.filter((item) => item.roles.includes(navRole)),
@@ -39,12 +46,14 @@ export default function PublicHeader() {
   useEffect(() => {
     let frame = 0
 
+    // Past 24px we mark the header as scrolled, and skip a no-op update.
     function updateScrolled() {
       frame = 0
       const next = window.scrollY > SCROLL_THRESHOLD
       setIsScrolled((prev) => (prev === next ? prev : next))
     }
 
+    // One update per frame, even if many scroll events arrive.
     function onScroll() {
       if (frame) return
       frame = window.requestAnimationFrame(updateScrolled)
@@ -58,7 +67,9 @@ export default function PublicHeader() {
     }
   }, [])
 
+  // Escape closes the mobile menu.
   useEffect(() => {
+    // Escape clears the open menu.
     function onKeyDown(event) {
       if (event.key === 'Escape') setMenuPath(null)
     }
@@ -66,19 +77,23 @@ export default function PublicHeader() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  // Clears the stored path so the menu closes.
   function closeMenu() {
     setMenuPath(null)
   }
 
+  // Opens the menu for this path, or closes it if it is already open.
   function toggleMenu() {
     setMenuPath((current) =>
       current === location.pathname ? null : location.pathname,
     )
   }
 
+  // Desktop link style. Active state comes from the router.
   const linkClass = ({ isActive }) =>
     `public-nav-link ${isActive ? 'public-nav-link--active' : ''}`
 
+  // Workspace links stay active for the whole dashboard or admin section.
   function navLinkClass(item) {
     return ({ isActive }) => {
       const active = item.matchPrefix
@@ -88,6 +103,7 @@ export default function PublicHeader() {
     }
   }
 
+  // Same active rule, with the mobile link style added.
   function mobileLinkClass(item) {
     return ({ isActive }) => {
       const active = item.matchPrefix
@@ -97,6 +113,7 @@ export default function PublicHeader() {
     }
   }
 
+  // Visitors see Login. Signed-in staff and admins see the account menu.
   const showLogin = !loading && navRole === 'public'
   const showUserMenu = !loading && navRole !== 'public'
 

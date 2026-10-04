@@ -1,3 +1,7 @@
+// Public map of Manila barangays colored by planning priority.
+// App.jsx mounts this at /priority-map. /risk-map redirects here.
+// Barangay rows come from usePublicBarangays (fetchPublicBarangays).
+// Downloads use fetchPublishedExports in publicExportService.
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GeoJSON, MapContainer, ScaleControl, TileLayer } from 'react-leaflet'
@@ -28,6 +32,7 @@ import 'leaflet/dist/leaflet.css'
 const MANILA_CENTER = [14.5995, 120.9842]
 const MANILA_ZOOM = 13
 
+// Draws outlines from /manila-barangays.geojson. A click selects a name.
 function BoundaryMap({ selectedName, onSelect, riskByName, mapRef }) {
   const [data, setData] = useState(null)
 
@@ -64,6 +69,9 @@ function BoundaryMap({ selectedName, onSelect, riskByName, mapRef }) {
           data={data}
           style={(feature) => {
             const name = feature?.properties?.name
+            // fillColor is riskColors for High, Medium, or Low.
+            // A missing level uses the pale token. Stroke is foundation.
+            // The selected name gets a heavier stroke and a stronger fill.
             const level = riskByName.get(name)
             return {
               color: 'var(--color-foundation)',
@@ -82,6 +90,7 @@ function BoundaryMap({ selectedName, onSelect, riskByName, mapRef }) {
   )
 }
 
+// Loads exports an admin has approved, for the download buttons.
 function usePublishedExports() {
   const [published, setPublished] = useState([])
   useEffect(() => {
@@ -96,6 +105,7 @@ function usePublishedExports() {
   return published
 }
 
+// Uses the numeric field when the API sent one. Otherwise the fallback.
 function scoreOf(row, key, fallback) {
   const value = row?.[key]
   return typeof value === 'number' ? value : fallback
@@ -106,6 +116,7 @@ function scoreOf(row, key, fallback) {
 const PHOTO_SLOT_CLASS =
   'aspect-[16/10] h-auto max-h-[240px] w-full rounded-xl object-cover object-[100%_85%] lg:aspect-[5/4] lg:max-h-none lg:object-[100%_60%]'
 
+// Splits the credit sentence so the source name stays a link.
 function PhotoCredit({ photo }) {
   const [before, after] = photo.creditText.split(photo.creditLinkText)
   return (
@@ -124,6 +135,7 @@ function PhotoCredit({ photo }) {
   )
 }
 
+// One score row. The bar width is the value clamped between 0 and 1.
 function IndicatorRow({ icon: Icon, label, value, barClass }) {
   const width = `${Math.max(0, Math.min(1, value)) * 100}%`
   return (
@@ -142,6 +154,7 @@ function IndicatorRow({ icon: Icon, label, value, barClass }) {
   )
 }
 
+// Filters, map, selected barangay, and the public export links.
 export default function PriorityMap() {
   const { rows: barangays, loading, error } = usePublicBarangays()
   const [district, setDistrict] = useState('All Districts')

@@ -1,5 +1,10 @@
+// Short note on how the winning model was chosen.
+// Model results places this note above the score table.
+// The text and class counts come from the ml results payload.
+
 const CLASS_ORDER = ['Low', 'Medium', 'High']
 
+// Reads support for Low, Medium, and High from the first model.
 function perClassSupport(models) {
   const reference = models[0]?.per_class ?? {}
   return CLASS_ORDER.filter((cls) => reference[cls]).map((cls) => ({
@@ -8,6 +13,7 @@ function perClassSupport(models) {
   }))
 }
 
+// Prints the selection note and the held-out class counts.
 export default function SelectionCallout({ selectionNote, nTest, models }) {
   const supports = perClassSupport(models)
   return (

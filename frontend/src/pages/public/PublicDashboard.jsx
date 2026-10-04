@@ -1,3 +1,7 @@
+// Citywide flood-priority overview.
+// App.jsx mounts this at /overview inside PublicInsightsLayout.
+// The staff dashboard reuses it at /dashboard/overview.
+// Rows come from usePublicBarangays (fetchPublicBarangays).
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Building2, SearchX, ShieldAlert, ShieldCheck, Users, Waves } from 'lucide-react'
@@ -14,6 +18,7 @@ const TOP_OPTIONS = [5, 10, 20]
 const DEFAULT_TOP = 5
 const FILTER_KEYS = ['q', 'district', 'priority', 'top']
 
+// Shortens a population count for the summary card.
 function formatCompact(n) {
   return new Intl.NumberFormat('en', {
     notation: 'compact',
@@ -21,10 +26,14 @@ function formatCompact(n) {
   }).format(n)
 }
 
+// Summary cards, charts, and the table of highest-DPI barangays.
 export default function PublicDashboard({ showArea = false }) {
   const { rows: barangays, loading: isLoading, error: loadError } = usePublicBarangays()
   const [searchParams, setSearchParams] = useSearchParams()
 
+  // Filters live in the query string: q, district, priority, and top.
+  // top is how many highest-DPI rows the chart and table keep.
+  // Allowed values are 5, 10, and 20. Anything else means 5.
   const query = searchParams.get('q') ?? ''
   const district = searchParams.get('district') ?? ''
   const priorityParam = searchParams.get('priority') ?? ''
@@ -35,6 +44,7 @@ export default function PublicDashboard({ showArea = false }) {
   const filtersActive = Boolean(query.trim() || district || priority)
   const changed = Boolean(query || district || priority || top !== DEFAULT_TOP)
 
+  // Updates one query key. An empty value, or top equal to 5, is removed.
   function setParam(key, value) {
     setSearchParams(
       (current) => {
@@ -47,6 +57,7 @@ export default function PublicDashboard({ showArea = false }) {
     )
   }
 
+  // Clears q, district, priority, and top from the query string.
   function resetFilters() {
     setSearchParams(
       (current) => {
@@ -58,6 +69,7 @@ export default function PublicDashboard({ showArea = false }) {
     )
   }
 
+  // Selects a priority class, or clears it when that class is already on.
   function togglePriority(level) {
     setParam('priority', priority === level ? '' : level)
   }

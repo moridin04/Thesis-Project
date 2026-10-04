@@ -1,3 +1,7 @@
+// Number card with an icon, optional change, and a short hint.
+// The public overview imports it through shared/StatCard.
+// Priority fills: High #ef5f55, Medium #f6c25b, Low #5db36b.
+
 import { TrendingDown, TrendingUp } from 'lucide-react'
 
 const toneStyles = {
@@ -22,6 +26,7 @@ const iconTone = {
   priorityLow: 'text-foundation',
 }
 
+// Lays out the label, the value, and the hint under them.
 export default function StatCard({
   label,
   value,

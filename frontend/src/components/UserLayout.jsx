@@ -1,3 +1,7 @@
+// Older signed-in frame with a side menu, top bar, and page.
+// App.jsx uses layouts/DashboardLayout for staff routes now.
+// Titles are local. Barangay pages read the id from the path.
+
 import { Outlet, useLocation } from 'react-router-dom'
 import UserSidebar from './user/UserSidebar'
 import UserTopbar from './user/UserTopbar'
@@ -25,6 +29,7 @@ const pageMeta = {
   },
 }
 
+// Builds the title, including a decoded barangay id when present.
 export default function UserLayout() {
   const { pathname } = useLocation()
   const barangayMatch = pathname.match(/^\/app\/barangays\/([^/]+)/)

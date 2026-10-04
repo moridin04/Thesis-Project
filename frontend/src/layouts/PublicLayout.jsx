@@ -1,7 +1,12 @@
+// Public pages that share a header, a main area, and a footer.
+// App.jsx mounts this layout on /about, /indicators, /methodology,
+// and /recommendations. Child routes render through Outlet.
+// This layout does not load data. The child page does.
 import { Outlet } from 'react-router-dom'
 import PublicHeader from '../components/public/PublicHeader'
 import PublicFooter from '../components/public/PublicFooter'
 
+// Header, page slot, and footer for those four content pages.
 export default function PublicLayout() {
   return (
     <div className="page-shell-public flex min-h-screen flex-col">

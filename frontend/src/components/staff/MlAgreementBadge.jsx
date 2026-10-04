@@ -1,3 +1,8 @@
+// Small pill: does the model class match the DPI class?
+// Staff barangay list and barangay detail both show it.
+// The parent passes agrees. This file does not fetch data.
+
+// Emerald when the classes match, amber when they differ.
 export default function MlAgreementBadge({ agrees }) {
   return (
     <span

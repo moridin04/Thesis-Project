@@ -1,3 +1,7 @@
+// Dark side menu for the older signed-in user shell.
+// Only UserLayout renders it, and App.jsx no longer uses that.
+// The links are written in this file. No data module.
+
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   BookOpen,
@@ -18,6 +22,7 @@ const navItems = [
   { to: '/app/recommendations', label: 'Recommendations', icon: Lightbulb },
 ]
 
+// One Barangay Detail link stays active for any barangay id.
 export default function UserSidebar() {
   const { pathname } = useLocation()
 

@@ -1,3 +1,7 @@
+// Thin bar that grows as the reader moves down the page.
+// PublicHeader draws it along the bottom of the header.
+// The amount comes from the useScrollProgress hook.
+
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 
 /** Non-interactive progress bar under the sticky public header. */

@@ -1,5 +1,10 @@
+// Heatmap of actual class against predicted class for one model.
+// Model results shows one heatmap for each exported model.
+// Counts arrive from useMlResults through the parent section.
+
 const CLASS_ORDER = ['Low', 'Medium', 'High']
 
+// Turns flat cells into Low, Medium, and High rows with totals.
 function buildMatrix(cells) {
   const lookup = new Map(cells.map((cell) => [`${cell.actual}|${cell.predicted}`, cell.count]))
   return CLASS_ORDER.map((actual) => {
@@ -9,6 +14,7 @@ function buildMatrix(cells) {
   })
 }
 
+// Fill is #024950 mixed toward white. White text past half the row.
 function cellStyle(count, total) {
   const share = total > 0 && count != null ? count / total : 0
   return {
@@ -17,8 +23,10 @@ function cellStyle(count, total) {
   }
 }
 
+// Table of counts, with a Selected tag on the chosen model.
 export default function ConfusionMatrixHeatmap({ model, cells, selected }) {
   const rows = buildMatrix(cells)
+  // Correct predictions sit on the diagonal of the class order.
   const correct = rows.reduce((sum, row, index) => sum + (row.counts[index] ?? 0), 0)
   const total = rows.reduce((sum, row) => sum + row.total, 0)
 

@@ -1,3 +1,7 @@
+// Staff form for a barangay file that an admin must review.
+// App.jsx mounts this at /dashboard/upload for staff and admin.
+// submitUpload and uploadsForUser come from useUploadData.
+// The history table lists only the signed-in account.
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
@@ -11,6 +15,7 @@ const statusStyles = {
   rejected: 'upload-badge upload-badge--rejected',
 }
 
+// File, barangay, data type, source, and notes, then the history table.
 export default function DashboardUpload() {
   const { account } = useAuth()
   const { submitUpload, uploadsForUser, loading, error } = useUploadData()
@@ -25,6 +30,7 @@ export default function DashboardUpload() {
 
   const myUploads = uploadsForUser(account?.id)
 
+  // Submits the file, then clears the fields and shows a confirmation.
   async function handleSubmit(event) {
     event.preventDefault()
     if (submitting) return

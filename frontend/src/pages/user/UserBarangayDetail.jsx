@@ -1,6 +1,10 @@
+// Older user barangay placeholder. App.jsx does not mount this file.
+// The live profile is pages/public/BarangayProfile.jsx at /barangays/:id.
+// This file reads the barangayId param and calls no service.
 import { useParams } from 'react-router-dom'
 import PagePlaceholder from '../../components/PagePlaceholder'
 
+// Placeholder text. It names the barangay when barangayId is present.
 export default function UserBarangayDetail() {
   const { barangayId } = useParams()
 

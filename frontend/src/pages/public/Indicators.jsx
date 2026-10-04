@@ -1,3 +1,7 @@
+// Catalog of hazard, exposure, and vulnerability indicators.
+// App.jsx mounts this at /indicators inside PublicLayout.
+// The staff dashboard reuses it at /dashboard/indicators.
+// Section text comes from indicatorSections in siteContent. No API call.
 import PageHeader from '../../components/shared/PageHeader'
 import { dpiAggregationNote, indicatorSections } from '../../data/siteContent'
 
@@ -6,6 +10,7 @@ import { dpiAggregationNote, indicatorSections } from '../../data/siteContent'
 const TABLE_CLASS = 'w-full min-w-[42rem] table-fixed text-left text-sm'
 const COLUMN_WIDTHS = ['w-[18.5rem]', 'w-[30%]', '']
 
+// One table per group, under the DPI note from siteContent.
 export default function Indicators() {
   return (
     <div className="space-y-6">

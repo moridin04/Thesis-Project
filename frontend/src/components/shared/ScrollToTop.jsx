@@ -1,3 +1,7 @@
+// Sends the window back to the top after a route change.
+// main.jsx mounts one copy around the whole app.
+// It reads the path from React Router, not a data module.
+
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 

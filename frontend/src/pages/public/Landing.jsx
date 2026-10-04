@@ -1,3 +1,7 @@
+// Home page for AGOS Manila.
+// App.jsx mounts this at /, the index route.
+// Photos and team names come from landingImagery and landingTeam.
+// Scroll fade and count-up run here. This page does not call an API.
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -99,6 +103,7 @@ const audiences = [
   },
 ]
 
+// One team card: initials, name, and a mail link.
 function TeamMemberCard({ member, colorIndex }) {
   const initials = getInitials(member.name)
   const avatarColor = avatarColors[colorIndex % avatarColors.length]
@@ -124,13 +129,17 @@ function TeamMemberCard({ member, colorIndex }) {
   )
 }
 
+// Landing sections: hero, flood story, actions, audiences, and team.
 export default function Landing() {
   useEffect(() => {
     initScrollFade()
     initCountUp()
   }, [])
 
+  // If the URL has a hash, scroll that section into view.
+  // hashchange covers later clicks that only change the hash.
   useEffect(() => {
+    // Reads the hash and scrolls to that section when it exists.
     function scrollToHash() {
       const { hash } = window.location
       if (!hash) return

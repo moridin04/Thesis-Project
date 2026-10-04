@@ -1,3 +1,7 @@
+// A row of flood photos that share one color grade.
+// The landing page passes the images into this row.
+// Each item brings its own src, alt text, and caption.
+
 /**
  * Equal 3-image mosaic row with shared color grade and hover captions.
  * @param {{ images: { id: string, src: string, alt: string, caption: string }[] }} props

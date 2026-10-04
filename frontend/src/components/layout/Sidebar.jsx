@@ -1,3 +1,7 @@
+// Dark menu used only by layout/Layout.
+// That layout is an earlier shell and is not on the live routes.
+// Links cover overview, map, alerts, models, and settings.
+
 import { NavLink } from 'react-router-dom'
 import {
   Activity,
@@ -16,6 +20,7 @@ const navItems = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
+// Marks the current path and shows a short prototype note.
 export default function Sidebar() {
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-slate-800/60 bg-slate-950 text-slate-100">

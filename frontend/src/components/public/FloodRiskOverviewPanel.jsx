@@ -1,12 +1,19 @@
+// Decorative flood sketch and a search that opens rankings.
+// No current page imports this panel.
+// Legend colors come from riskLegend in theme/colors.
+// Low #5db36b, Medium #f6c25b, High #ef5f55.
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPinned, Search } from 'lucide-react'
 import { riskLegend } from '../../theme/colors'
 
+// Sketch only. The legend dots use the real priority colors.
 export default function FloodRiskOverviewPanel() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
+  // Sends the typed name to /rankings as a query, or rankings alone.
   function handleSearch(event) {
     event.preventDefault()
     const trimmed = query.trim()
@@ -42,6 +49,7 @@ export default function FloodRiskOverviewPanel() {
           className="relative h-52 overflow-hidden rounded-xl border border-pale/25 bg-foundation/70 sm:h-56"
           aria-hidden
         >
+          {/* Sketch paints #afdde5, #0fa4af, #964734, and #024950. */}
           <svg
             className="absolute inset-0 h-full w-full"
             viewBox="0 0 400 240"
@@ -103,6 +111,7 @@ export default function FloodRiskOverviewPanel() {
           </p>
         </div>
 
+        {/* Legend dots: Low #5db36b, Medium #f6c25b, High #ef5f55. */}
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-pale">
           {riskLegend.map((item) => (
             <li key={item.label} className="inline-flex items-center gap-2">

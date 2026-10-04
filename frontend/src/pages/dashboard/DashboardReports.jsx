@@ -1,3 +1,7 @@
+// Internal PDF report for staff and admin.
+// App.jsx mounts this at /dashboard/reports for those two roles.
+// Details and the file come from reportService.
+// Regenerating the PDF is limited to the admin role.
 import { useCallback, useEffect, useState } from 'react'
 import { Download, FileText, Info, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
@@ -19,11 +23,13 @@ import {
   reportFilename,
 } from '../../utils/comprehensiveReport'
 
+// Uses the API error text when it is a string. Otherwise the fallback.
 function errorMessage(err, fallback) {
   const detail = err?.response?.data?.detail
   return typeof detail === 'string' ? detail : fallback
 }
 
+// One metadata label and its value.
 function Fact({ label, value }) {
   return (
     <div className="min-w-0">
@@ -33,8 +39,10 @@ function Fact({ label, value }) {
   )
 }
 
+// Download builds the PDF when none is cached yet.
 export default function DashboardReports() {
   const { account } = useAuth()
+  // True only when the signed-in role is admin.
   const isAdmin = canRegenerateReport(account?.role)
   const [meta, setMeta] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -45,6 +53,7 @@ export default function DashboardReports() {
   const [regenerating, setRegenerating] = useState(false)
   const [regenerateError, setRegenerateError] = useState('')
 
+  // Stores the metadata, or the load error, from one request.
   const applyLoad = useCallback((request) => {
     return request
       .then((data) => {
@@ -59,11 +68,13 @@ export default function DashboardReports() {
     applyLoad(fetchComprehensiveReportMeta())
   }, [applyLoad])
 
+  // Asks again for the report metadata.
   function retry() {
     setLoading(true)
     applyLoad(fetchComprehensiveReportMeta())
   }
 
+  // Downloads the PDF and refreshes the metadata shown on the page.
   async function handleDownload() {
     setDownloading(true)
     setActionError('')
@@ -79,6 +90,7 @@ export default function DashboardReports() {
     }
   }
 
+  // Rebuilds the PDF after the confirm dialog. Admin only reaches this.
   async function handleRegenerate() {
     setRegenerating(true)
     setRegenerateError('')
@@ -92,6 +104,7 @@ export default function DashboardReports() {
     }
   }
 
+  // Closes the confirm dialog and clears its error.
   const closeDialog = useCallback(() => {
     setConfirming(false)
     setRegenerateError('')

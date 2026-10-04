@@ -1,7 +1,11 @@
+// Frame for the sign-in page: logo, return link, and the form slot.
+// App.jsx mounts this layout on /login.
+// The form is the Login page. This layout does not call auth.
 import { Outlet, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import BrandLogo from '../components/shared/BrandLogo'
 
+// Logo and return link above the Outlet, where Login renders.
 export default function AuthLayout() {
   return (
     <div className="page-shell-auth page-clip-x relative min-h-screen overflow-hidden">

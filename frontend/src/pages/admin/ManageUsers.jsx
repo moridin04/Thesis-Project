@@ -1,8 +1,13 @@
+// Admin page for staff and admin accounts.
+// App.jsx mounts this at /admin/manage-users. Only admin can enter.
+// The list and the create and update calls come from useUploadData.
+// A role is staff or admin. A status is active or inactive.
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { useUploadData } from '../../context/UploadDataContext'
 import PageHeader from '../../components/shared/PageHeader'
 
+// Create form, then a table that changes role or status.
 export default function ManageUsers() {
   const { users, updateUser, addUser, loading, error } = useUploadData()
   const [name, setName] = useState('')
@@ -13,6 +18,7 @@ export default function ManageUsers() {
   const [formError, setFormError] = useState('')
   const [busyUserId, setBusyUserId] = useState(null)
 
+  // Creates an account, then clears the form.
   async function handleAddUser(event) {
     event.preventDefault()
     if (submitting) return
@@ -36,6 +42,7 @@ export default function ManageUsers() {
     }
   }
 
+  // Saves a new role for one account.
   async function handleRoleChange(userId, nextRole) {
     setBusyUserId(userId)
     try {
@@ -45,6 +52,7 @@ export default function ManageUsers() {
     }
   }
 
+  // Saves active or inactive for one account.
   async function handleStatusChange(userId, nextStatus) {
     setBusyUserId(userId)
     try {

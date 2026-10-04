@@ -1,7 +1,12 @@
+// Horizontal bars for feature importance, grouped by theme.
+// Model results on the dashboard renders two of these charts.
+// Bar lengths use importanceScale. Colors come from theme/colors.
+
 import { useState } from 'react'
 import { colors } from '../../theme/colors'
 import { importanceTicks } from '../../utils/importanceScale'
 
+// Hazard #0fa4af, Exposure #024950, Vulnerability #964734. Else #024950.
 const GROUP_COLORS = {
   Hazard: colors.secondary,
   Exposure: colors.primary,
@@ -14,6 +19,7 @@ const GROUP_COLORS = {
 const COLUMNS = 'grid grid-cols-[8.125rem_minmax(9rem,1fr)] gap-x-3 sm:grid-cols-[12.5rem_minmax(9rem,1fr)]'
 const TICK_POSITIONS = [0, 25, 50, 75, 100]
 
+// Shows the importance, plus the spread when we have one.
 function formatValue(item) {
   const std = item.std != null ? ` ± ${item.std.toFixed(4)}` : ''
   return `${item.importance.toFixed(4)}${std}`

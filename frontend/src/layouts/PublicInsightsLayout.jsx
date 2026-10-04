@@ -1,3 +1,7 @@
+// Shell for the public insight pages: header, side menu, and page body.
+// App.jsx mounts this on /overview, /rankings, /barangays/:id, and /compare.
+// The menu also links to /methodology, which sits in PublicLayout.
+// This layout does not load barangay data. The child page does.
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BarChart2, Database, FileText, LayoutDashboard, List, Menu } from 'lucide-react'
@@ -15,6 +19,7 @@ const links = [
 
 const tagline = ['People', 'Places', 'Progress', 'Together']
 
+// Class string for a menu row. The current route is highlighted.
 function pillClass(active) {
   return `flex min-h-15 items-center gap-5 rounded-lg px-4 text-base font-medium transition ${
     active
@@ -23,10 +28,12 @@ function pillClass(active) {
   }`
 }
 
+// Desktop keeps the menu on the page. Narrow screens open it on demand.
 export default function PublicInsightsLayout() {
   const location = useLocation()
   const [open, setOpen] = useState(false)
 
+  // True when the path is that link, or a page under that path.
   function isActive(match) {
     return location.pathname === match || location.pathname.startsWith(`${match}/`) || location.pathname.startsWith(match)
   }

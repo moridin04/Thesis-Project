@@ -1,7 +1,12 @@
+// Dark login frame with a logo and a link back home.
+// App.jsx uses layouts/AuthLayout, not this copy.
+// The form itself is the route outlet. No data module.
+
 import { Outlet } from 'react-router-dom'
 import { Waves } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+// Centers the login form under a simple brand header.
 export default function AuthLayout() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">

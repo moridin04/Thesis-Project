@@ -1,3 +1,7 @@
+// Light side menu listing the public insight pages.
+// No current layout imports this file.
+// The link list is written here. No data module.
+
 import { NavLink } from 'react-router-dom'
 import {
   BookOpen,
@@ -19,6 +23,7 @@ const navItems = [
   { to: '/recommendations', label: 'Recommendations', icon: Lightbulb },
 ]
 
+// Renders the AGOS name and the public page links.
 export default function PublicSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">

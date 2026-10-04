@@ -1,3 +1,7 @@
+// About page: what AGOS is, who it is for, and the project team.
+// App.jsx mounts this at /about inside PublicLayout.
+// The user and team tables are the lists at the top of this file.
+// No API call.
 const users = [
   {
     user: 'City disaster-risk and planning personnel',
@@ -25,6 +29,7 @@ const team = [
   { name: 'Galindo, Erica O.', role: 'Documenter / Technical Writer' },
 ]
 
+// Table with a screen-reader caption and one row per record.
 function InfoTable({ caption, columns, rows }) {
   return (
     <div className="card-surface overflow-x-auto">
@@ -55,6 +60,7 @@ function InfoTable({ caption, columns, rows }) {
   )
 }
 
+// Summary, user table, team table, and the closing note.
 export default function About() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">

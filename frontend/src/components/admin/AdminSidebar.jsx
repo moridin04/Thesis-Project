@@ -1,3 +1,7 @@
+// Side menu for the admin area, under the public header.
+// layouts/AdminLayout renders it on the admin routes.
+// Items come from adminNavItemsForRole in config/adminNav.
+
 import { Link, NavLink } from 'react-router-dom'
 import { ClipboardList, FileOutput, FileText, ScrollText, Users } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
@@ -10,6 +14,7 @@ const NAV_ICONS = {
   'audit-log': ScrollText,
 }
 
+// Links follow account.role. Reports shows only if some links remain.
 export default function AdminSidebar() {
   const { account } = useAuth()
   const navItems = adminNavItemsForRole(account?.role)

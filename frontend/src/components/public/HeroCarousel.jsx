@@ -1,3 +1,7 @@
+// Full-width photo carousel behind the landing hero text.
+// The landing page passes the images and the hero copy.
+// Slide objects come from the landing imagery module.
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const AUTO_ADVANCE_MS = 5500
@@ -14,6 +18,7 @@ export default function HeroCarousel({ images, children }) {
 
   const slideCount = images.length
 
+  // Wrap the index so the ends of the list loop.
   const goTo = useCallback(
     (index) => {
       if (slideCount === 0) return
@@ -22,11 +27,15 @@ export default function HeroCarousel({ images, children }) {
     [slideCount],
   )
 
+  // Step forward.
   const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo])
+  // Step back.
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo])
 
+  // Match the reader setting for reduced motion.
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    // Store whether reduced motion is requested.
     function sync() {
       setReducedMotion(media.matches)
     }
@@ -35,13 +44,16 @@ export default function HeroCarousel({ images, children }) {
     return () => media.removeEventListener('change', sync)
   }, [])
 
+  // Advance on a timer unless motion is reduced or the reader paused it.
   useEffect(() => {
     if (reducedMotion || isPaused || slideCount <= 1) return undefined
     const timer = window.setInterval(goNext, AUTO_ADVANCE_MS)
     return () => window.clearInterval(timer)
   }, [goNext, isPaused, reducedMotion, slideCount])
 
+  // Arrow keys change slides only while focus is inside the carousel.
   useEffect(() => {
+    // Left and right arrows move between slides.
     function onKeyDown(event) {
       if (!rootRef.current?.contains(document.activeElement)) return
       if (event.key === 'ArrowLeft') {

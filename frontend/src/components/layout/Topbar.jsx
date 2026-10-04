@@ -1,5 +1,10 @@
+// Top bar for layout/Layout, with a title, search, and a bell.
+// Only that layout uses it. The search box does not call an API.
+// The name on the right is a static Ops Desk label.
+
 import { Bell, Search } from 'lucide-react'
 
+// Shows the page title and a search box that is not wired up.
 export default function Topbar({ title, subtitle }) {
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 bg-white/85 px-6 py-4 backdrop-blur-md">

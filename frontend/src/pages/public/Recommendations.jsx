@@ -1,6 +1,11 @@
+// Planning notes grouped by priority class, plus NDRRMP pillars.
+// App.jsx mounts this at /recommendations inside PublicLayout.
+// The staff dashboard reuses it at /dashboard/recommendations.
+// Text comes from siteContent. No API call.
 import PageHeader from '../../components/shared/PageHeader'
 import { ndrrmpPillars, recommendationsByCategory } from '../../data/siteContent'
 
+// Class lists, then the pillar table and the plan citation.
 export default function Recommendations() {
   return (
     <div className="space-y-6">

@@ -1,3 +1,8 @@
+// Small drawn skyline at the bottom of the insights sidebar.
+// PublicInsightsLayout draws it under the section links.
+// Building shapes and wave paths are written in this file.
+
+// Builds one wave as a row of quadratic curves.
 function wave(y, amp, phase) {
   let d = `M0 ${y}`
   for (let x = 0; x < 240; x += 20) {
@@ -7,6 +12,7 @@ function wave(y, amp, phase) {
   return d
 }
 
+// Adds tiny window rectangles onto a building path.
 function windows(x, y, cols, rows, dx = 4, dy = 6) {
   let d = ''
   for (let r = 0; r < rows; r += 1) {
@@ -40,6 +46,7 @@ const buildings = [
   'M228 96V70H240V96Z' + windows(231, 74, 2, 2),
 ]
 
+// Manila-style skyline with two wave lines under the buildings.
 export default function SidebarSkyline({ className = '' }) {
   return (
     <svg

@@ -1,3 +1,7 @@
+// Staff detail for one barangay: DPI class and the model class.
+// App.jsx mounts this at /dashboard/barangays/:id for staff and admin.
+// The id comes from the route. Data comes from fetchStaffBarangayMl.
+// A 404 from the API is shown as barangay not found.
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import BackLink from '../../components/shared/BackLink'
@@ -7,6 +11,7 @@ import MlAgreementBadge from '../../components/staff/MlAgreementBadge'
 import { IN_SAMPLE_NOTE } from '../../components/staff/mlNotes'
 import { fetchStaffBarangayMl } from '../../services/staffService'
 
+// One record, the in-sample note, and links out to related pages.
 export default function DashboardBarangayDetail() {
   const { id } = useParams()
   const [result, setResult] = useState({ id: null, record: null, error: '' })
@@ -30,6 +35,7 @@ export default function DashboardBarangayDetail() {
     }
   }, [id])
 
+  // While the stored id lags the route, we hide the previous record.
   const loading = result.id !== id
   const record = loading ? null : result.record
 

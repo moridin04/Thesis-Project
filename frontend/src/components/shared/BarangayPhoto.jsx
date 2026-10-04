@@ -1,3 +1,7 @@
+// Barangay photo, or a placeholder when the image is missing.
+// Priority map and barangay profile both use it.
+// The page passes imageUrl. Lookup lives in data/barangayPhotos.
+
 import { useState } from 'react'
 import { ImageOff } from 'lucide-react'
 
@@ -5,6 +9,7 @@ import { ImageOff } from 'lucide-react'
 const CAPTION_CLASS = 'mt-1.5 text-xs leading-snug text-ocean'
 const CAPTION_SLOT_CLASS = `${CAPTION_CLASS} min-h-[2.0625rem]`
 
+// Shows the photo, or a same-height placeholder when it is missing.
 export default function BarangayPhoto({
   imageUrl,
   alt = '',
@@ -13,6 +18,7 @@ export default function BarangayPhoto({
   reserveCaptionSpace = false,
   ...imgProps
 }) {
+  // Remember the URL that failed so a new URL can try again.
   const [failedUrl, setFailedUrl] = useState(null)
 
   if (imageUrl && failedUrl !== imageUrl) {
