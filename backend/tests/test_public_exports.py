@@ -125,7 +125,7 @@ def test_report_snapshot_puts_disclaimer_before_rows(client: TestClient, admin_h
     created = _create(client, admin_headers, kind="report")
     approved = client.post(f"{BASE}/{created['id']}/approve", headers=admin_headers).json()
     text = Path(db_session.get(PublicExport, approved["id"]).file_path).read_text("utf-8")
-    assert text.index(DISCLAIMER) < text.index('<table class="t">')
+    assert text.index(DISCLAIMER) < text.index('<table class="t"')
 
 
 def test_approve_supersedes_previous_of_same_kind(client: TestClient, admin_headers):

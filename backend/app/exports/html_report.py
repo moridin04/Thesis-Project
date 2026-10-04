@@ -1,8 +1,9 @@
-"""Self-contained public HTML report: inline CSS, embedded logo, no external requests."""
+"""Self-contained public HTML report: inline CSS, embedded logo, one inline pager script."""
 
 from __future__ import annotations
 
 import base64
+import re
 from datetime import datetime
 from functools import lru_cache
 from html import escape
@@ -13,15 +14,33 @@ from app.exports.records import district_short, place_label
 
 REPORT_TITLE = "AGOS Barangay Risk Report"
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "agos-logo-white.png"
+PAGER_LOGIC = Path(__file__).resolve().parents[3] / "frontend" / "src" / "utils" / "exportReportPager.js"
+PAGER_BOOT = Path(__file__).resolve().parent / "report_pager_boot.js"
 
 _BADGE = {"High": "h", "Medium": "m", "Low": "l"}
+_COL_WIDTHS = {
+    "rank": "52px",
+    "barangay": "110px",
+    "place": "140px",
+    "dpi_scaled": "64px",
+    "priority_class": "80px",
+    "population_2024": "96px",
+    "flood_pct_5yr": "76px",
+    "flood_pct_25yr": "84px",
+    "elevation_mean": "76px",
+    "hazard": "68px",
+    "exposure": "76px",
+    "vulnerability": "88px",
+    "planning_reference": "260px",
+    "drrm_pillar": "200px",
+}
 
 _CSS = """
 :root{--teal:#024950;--ink:#003135;--body:#3d6265;--line:#d7e6e8;--tint:#e9f5f7;--sec:#0fa4af;
 --h:#964734;--h-bg:#f3e3df;--h-tx:#7a3426;--m:#b8893d;--m-bg:#f7ecd6;--m-tx:#6b4c12;--l:#024950;--l-bg:#d9eef1;--l-tx:#024950}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:#f4f9fa;color:var(--ink);font:15px/1.5 "Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:#f4f9fa;color:var(--ink);font:15px/1.35 "Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 h1,h2,h3{font-family:"Fraunces",Georgia,"Times New Roman",serif;line-height:1.2;margin:0}
 .pg,.pg>tbody,.pg>tbody>tr,.pg>tbody>tr>td{display:block}
 .pg>tfoot,.pf{display:none}
@@ -34,7 +53,7 @@ h1,h2,h3{font-family:"Fraunces",Georgia,"Times New Roman",serif;line-height:1.2;
 .band h1{font-size:28px}
 .band .ds{margin:6px 0 0;color:#e3f4f6}
 .chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;padding:0;width:100%}
-.chips li{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600}
+.chips li{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
 .chips span{font-weight:400;color:#d6f0f3;margin-right:4px}
 main{padding:24px 0 8px}
 section{margin:0 0 32px}
@@ -53,28 +72,43 @@ b.h,b.m,b.l{display:inline-block;border-radius:999px;padding:1px 10px;font:700 1
 b.h{background:var(--h-bg);color:var(--h-tx);border-color:var(--h)}
 b.m{background:var(--m-bg);color:var(--m-tx);border-color:var(--m)}
 b.l{background:var(--l-bg);color:var(--l-tx);border-color:var(--l)}
-.f{position:absolute;opacity:0;pointer-events:none}
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
-.bar label{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--teal)}
-#pc-all:checked~.bar [for=pc-all],#pc-h:checked~.bar [for=pc-h],#pc-m:checked~.bar [for=pc-m],#pc-l:checked~.bar [for=pc-l],#hp:checked~.bar [for=hp]{background:var(--teal);color:#fff;border-color:var(--teal)}
-#pc-h:checked~.scroll tbody tr:not(.h),#pc-m:checked~.scroll tbody tr:not(.m),#pc-l:checked~.scroll tbody tr:not(.l){display:none}
-#hp:checked~.scroll .plan{display:none}
+.controls,.pager{display:none}
+html.js .controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin:0 0 12px}
+html.js .pager{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 12px}
+html.js .pager.below{margin:12px 0 0}
+.controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--teal)}
+.controls select,.controls input[type=search]{min-height:40px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font:15px/1.35 "Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;background:#fff;color:var(--ink)}
+.controls .check{flex-direction:row;align-items:center;gap:8px;min-height:40px}
+.controls button,.pager-nav button{min-height:40px;border:1px solid var(--line);border-radius:10px;padding:6px 12px;background:#fff;color:var(--teal);font:600 13px/1.35 "Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;cursor:pointer}
+.controls button:focus-visible,.pager-nav button:focus-visible,.controls select:focus-visible,.controls input:focus-visible{
+outline:2px solid var(--sec);outline-offset:2px}
+.pager-nav{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.pager-nav button[aria-current=page]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.pager-nav button:disabled{opacity:.45;cursor:not-allowed}
+.pager-nav .gap{padding:0 4px;color:var(--body)}
+.pager-status{font-size:13px;color:var(--body)}
+section:has(#hp:checked) .plan{display:none}
 .scroll{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
-.t{width:100%;min-width:1180px;border-collapse:collapse;font-size:13px;table-layout:auto}
+.t{border-collapse:collapse;table-layout:fixed;font-size:13px;line-height:1.35}
 .t caption{text-align:left;padding:10px 14px 6px;font-weight:600;color:var(--body)}
-.t th,.t td{padding:7px 10px;text-align:left;border-top:1px solid var(--line);vertical-align:top;white-space:nowrap}
+.t th,.t td{padding:8px 10px;text-align:left;border-top:1px solid var(--line);vertical-align:middle;white-space:nowrap;line-height:1.35}
 .t thead th{position:sticky;top:0;z-index:1;background:var(--tint);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--teal)}
 .t tbody tr:nth-child(even) td{background:#f7fbfc}
 .t tbody tr:hover td{background:#eef7f8}
 .t .n,.t td:first-child{text-align:right;font-variant-numeric:tabular-nums}
 .t td:first-child{color:var(--body)}
-.t td.plan,.t th.plan{white-space:normal;width:14rem;min-width:14rem;max-width:14rem}
-.pr{font-size:12px;line-height:1.35;color:var(--body)}
-.pl{display:flex;flex-wrap:wrap;gap:4px}
-.pl i{display:inline-block;background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:1px 8px;font:600 11px/1.4 "Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;font-style:normal}
+.t td.plan,.t th.plan{white-space:normal;overflow-wrap:break-word;word-break:normal;hyphens:manual;vertical-align:top}
+.t td.pr,.t th.pr{width:260px;font-size:12px;line-height:1.35;color:var(--body)}
+.t td.dr,.t th.dr{width:200px;padding-right:16px}
+.pl{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-start}
+.pl i{display:inline-block;background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:1px 7px;font:600 10px/1.3 "Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;font-style:normal;white-space:nowrap}
+#empty-row td{text-align:center;white-space:normal;color:var(--body);padding:18px 10px}
 .foot{border-top:1px solid var(--line);padding:16px 0 28px;color:var(--body);font-size:13px}
 .foot p{margin:2px 0}
-@media (max-width:600px){body{font-size:14px}.band h1{font-size:22px}.band img{width:112px}}
+@media (max-width:600px){
+body{font-size:14px}.band h1{font-size:22px}.band img{width:112px}
+html.js .controls{flex-direction:column;align-items:stretch}
+}
 @page{size:A4 landscape;margin:12mm}
 @media print{
 *{ -webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -88,13 +122,16 @@ body{background:#fff;font-size:9pt}
 .band{padding:12px 14px;border-radius:10px}
 .card,.note,.t tr{break-inside:avoid;page-break-inside:avoid}
 h2,.lead{break-after:avoid;page-break-after:avoid}
-.t{min-width:0;font-size:8pt}
+.t{width:100%;min-width:0;font-size:7.5pt}
 .t thead{display:table-header-group}
-.t th,.t td{padding:3px 5px}
+.t th,.t td{padding:4px 5px}
 .scroll{overflow:visible;border-radius:0}
-.t tbody tr{display:table-row !important}
-.t td.plan,.t th.plan{display:table-cell !important;width:32mm;min-width:28mm;max-width:36mm;white-space:normal;font-size:6.5pt}
-.bar,.f{display:none}
+.t tbody tr[hidden]:not(#empty-row){display:table-row !important}
+#empty-row{display:none !important}
+html.js .pager,html.js .controls,.pager,.controls{display:none !important}
+section:has(#hp:checked) .plan,.t td.plan,.t th.plan{display:table-cell !important;white-space:normal;font-size:6.5pt}
+.t td.pr,.t th.pr{width:32mm}
+.t td.dr,.t th.dr{width:28mm}
 }
 """
 
@@ -102,6 +139,12 @@ h2,.lead{break-after:avoid;page-break-after:avoid}
 @lru_cache(maxsize=1)
 def _logo_data_uri() -> str:
     return "data:image/png;base64," + base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+
+
+def _pager_script() -> str:
+    logic = re.sub(r"^export ", "", PAGER_LOGIC.read_text(encoding="utf-8"), flags=re.M)
+    boot = PAGER_BOOT.read_text(encoding="utf-8")
+    return logic + "\n" + boot
 
 
 def _generated_text(moment: datetime) -> str:
@@ -115,7 +158,7 @@ def _table_columns(columns: list[str]) -> list[tuple[str, str, str]]:
     if "barangay" in selected:
         spec.append(("barangay", "Barangay", ""))
     if "district" in selected or "area" in selected:
-        header = { (True, True): "District and Area", (True, False): "District", (False, True): "Area" }[
+        header = {(True, True): "District and Area", (True, False): "District", (False, True): "Area"}[
             ("district" in selected, "area" in selected)
         ]
         spec.append(("place", header, ""))
@@ -132,16 +175,24 @@ def _table_columns(columns: list[str]) -> list[tuple[str, str, str]]:
         ("planning_reference", "Planning"),
         ("drrm_pillar", "DRRM pillars"),
     )
-    numeric = {"dpi_scaled", "population_2024", "flood_pct_5yr", "flood_pct_25yr", "elevation_mean", "hazard", "exposure", "vulnerability"}
-    planning = {"planning_reference", "drrm_pillar"}
+    numeric = {
+        "dpi_scaled",
+        "population_2024",
+        "flood_pct_5yr",
+        "flood_pct_25yr",
+        "elevation_mean",
+        "hazard",
+        "exposure",
+        "vulnerability",
+    }
     for key, label in mapping:
         if key not in selected:
             continue
         extra = "n" if key in numeric else ""
-        if key in planning:
-            extra = (extra + " plan").strip()
-            if key == "planning_reference":
-                extra += " pr"
+        if key == "planning_reference":
+            extra = "plan pr"
+        elif key == "drrm_pillar":
+            extra = "plan dr"
         spec.append((key, label, extra))
     return spec
 
@@ -173,9 +224,67 @@ def _cell(key: str, row: dict, columns: set[str], extra: str) -> str:
     if key == "planning_reference":
         return f"<td{cls}>{escape(row[key])}</td>"
     if key == "drrm_pillar":
-        pills = "".join(f"<i>{escape(p)}</i>" for p in class_guide.CLASS_GUIDE[row["priority_class"]]["pillars"])
-        return f'<td class="plan"><span class="pl">{pills}</span></td>'
+        pills = "".join(
+            f"<i>{escape(class_guide.PILLAR_SHORT.get(p, p))}</i>"
+            for p in class_guide.CLASS_GUIDE[row["priority_class"]]["pillars"]
+        )
+        return f'<td class="plan dr"><span class="pl">{pills}</span></td>'
     return f"<td{cls}>{escape(str(row[key]))}</td>"
+
+
+def _colgroup(spec: list[tuple[str, str, str]]) -> tuple[str, int]:
+    cols = []
+    total = 0
+    for key, _label, _extra in spec:
+        width = _COL_WIDTHS.get(key, "72px")
+        total += int(width.replace("px", ""))
+        cols.append(f'<col style="width:{width}">')
+    return f'<colgroup>{"".join(cols)}</colgroup>', total
+
+
+def _pager_bar(position: str, count: int) -> str:
+    return (
+        f'<div class="pager {position}">'
+        f'<p class="pager-status" aria-live="polite">Showing 1 to {min(50, count)} of {count} barangays</p>'
+        f'<nav class="pager-nav" aria-label="Table pagination, {position}"></nav>'
+        "</div>"
+    )
+
+
+def _controls(has_planning: bool) -> str:
+    classes = "".join(f'<option value="{label}">{label}</option>' for label in class_guide.CLASS_ORDER)
+    districts = "".join(f'<option value="{item}">{item}</option>' for item in ("I", "II", "III", "IV", "V", "VI"))
+    hide = ""
+    if has_planning:
+        hide = (
+            '<label class="check" for="hp"><input type="checkbox" id="hp"> Hide planning columns</label>'
+        )
+    return f"""<div class="controls">
+<label for="page-size">Page size
+<select id="page-size">
+<option value="25">25</option>
+<option value="50" selected>50</option>
+<option value="100">100</option>
+</select>
+</label>
+<label for="q">Search
+<input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Barangay name or number">
+</label>
+<label for="class-filter">Priority class
+<select id="class-filter">
+<option value="">All</option>
+{classes}
+</select>
+</label>
+<label for="district-filter">District
+<select id="district-filter">
+<option value="">All</option>
+{districts}
+</select>
+</label>
+<button type="button" id="reset">Reset</button>
+{hide}
+</div>"""
 
 
 def _table(caption: str, spec: list[tuple[str, str, str]], rows: list[dict], columns: set[str]) -> str:
@@ -183,15 +292,22 @@ def _table(caption: str, spec: list[tuple[str, str, str]], rows: list[dict], col
     for _key, label, extra in spec:
         attr = f' class="{extra}"' if extra else ""
         head_cells.append(f'<th scope="col"{attr}>{escape(label)}</th>')
-    head = "".join(head_cells)
+    colgroup, width = _colgroup(spec)
     body = []
     for row in rows:
         badge = _BADGE.get(row["priority_class"], "l")
         cells = "".join(_cell(key, row, columns, extra) for key, _label, extra in spec)
-        body.append(f'<tr class="{badge}">{cells}</tr>')
+        name = escape(row["barangay"], quote=True)
+        klass = escape(row["priority_class"], quote=True)
+        district = escape(district_short(row.get("district")), quote=True)
+        body.append(
+            f'<tr class="{badge}" data-name="{name}" data-class="{klass}" data-district="{district}">{cells}</tr>'
+        )
+    empty = f'<tr id="empty-row" hidden><td colspan="{len(spec)}">No barangays match</td></tr>'
     return (
-        f'<div class="scroll"><table class="t"><caption>{escape(caption)}</caption>'
-        f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table></div>"
+        f'<div class="scroll"><table class="t" id="barangay-table" style="width:{width}px;min-width:{width}px">'
+        f"<caption>{escape(caption)}</caption>{colgroup}"
+        f"<thead><tr>{''.join(head_cells)}</tr></thead><tbody>{''.join(body)}{empty}</tbody></table></div>"
     )
 
 
@@ -248,27 +364,7 @@ def render_report(
             ("Records", len(rows)),
         )
     )
-    planning_controls = ""
-    if "planning_reference" in selected or "drrm_pillar" in selected:
-        planning_controls = (
-            '<input class="f" type="checkbox" id="hp">'
-            '<div class="bar" role="group" aria-label="Table options">'
-            '<label for="pc-all">All classes</label>'
-            '<label for="pc-h">High</label>'
-            '<label for="pc-m">Medium</label>'
-            '<label for="pc-l">Low</label>'
-            '<label for="hp">Hide planning columns</label>'
-            "</div>"
-        )
-    else:
-        planning_controls = (
-            '<div class="bar" role="group" aria-label="Table options">'
-            '<label for="pc-all">All classes</label>'
-            '<label for="pc-h">High</label>'
-            '<label for="pc-m">Medium</label>'
-            '<label for="pc-l">Low</label>'
-            "</div>"
-        )
+    has_planning = "planning_reference" in selected or "drrm_pillar" in selected
     document = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -290,12 +386,10 @@ def render_report(
 <section aria-labelledby="s-all">
 <h2 id="s-all">All barangays by priority</h2>
 <p class="lead">{escape(class_guide.TERTILE_NOTE)} DPI is the {class_guide.DPI_NAME}, scaled 0 to 100. Source: {escape(class_guide.SOURCE_NOTE)}.</p>
-<input class="f" type="radio" name="pc" id="pc-all" checked>
-<input class="f" type="radio" name="pc" id="pc-h">
-<input class="f" type="radio" name="pc" id="pc-m">
-<input class="f" type="radio" name="pc" id="pc-l">
-{planning_controls}
+{_controls(has_planning)}
+{_pager_bar("top", len(rows))}
 {_table(f"All {len(rows)} Manila barangays by DPI, highest first", spec, rows, selected)}
+{_pager_bar("below", len(rows))}
 </section>
 </main>
 <footer class="foot"><div class="wrap">
@@ -305,6 +399,7 @@ def render_report(
 </div></footer>
 </td></tr></tbody><tfoot><tr><td><div class="fsp"></div></td></tr></tfoot></table>
 <div class="pf" aria-hidden="true">{REPORT_TITLE} &middot; {meta_line} &middot; {disclaimer_html}</div>
+<script>{_pager_script()}</script>
 </body>
 </html>
 """

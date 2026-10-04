@@ -53,24 +53,30 @@ The last line repeats the disclaimer. `pandas.read_csv(path, comment="#")` loads
 
 ## HTML report (`AGOS_Barangay_Risk_Report_v{version}_{YYYY-MM-DD}.html`)
 
-One self-contained file (inline CSS, embedded logo, no external requests, no script tags):
+One self-contained file (inline CSS, embedded logo, one inline `<script>`, no external requests):
 
 1. Teal header band with the AGOS logo, title and chips for Version, Data version, Generated and Records
 2. Disclaimer callout
 3. Summary cards: High, Medium and Low counts, DPI ranges and population covered, plus the citywide
    Population (2024) represented figure computed from the rows
-4. One table of all 897 barangays in rank order
+4. One table of all 897 barangays in rank order, with a controls bar and pager (JavaScript only)
 5. Footer with version, data version and disclaimer
+
+All 897 rows are server-rendered. JavaScript only toggles the `hidden` attribute; without JavaScript
+every row is visible and the pager is hidden. Page size defaults to 50 (25 / 50 / 100). Search
+(barangay name or number) and Priority / District filters apply to all rows first, then paging.
+Rank numbers stay the overall rank. State is stored in the URL hash (page, size, class, district,
+q). Invalid hash values fall back to defaults.
 
 Table columns match the CSV (District and Area share one cell, e.g. `III · Santa Cruz`). Numbers
 are right-aligned with tabular figures; population uses a thousands separator; DPI, flood percent
-and elevation use 2 decimals. Priority is a coloured badge with text. Planning_Reference is 12px
-muted text; DRRM_Pillar is one chip per pillar. A CSS-only “Hide planning columns” checkbox
-compacts the screen view; print always shows those columns. Optional CSS-only High/Medium/Low
-filters hide rows on screen only.
+and elevation use 2 decimals. Priority is a coloured badge with text. Planning_Reference is about
+260px wrapping text; DRRM_Pillar is about 200px with one chip per pillar. A CSS-only “Hide planning
+columns” checkbox compacts the screen view; print always shows those columns.
 
-Print: A4 landscape with 12 mm margins, repeating table headers, rows kept whole, colours kept,
-planning columns visible, and a running footer with the version and disclaimer on every page.
+Print: A4 landscape with 12 mm margins, repeating table headers, every row visible (including those
+hidden by the pager), colours kept, planning columns visible, and a running footer with the version
+and disclaimer on every page. The pager and controls are hidden in print.
 
 ## Audit trail
 

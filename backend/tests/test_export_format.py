@@ -146,10 +146,17 @@ def test_html_has_disclaimer_versions_badges_and_population(html_export):
         badge = {"High": "h", "Medium": "m", "Low": "l"}[label]
         assert f'<b class="{badge}">{label}</b>' in html
         assert html.count(escape(class_guide.planning_reference(label))) == 299
-    assert html.count("<script") == 0
+    assert html.count("<script") == 1
     assert 'id="hp"' in html
-    assert html.count('<table class="t">') == 1
+    assert html.count('<table class="t"') == 1
     assert html.count("<tr class=") == 897
+    assert 'id="page-size"' in html
+    assert 'value="25"' in html and 'value="50" selected' in html and 'value="100"' in html
+    assert 'id="q"' in html
+    assert 'id="class-filter"' in html and 'id="district-filter"' in html
+    assert 'id="reset"' in html
+    assert 'data-name="Barangay 310"' in html
+    assert html.count('data-class="High"') == 299
 
 
 def test_class_guide_text_lives_only_in_the_shared_module():
@@ -168,14 +175,22 @@ def test_html_is_self_contained_and_reports_size(html_export):
     _created, html = html_export
     size = len(html.encode("utf-8"))
     print(f"HTML size: {size} bytes")
+    scripts = re.findall(r"<script\b([^>]*)>", html)
+    assert len(scripts) == 1
+    assert "src=" not in scripts[0]
+    assert html.count("</script>") == 1
+    assert not re.search(r"\son[A-Za-z]+\s*=", html)
+    assert "eval(" not in html and "fetch(" not in html and "XMLHttpRequest" not in html
     assert "http://" not in html and "https://" not in html
     assert not re.search(r"""(src|href)\s*=\s*["']?(?!data:|#)[a-z]+:""", html)
-    assert "<link" not in html and "@import" not in html and "<script" not in html
-    assert size < 600_000
+    assert "<link" not in html and "@import" not in html
+    assert size < 650_000
     assert "@page{size:A4 landscape;margin:12mm}" in html
     assert "print-color-adjust:exact" in html
+    assert "tr[hidden]" in html
     assert 'class="pf"' in html
     assert "Hide planning columns" in html
+    assert "No barangays match" in html
 
 
 def test_whitelist_accepts_context_and_planning_and_rejects_staff_fields(client: TestClient, admin_headers):
