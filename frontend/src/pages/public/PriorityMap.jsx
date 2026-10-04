@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { GeoJSON, MapContainer, ScaleControl, TileLayer, useMap } from 'react-leaflet'
-import L from 'leaflet'
+import { GeoJSON, MapContainer, ScaleControl, TileLayer } from 'react-leaflet'
 import {
   BarChart3,
   Bookmark,
@@ -22,67 +21,6 @@ import { usePublicBarangays } from '../../hooks/usePublicBarangays'
 import { buildReportHtml, downloadTextFile, exportBasename, rowsToCsv } from '../../utils/agosExport'
 import { CARTO_ATTRIBUTION, CARTO_TILE_URL } from '../../components/public/cartoBasemap'
 import 'leaflet/dist/leaflet.css'
-
-function FitToData({ data }) {
-  const map = useMap()
-  useEffect(() => {
-    if (!data?.features?.length) return
-    const bounds = L.geoJSON(data).getBounds()
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [4, 4] })
-  }, [data, map])
-  return null
-}
-
-function OverviewMiniMap() {
-  const [data, setData] = useState(null)
-
-  useEffect(() => {
-    let active = true
-    fetch('/manila-barangays.geojson')
-      .then((response) => response.json())
-      .then((json) => {
-        if (active) setData(json)
-      })
-      .catch(() => {
-        if (active) setData(null)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  return (
-    <div className="h-28 overflow-hidden rounded-lg">
-      <MapContainer
-        center={[14.5995, 120.9842]}
-        zoom={11}
-        className="h-full w-full"
-        dragging={false}
-        scrollWheelZoom={false}
-        doubleClickZoom={false}
-        boxZoom={false}
-        keyboard={false}
-        zoomControl={false}
-        attributionControl={false}
-      >
-        {data ? (
-          <>
-            <FitToData data={data} />
-            <GeoJSON
-              data={data}
-              style={{
-                color: 'var(--color-foundation)',
-                weight: 0.2,
-                fillColor: 'var(--color-secondary)',
-                fillOpacity: 0.65,
-              }}
-            />
-          </>
-        ) : null}
-      </MapContainer>
-    </div>
-  )
-}
 
 function BoundaryMap({ selectedName, onSelect, riskByName }) {
   const [data, setData] = useState(null)
@@ -264,13 +202,6 @@ export default function PriorityMap() {
               ))}
             </select>
           </label>
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-            <OverviewMiniMap />
-            <p className="mt-2 text-center text-[0.65rem] uppercase tracking-widest text-white/60">
-              City Overview
-            </p>
-          </div>
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pale">
