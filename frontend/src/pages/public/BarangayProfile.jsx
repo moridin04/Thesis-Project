@@ -15,6 +15,7 @@ import {
 import BarangayPhoto from '../../components/shared/BarangayPhoto'
 import RiskBadge from '../../components/shared/RiskBadge'
 import { fetchPublicBarangay } from '../../services/publicService'
+import { barangayHeading } from '../../utils/barangayHeading'
 import { riskColors } from '../../theme/colors'
 
 const priorityCopy = {
@@ -221,7 +222,7 @@ export default function BarangayProfile() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ocean">Barangay Profile</p>
         <h1 className="font-display mt-1 text-3xl font-bold text-foundation sm:text-4xl">
-          Barangay {headingName}, Manila
+          {barangayHeading(`Barangay ${headingName}`, profile.area)}
         </h1>
       </header>
 
