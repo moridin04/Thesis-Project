@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Building2, SearchX, ShieldAlert, Users, Waves } from 'lucide-react'
 import PageHeader from '../../components/shared/PageHeader'
@@ -7,7 +7,6 @@ import RiskDistributionChart from '../../components/charts/RiskDistributionChart
 import TopBarangaysChart from '../../components/charts/TopBarangaysChart'
 import PriorityBarangaysTable from '../../components/tables/PriorityBarangaysTable'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
-import { fetchPublicOverview } from '../../services/publicService'
 import { riskColors } from '../../theme/colors'
 
 const LEVELS = ['High', 'Medium', 'Low']
@@ -27,28 +26,8 @@ function countLevel(rows, level) {
 }
 
 export default function PublicDashboard() {
-  const [overview, setOverview] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const { rows: barangays, loading: barangaysLoading, error: barangaysError } = usePublicBarangays()
+  const { rows: barangays, loading: isLoading, error: loadError } = usePublicBarangays()
   const [searchParams, setSearchParams] = useSearchParams()
-
-  useEffect(() => {
-    let active = true
-    fetchPublicOverview()
-      .then((data) => {
-        if (active) setOverview(data)
-      })
-      .catch(() => {
-        if (active) setError('Unable to load the city overview. Check that the API is running.')
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
 
   const query = searchParams.get('q') ?? ''
   const district = searchParams.get('district') ?? ''
@@ -118,8 +97,6 @@ export default function PublicDashboard() {
     color: riskColors[level] || 'var(--color-pale)',
   }))
 
-  const isLoading = loading || barangaysLoading
-  const loadError = error || barangaysError
   const ready = !isLoading && !loadError && barangays.length > 0
 
   return (
@@ -132,8 +109,6 @@ export default function PublicDashboard() {
       {loadError ? <p className="text-sm text-accent">{loadError}</p> : null}
       {ready ? (
         <>
-          {overview ? <p className="text-sm text-ocean">Dataset {overview.dataset_version}</p> : null}
-
           <section aria-label="Filters" className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-3 xl:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))_auto]">
               <label className="block text-xs font-medium text-ocean">
