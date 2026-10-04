@@ -97,17 +97,13 @@
   --color-priority-medium-text: color-mix(in srgb, var(--color-priority-medium) 50%, black);
   --color-priority-low-text: color-mix(in srgb, var(--color-priority-low) 50%, black);
 
-  /* Approve = Vulnerability bar colour, Reject = Hazard bar colour (Barangay Profile score bars).
-     Approve text is --color-darkest (white fails at 3.02): 4.66 / hover 4.00 / active 3.67.
-     Reject text is white (ink fails at 2.18): 6.47 / hover 7.29 / active 7.75. */
+  /* Outline Approve / Reject: border = Vulnerability / Hazard bar colour (Barangay Profile).
+     Teal text fails on white (3.02), so Approve text is a darker teal:
+     5.60 on white / 4.99 hover tint / 4.63 active tint. Hazard text passes: 6.47 / 5.50 / 4.93. */
   --action-approve: var(--color-secondary);
-  --action-approve-text: var(--color-darkest);
-  --action-approve-hover: color-mix(in srgb, var(--action-approve) 92%, black);
-  --action-approve-active: color-mix(in srgb, var(--action-approve) 88%, black);
+  --action-approve-text: color-mix(in srgb, var(--action-approve) 70%, black);
   --action-reject: var(--risk-high);
-  --action-reject-text: var(--text-on-primary);
-  --action-reject-hover: color-mix(in srgb, var(--action-reject) 92%, black);
-  --action-reject-active: color-mix(in srgb, var(--action-reject) 88%, black);
+  --action-reject-text: var(--action-reject);
 
   /* Legacy aliases */
   --color-teal-darkest: var(--color-darkest);
@@ -693,48 +689,40 @@ main h2,
   font-size: 0.9375rem;
   font-weight: 600;
   white-space: nowrap;
-  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
-}
-
-/* Transparent border keeps the row height of the old primary + 1.5px-outlined secondary pair. */
-.btn-approve,
-.btn-reject {
-  border: 1.5px solid transparent;
+  transition: background-color 150ms ease;
 }
 
 .btn-approve {
-  background-color: var(--action-approve);
-  color: var(--action-approve-text);
-}
-
-.btn-approve:hover:not(:disabled) {
-  background-color: var(--action-approve-hover);
-}
-
-.btn-approve:active:not(:disabled) {
-  background-color: var(--action-approve-active);
-}
-
-.btn-approve:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--action-approve) 35%, transparent);
-  outline-offset: 2px;
+  --action: var(--action-approve);
+  --action-text: var(--action-approve-text);
 }
 
 .btn-reject {
-  background-color: var(--action-reject);
-  color: var(--action-reject-text);
+  --action: var(--action-reject);
+  --action-text: var(--action-reject-text);
 }
 
+/* Tints are mixed with the surface, not transparency, so text contrast holds on any row background. */
+.btn-approve,
+.btn-reject {
+  border: 1.5px solid var(--action);
+  background-color: var(--surface);
+  color: var(--action-text);
+}
+
+.btn-approve:hover:not(:disabled),
 .btn-reject:hover:not(:disabled) {
-  background-color: var(--action-reject-hover);
+  background-color: color-mix(in srgb, var(--action) 11%, var(--surface));
 }
 
+.btn-approve:active:not(:disabled),
 .btn-reject:active:not(:disabled) {
-  background-color: var(--action-reject-active);
+  background-color: color-mix(in srgb, var(--action) 18%, var(--surface));
 }
 
+.btn-approve:focus-visible,
 .btn-reject:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--action-reject) 35%, transparent);
+  outline: 2px solid var(--action);
   outline-offset: 2px;
 }
 
