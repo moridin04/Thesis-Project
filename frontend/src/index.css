@@ -97,12 +97,14 @@
   --color-priority-medium-text: color-mix(in srgb, var(--color-priority-medium) 50%, black);
   --color-priority-low-text: color-mix(in srgb, var(--color-priority-low) 50%, black);
 
-  /* Approve / Reject actions: darker shades of the priority Low (green) and High (red) hues so
-     white or coloured text clears 4.5:1 (approve 4.93, approve-hover 6.00, reject 5.16, reject on tint 4.52). */
-  --action-approve: #2d803b;
-  --action-approve-hover: #287134;
-  --action-reject: #c9372c;
-  --action-reject-tint: #fdecea;
+  /* Approve / Reject use the Low and High priority fills with --color-darkest text.
+     Ink contrast: approve 5.45 / hover 4.66 / active 4.30; reject 4.32 / hover 3.70 / active 3.43. */
+  --action-approve: var(--color-priority-low);
+  --action-approve-hover: color-mix(in srgb, var(--action-approve) 92%, black);
+  --action-approve-active: color-mix(in srgb, var(--action-approve) 88%, black);
+  --action-reject: var(--color-priority-high);
+  --action-reject-hover: color-mix(in srgb, var(--action-reject) 92%, black);
+  --action-reject-active: color-mix(in srgb, var(--action-reject) 88%, black);
 
   /* Legacy aliases */
   --color-teal-darkest: var(--color-darkest);
@@ -691,15 +693,23 @@ main h2,
   transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
 
+/* Transparent border keeps the row height of the old primary + 1.5px-outlined secondary pair. */
+.btn-approve,
+.btn-reject {
+  border: 1.5px solid transparent;
+  color: var(--color-darkest);
+}
+
 .btn-approve {
-  border: none;
   background-color: var(--action-approve);
-  color: var(--text-on-primary);
 }
 
 .btn-approve:hover:not(:disabled) {
   background-color: var(--action-approve-hover);
-  transform: translateY(-2px);
+}
+
+.btn-approve:active:not(:disabled) {
+  background-color: var(--action-approve-active);
 }
 
 .btn-approve:focus-visible {
@@ -708,13 +718,15 @@ main h2,
 }
 
 .btn-reject {
-  border: 1px solid var(--action-reject);
-  background-color: var(--brand-white);
-  color: var(--action-reject);
+  background-color: var(--action-reject);
 }
 
 .btn-reject:hover:not(:disabled) {
-  background-color: var(--action-reject-tint);
+  background-color: var(--action-reject-hover);
+}
+
+.btn-reject:active:not(:disabled) {
+  background-color: var(--action-reject-active);
 }
 
 .btn-reject:focus-visible {
@@ -725,7 +737,7 @@ main h2,
 .btn-approve:disabled,
 .btn-reject:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .btn-tertiary {
