@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { GeoJSON, MapContainer, ScaleControl, useMap } from 'react-leaflet'
+import { GeoJSON, MapContainer, ScaleControl, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { CARTO_ATTRIBUTION, CARTO_TILE_URL } from '../../components/public/cartoBasemap'
 import 'leaflet/dist/leaflet.css'
 import {
   Building2,
@@ -84,23 +85,25 @@ function SelectedBarangayMap({ name, riskLevel }) {
       <MapContainer
         center={[14.5995, 120.9842]}
         zoom={14}
-        className="h-full w-full"
+        // Too narrow for the scale bar and attribution side by side, so the scale bar sits above it.
+        // Important is needed to beat Leaflet's unlayered `.leaflet-bottom .leaflet-control` margin.
+        className="h-full w-full [&_.leaflet-control-scale]:mb-5!"
         dragging={false}
         scrollWheelZoom={false}
         doubleClickZoom={false}
         zoomControl={false}
-        attributionControl={false}
       >
+        <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_TILE_URL} />
         {data ? (
           <>
             <FitToData data={data} />
             <GeoJSON
               data={data}
               style={{
-                color: 'var(--color-foundation)',
-                weight: 1.5,
+                color: 'var(--color-accent)',
+                weight: 2,
                 fillColor: riskColors[riskLevel] || 'var(--color-pale)',
-                fillOpacity: 0.75,
+                fillOpacity: 0.5,
               }}
             />
           </>
