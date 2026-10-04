@@ -21,6 +21,21 @@ function SectionCard({ title, subtitle, note, action, children }) {
   )
 }
 
+/* Five subgrid rows (header, controls, plot, axis, legend) shared with the neighbouring card,
+   so both importance charts start, end and label at the same y whatever wraps. */
+function ImportanceCard({ title, subtitle, controls, children }) {
+  return (
+    <section className="card-surface row-span-5 grid min-w-0 grid-rows-subgrid gap-y-3 overflow-x-auto p-5">
+      <div>
+        <h3 className="font-display text-base font-semibold text-foundation">{title}</h3>
+        {subtitle ? <p className="mt-1 text-sm text-ocean">{subtitle}</p> : null}
+      </div>
+      <div className="flex flex-wrap content-start items-center gap-x-3 gap-y-1">{controls}</div>
+      {children}
+    </section>
+  )
+}
+
 export default function ModelResultsSection() {
   const { results, loading, error } = useMlResults()
   const [importanceModel, setImportanceModel] = useState('')
@@ -63,40 +78,51 @@ export default function ModelResultsSection() {
       </SectionCard>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <SectionCard
+        <ImportanceCard
           title="Feature importance"
           subtitle={activeImportanceModel ? `Built-in importance, ${activeImportanceModel}` : undefined}
-          note="MLP has no built-in importance; see permutation importance."
-          action={
-            importanceModels.length > 1 ? (
-              <select
-                aria-label="Feature importance model"
-                value={activeImportanceModel}
-                onChange={(event) => setImportanceModel(event.target.value)}
-                className="input-field-light w-auto text-sm"
-              >
-                {importanceModels.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+          controls={
+            <>
+              {importanceModels.length > 1 ? (
+                <select
+                  aria-label="Feature importance model"
+                  value={activeImportanceModel}
+                  onChange={(event) => setImportanceModel(event.target.value)}
+                  className="input-field-light w-auto text-sm"
+                >
+                  {importanceModels.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              <p className="text-xs text-ocean">MLP has no built-in importance; see permutation importance.</p>
+            </>
+          }
+        >
+          <FeatureImportanceChart
+            items={featureImportance[activeImportanceModel] ?? []}
+            label={`Feature importance bar chart, ${activeImportanceModel}`}
+            axisTitle="Built-in importance"
+          />
+        </ImportanceCard>
+
+        <ImportanceCard
+          title="Permutation importance"
+          subtitle="Drop in test F1-macro when each feature is shuffled"
+          controls={
+            permutationImportanceModel ? (
+              <p className="text-xs text-ocean">{permutationImportanceModel}, test set</p>
             ) : null
           }
         >
-          <FeatureImportanceChart items={featureImportance[activeImportanceModel] ?? []} />
-        </SectionCard>
-
-        <SectionCard
-          title="Permutation importance"
-          subtitle={
-            permutationImportanceModel
-              ? `Drop in test F1-macro when each feature is shuffled, ${permutationImportanceModel}`
-              : undefined
-          }
-        >
-          <FeatureImportanceChart items={permutationImportance} />
-        </SectionCard>
+          <FeatureImportanceChart
+            items={permutationImportance}
+            label={`Permutation importance bar chart, ${permutationImportanceModel || 'test set'}`}
+            axisTitle="Drop in test F1-macro"
+          />
+        </ImportanceCard>
       </div>
 
       <SectionCard
