@@ -49,7 +49,7 @@ Not all engineered features are used as model inputs. Features are selected to b
 5. `Flood_Growth_5to25` — hazard escalation rate
 6. `Land Area` — spatial scale control variable
 
-## Deterministic Benchmarking: Disaster Priority Index (DPI)
+## Deterministic Benchmarking: Disaster Prioritization Index (DPI)
 Because externally observed outcome labels (e.g., event inundation confirmations, damages, casualties) are not available, this study defines a **deterministic benchmark index** used as a proxy target for supervised learning.
 
 1. **Composite Susceptibility Index (CSI)**

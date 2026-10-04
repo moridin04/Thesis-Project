@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, Optional
+from datetime import date, datetime, timezone
+from typing import Annotated, Any, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -18,6 +19,7 @@ from app.schemas.auth import (
 )
 from app.security import ROLE_ADMIN, ROLE_STAFF
 from app.services import barangay_data
+from app.services import audit_service
 from app.services.audit_service import record_audit_log
 from app.schemas.upload import UploadPublic, UploadRejectRequest
 from app.services.auth_service import create_account
@@ -202,10 +204,13 @@ def publish_content(
 def list_audit_logs(
     _current_account: Annotated[Account, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
+    group: Annotated[Optional[Literal["uploads", "exports", "reports", "accounts"]], Query()] = None,
+    day: Annotated[Optional[date], Query(alias="date", description="Asia/Manila calendar day")] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[dict[str, Any]]:
-    from app.models.audit_log import AuditLog
-
-    logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(100).all()
+    """Read-only, newest first. There is deliberately no edit or delete route for audit rows."""
+    logs = audit_service.list_audit_logs(db, group=group, day=day, limit=limit, offset=offset)
     return [
         {
             "id": log.id,
@@ -214,10 +219,15 @@ def list_audit_logs(
             "resource_type": log.resource_type,
             "resource_id": log.resource_id,
             "details": log.details,
-            "created_at": log.created_at.isoformat(),
+            "created_at": _utc_iso(log.created_at),
         }
         for log in logs
     ]
+
+
+def _utc_iso(value: datetime) -> str:
+    # SQLite returns naive datetimes; they are stored in UTC.
+    return (value if value.tzinfo else value.replace(tzinfo=timezone.utc)).isoformat()
 
 
 @router.get("/accounts", response_model=list[AccountPublic])

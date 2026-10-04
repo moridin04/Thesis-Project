@@ -38,20 +38,3 @@ class PublicExport(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-
-class ExportAuditLog(Base):
-    """Public export workflow events; export_id is NULL for staff report downloads/regenerations."""
-
-    __tablename__ = "export_audit_log"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    export_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("public_exports.id"), nullable=True, index=True
-    )
-    actor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("accounts.id"), nullable=True)
-    actor_role: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
-    action: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    detail: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
-    )

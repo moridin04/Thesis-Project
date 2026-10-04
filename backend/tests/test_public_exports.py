@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import generated_files
-from app.models.public_export import ExportAuditLog, PublicExport
+from app.models.audit_log import AuditLog
+from app.models.public_export import PublicExport
 from app.services import barangay_data
-from tests.conftest import admin_account, client, staff_account  # noqa: F401
 
 BASE = "/api/admin/public-exports"
 DISCLAIMER = "For information purposes only. Not a warning system."
@@ -30,12 +30,12 @@ def _login(client: TestClient, username: str, password: str) -> dict[str, str]:
 
 
 @pytest.fixture()
-def admin_headers(client: TestClient, admin_account) -> dict[str, str]:  # noqa: F811
+def admin_headers(client: TestClient, admin_account) -> dict[str, str]:
     return _login(client, "agos_admin", "AdminPass1234")
 
 
 @pytest.fixture()
-def staff_headers(client: TestClient, staff_account) -> dict[str, str]:  # noqa: F811
+def staff_headers(client: TestClient, staff_account) -> dict[str, str]:
     return _login(client, "staff01", "StaffPass1234")
 
 
@@ -117,7 +117,7 @@ def test_csv_snapshot_has_disclaimer_whitelisted_header_and_checksum(
     assert lines[0].startswith("# ")
     assert any(line == f"# Disclaimer: {DISCLAIMER}" for line in lines)
     header = next(line for line in lines if not line.startswith("#"))
-    assert header == "Barangay,District,Priority class"
+    assert header == "Rank,Barangay,District,Priority_Class"
     assert approved["row_count"] == len(barangay_data.get_all_barangays())
 
 
@@ -125,7 +125,7 @@ def test_report_snapshot_puts_disclaimer_before_rows(client: TestClient, admin_h
     created = _create(client, admin_headers, kind="report")
     approved = client.post(f"{BASE}/{created['id']}/approve", headers=admin_headers).json()
     text = Path(db_session.get(PublicExport, approved["id"]).file_path).read_text("utf-8")
-    assert text.index(DISCLAIMER) < text.index("<table>")
+    assert text.index(DISCLAIMER) < text.index('<table class="t">')
 
 
 def test_approve_supersedes_previous_of_same_kind(client: TestClient, admin_headers):
@@ -192,7 +192,7 @@ def test_unpublished_and_rejected_return_404(client: TestClient, admin_headers):
     assert client.get("/api/public/exports/csv/download").status_code == 404
 
 
-def test_audit_entries_are_written(client: TestClient, admin_headers, admin_account, db_session: Session):  # noqa: F811
+def test_audit_entries_are_written(client: TestClient, admin_headers, db_session: Session):
     first = _create(client, admin_headers)
     client.patch(f"{BASE}/{first['id']}", json={"title": "Edited"}, headers=admin_headers)
     client.get(f"{BASE}/{first['id']}/preview", headers=admin_headers)
@@ -201,15 +201,27 @@ def test_audit_entries_are_written(client: TestClient, admin_headers, admin_acco
     client.post(f"{BASE}/{second['id']}/approve", headers=admin_headers)
     client.post(f"{BASE}/{second['id']}/unpublish", json={"reason": "Typo"}, headers=admin_headers)
 
-    actions = [
-        (entry.export_id, entry.action, entry.actor_id, entry.actor_role)
-        for entry in db_session.query(ExportAuditLog).order_by(ExportAuditLog.id)
+    rows = db_session.query(AuditLog).filter(AuditLog.action.startswith("export_")).order_by(AuditLog.id).all()
+    assert [(row.action, row.actor_username) for row in rows] == [
+        ("export_created", "agos_admin"),
+        ("export_edited", "agos_admin"),
+        ("export_previewed", "agos_admin"),
+        ("export_approved", "agos_admin"),
+        ("export_created", "agos_admin"),
+        ("export_superseded", "system"),
+        ("export_approved", "agos_admin"),
+        ("export_unpublished", "agos_admin"),
     ]
-    expected = ["created", "updated", "preview_downloaded", "approved", "created", "superseded", "approved", "unpublished"]
-    assert [action for _, action, _, _ in actions] == expected
-    assert {(actor, role) for _, _, actor, role in actions} == {(admin_account.id, "admin")}
     history = client.get(f"{BASE}/{first['id']}/audit", headers=admin_headers).json()
-    assert [entry["action"] for entry in history] == ["superseded", "approved", "preview_downloaded", "updated", "created"]
+    assert [entry["action"] for entry in history] == [
+        "export_superseded",
+        "export_approved",
+        "export_previewed",
+        "export_edited",
+        "export_created",
+    ]
+    assert history[0]["details"] == "CSV v1 replaced by v2"
+    assert history[0]["created_at"].endswith(("Z", "+00:00"))
 
 
 def test_preview_downloads_the_draft_snapshot(client: TestClient, admin_headers, db_session: Session):

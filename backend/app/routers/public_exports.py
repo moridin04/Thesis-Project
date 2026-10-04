@@ -58,7 +58,7 @@ def list_public_exports(_admin: AdminAccount, db: DbSession) -> list[PublicExpor
 
 @admin_router.get("/columns")
 def list_allowed_columns(_admin: AdminAccount) -> list[dict[str, str]]:
-    return [{"key": key, "label": label} for key, (label, _read) in service.PUBLIC_EXPORT_COLUMNS.items()]
+    return [{"key": key, "label": label} for key, label in service.PUBLIC_EXPORT_COLUMNS.items()]
 
 
 @admin_router.post("", response_model=PublicExportOut, status_code=status.HTTP_201_CREATED)
@@ -102,12 +102,7 @@ def preview_public_export(export_id: int, admin: AdminAccount, db: DbSession) ->
 
 @admin_router.get("/{export_id}/audit", response_model=list[ExportAuditOut])
 def public_export_audit(export_id: int, _admin: AdminAccount, db: DbSession) -> list[ExportAuditOut]:
-    entries = service.audit_history(db, export_id)
-    names = _names(db, {e.actor_id for e in entries})
-    return [
-        ExportAuditOut.model_validate(entry).model_copy(update={"actor_name": names.get(entry.actor_id)})
-        for entry in entries
-    ]
+    return [ExportAuditOut.model_validate(entry) for entry in service.audit_history(db, export_id)]
 
 
 @public_router.get("", response_model=list[PublicExportMeta])
@@ -127,4 +122,5 @@ def download_published_export(kind: str, db: DbSession) -> FileResponse:
             status.HTTP_404_NOT_FOUND,
             detail="No approved public export is available for this type yet.",
         )
+    service.record_public_download_event(db, export)
     return FileResponse(path, media_type=service.MEDIA_TYPES[kind], filename=service.download_filename(export))

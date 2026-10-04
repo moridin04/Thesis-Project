@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import csv
-import html
-import io
-from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -13,44 +9,27 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import generated_files
+from app.exports.csv_export import render_csv
+from app.exports.html_report import render_report
+from app.exports.records import PUBLIC_EXPORT_COLUMNS, ranked_rows
 from app.models.account import Account
-from app.models.public_export import EXPORT_KINDS, ExportAuditLog, PublicExport
+from app.models.audit_log import AuditLog
+from app.models.public_export import EXPORT_KINDS, PublicExport
 from app.services import barangay_data
+from app.services.audit_service import (
+    SYSTEM_ACTOR,
+    add_audit_log,
+    record_audit_log_safely,
+    record_public_download,
+)
 
 EXPORTS_SUBDIR = "exports"
 MANILA_TZ = ZoneInfo("Asia/Manila")
-
-
-def _score(key: str) -> Callable[[dict], str]:
-    def read(record: dict) -> str:
-        value = record.get(key)
-        return "" if value is None else f"{float(value):.6f}"
-
-    return read
-
-
-def _text(key: str) -> Callable[[dict], str]:
-    def read(record: dict) -> str:
-        value = record.get(key)
-        return "" if value is None else str(value)
-
-    return read
-
-
-# The only fields that may leave the server through a public export, in output order.
-PUBLIC_EXPORT_COLUMNS: dict[str, tuple[str, Callable[[dict], str]]] = {
-    "barangay": ("Barangay", _text("name")),
-    "district": ("District", _text("district")),
-    "area": ("Area", _text("area")),
-    "hazard": ("Hazard", _score("hazard")),
-    "exposure": ("Exposure", _score("exposure")),
-    "vulnerability": ("Vulnerability", _score("vulnerability")),
-    "dpi_scaled": ("DPI_Scaled", _score("dpi_scaled")),
-    "priority_class": ("Priority class", _text("risk_category")),
-}
+RESOURCE_TYPE = "public_export"
 
 FILE_EXTENSIONS = {"csv": "csv", "report": "html"}
 MEDIA_TYPES = {"csv": "text/csv; charset=utf-8", "report": "text/html; charset=utf-8"}
+KIND_LABELS = {"csv": "CSV", "report": "HTML"}
 
 
 def validate_columns(columns: list[str]) -> list[str]:
@@ -75,93 +54,46 @@ def _validate_kind(kind: str) -> str:
     return kind
 
 
-def _rows(columns: list[str]) -> list[list[str]]:
-    getters = [PUBLIC_EXPORT_COLUMNS[key][1] for key in columns]
-    return [[read(record) for read in getters] for record in barangay_data.get_all_barangays()]
-
-
-def render_csv(export: PublicExport, rows: list[list[str]], data_version: str) -> bytes:
-    buffer = io.StringIO()
-    buffer.write(f"# {export.title}\n")
-    buffer.write(f"# Version {export.version}; data version {data_version}\n")
-    for line in export.disclaimer.strip().splitlines():
-        buffer.write(f"# Disclaimer: {line}\n")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow([PUBLIC_EXPORT_COLUMNS[key][0] for key in export.columns])
-    writer.writerows(rows)
-    # BOM so Excel opens the file as UTF-8.
-    return ("\ufeff" + buffer.getvalue()).encode("utf-8")
-
-
-def render_report(export: PublicExport, rows: list[list[str]], data_version: str) -> bytes:
-    esc = html.escape
-    head = "".join(f"<th>{esc(PUBLIC_EXPORT_COLUMNS[key][0])}</th>" for key in export.columns)
-    body = "".join("<tr>" + "".join(f"<td>{esc(value)}</td>" for value in row) + "</tr>" for row in rows)
-    description = f'<p class="meta">{esc(export.description)}</p>' if export.description else ""
-    document = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>{esc(export.title)}</title>
-  <style>
-    body {{ font-family: "Plus Jakarta Sans", sans-serif; color: #003135; margin: 2rem; }}
-    h1 {{ font-size: 1.5rem; margin-bottom: 0.25rem; }}
-    .meta {{ font-size: 0.9rem; line-height: 1.5; }}
-    .disclaimer {{ margin-top: 0.75rem; padding: 0.75rem 1rem; background: #afdde5; }}
-    .rows {{ break-before: page; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.8rem; }}
-    th, td {{ border-bottom: 1px solid #afdde5; text-align: left; padding: 0.4rem 0.5rem; }}
-    th {{ background: #024950; color: #fff; }}
-  </style>
-</head>
-<body>
-  <h1>{esc(export.title)}</h1>
-  <p class="meta"><strong>Version:</strong> {export.version} &middot; <strong>Data version:</strong> {esc(data_version)}</p>
-  {description}
-  <p class="disclaimer"><strong>Disclaimer:</strong> {esc(export.disclaimer)}</p>
-  <p class="meta">Records: {len(rows)}.</p>
-  <section class="rows">
-    <table>
-      <thead><tr>{head}</tr></thead>
-      <tbody>{body}</tbody>
-    </table>
-  </section>
-</body>
-</html>
-"""
-    return document.encode("utf-8")
-
-
 def _write_snapshot(export: PublicExport, *, final: bool) -> None:
+    """Approved snapshots are never rewritten: approval writes a new final file once, from the draft."""
     data_version = barangay_data.current_data_version()
-    rows = _rows(export.columns)
+    rows = ranked_rows()
     render = render_csv if export.kind == "csv" else render_report
+    content = render(
+        title=export.title,
+        description=export.description,
+        version=export.version,
+        data_version=data_version,
+        generated_at=datetime.now(MANILA_TZ),
+        disclaimer=export.disclaimer,
+        columns=export.columns,
+        rows=rows,
+    )
     suffix = "" if final else "-draft"
     name = f"{export.kind}-v{export.version}-id{export.id}{suffix}.{FILE_EXTENSIONS[export.kind]}"
     path = generated_files.generated_path(EXPORTS_SUBDIR, name)
-    path.write_bytes(render(export, rows, data_version))
+    path.write_bytes(content)
     export.file_path = str(path)
     export.sha256 = generated_files.sha256_file(path)
     export.row_count = len(rows)
     export.data_version = data_version
 
 
-def _audit(db: Session, export: PublicExport | None, actor: Account | None, action: str, detail: dict | None = None):
-    db.add(
-        ExportAuditLog(
-            export_id=export.id if export else None,
-            actor_id=actor.id if actor else None,
-            actor_role=actor.role if actor else None,
-            action=action,
-            detail=detail,
-        )
+def export_label(export: PublicExport) -> str:
+    """"CSV v2" / "HTML v2"."""
+    return f"{KIND_LABELS.get(export.kind, export.kind.upper())} v{export.version}"
+
+
+def _audit(db: Session, export: PublicExport, actor_username: str, action: str, extra: str | None = None) -> None:
+    details = f"{export_label(export)} - {export.title}" + (f"; {extra}" if extra else "")
+    add_audit_log(
+        db,
+        action=action,
+        actor_username=actor_username,
+        resource_type=RESOURCE_TYPE,
+        resource_id=str(export.id),
+        details=details,
     )
-
-
-def record_event(db: Session, actor: Account | None, action: str, detail: dict | None = None) -> None:
-    """Audit entry not tied to a public export (staff report downloads and regenerations)."""
-    _audit(db, None, actor, action, detail)
-    db.commit()
 
 
 def _get(db: Session, export_id: int) -> PublicExport:
@@ -213,7 +145,7 @@ def create_draft(
     db.add(export)
     db.flush()
     _write_snapshot(export, final=False)
-    _audit(db, export, actor, "created", {"kind": kind, "version": export.version, "columns": columns})
+    _audit(db, export, actor.username, "export_created")
     db.commit()
     db.refresh(export)
     return export
@@ -224,10 +156,11 @@ def update_draft(db: Session, actor: Account, export_id: int, changes: dict) -> 
     _require_status(export, "draft")
     if "columns" in changes:
         changes["columns"] = validate_columns(changes["columns"])
+    changed = sorted(key for key, value in changes.items() if getattr(export, key) != value)
     for key, value in changes.items():
         setattr(export, key, value)
     _write_snapshot(export, final=False)
-    _audit(db, export, actor, "updated", {"fields": sorted(changes)})
+    _audit(db, export, actor.username, "export_edited", f"changed: {', '.join(changed) or 'nothing'}")
     db.commit()
     db.refresh(export)
     return export
@@ -247,8 +180,15 @@ def approve(db: Session, actor: Account, export_id: int) -> PublicExport:
     export.approved_at = datetime.now(timezone.utc)
     for old in previous:
         old.status = "superseded"
-        _audit(db, old, actor, "superseded", {"superseded_by": export.id})
-    _audit(db, export, actor, "approved", {"sha256": export.sha256, "row_count": export.row_count})
+        add_audit_log(
+            db,
+            action="export_superseded",
+            actor_username=SYSTEM_ACTOR,
+            resource_type=RESOURCE_TYPE,
+            resource_id=str(old.id),
+            details=f"{export_label(old)} replaced by v{export.version}",
+        )
+    _audit(db, export, actor.username, "export_approved", f"sha256 {export.sha256[:12]}")
     db.commit()
     db.refresh(export)
     return export
@@ -259,7 +199,7 @@ def reject(db: Session, actor: Account, export_id: int, reason: str) -> PublicEx
     _require_status(export, "draft")
     export.status = "rejected"
     export.status_reason = reason
-    _audit(db, export, actor, "rejected", {"reason": reason})
+    _audit(db, export, actor.username, "export_rejected", f"reason: {reason}")
     db.commit()
     db.refresh(export)
     return export
@@ -270,7 +210,7 @@ def unpublish(db: Session, actor: Account, export_id: int, reason: str) -> Publi
     _require_status(export, "approved")
     export.status = "unpublished"
     export.status_reason = reason
-    _audit(db, export, actor, "unpublished", {"reason": reason})
+    _audit(db, export, actor.username, "export_unpublished", f"reason: {reason}")
     db.commit()
     db.refresh(export)
     return export
@@ -281,17 +221,28 @@ def preview_file(db: Session, actor: Account, export_id: int) -> tuple[PublicExp
     path = Path(export.file_path or "")
     if not path.is_file():
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Snapshot file is missing.")
-    _audit(db, export, actor, "preview_downloaded")
-    db.commit()
+    record_audit_log_safely(
+        db,
+        action="export_previewed",
+        actor_username=actor.username,
+        resource_type=RESOURCE_TYPE,
+        resource_id=str(export.id),
+        details=f"{export_label(export)} - {export.title}",
+    )
     return export, path
 
 
-def audit_history(db: Session, export_id: int) -> list[ExportAuditLog]:
+def record_public_download_event(db: Session, export: PublicExport) -> None:
+    record_public_download(db, resource_id=str(export.id), label=export_label(export))
+
+
+def audit_history(db: Session, export_id: int) -> list[AuditLog]:
+    """This export's rows from the shared audit_logs table (the one the Audit Log page reads)."""
     _get(db, export_id)
     return (
-        db.query(ExportAuditLog)
-        .filter(ExportAuditLog.export_id == export_id)
-        .order_by(ExportAuditLog.created_at.desc(), ExportAuditLog.id.desc())
+        db.query(AuditLog)
+        .filter(AuditLog.resource_type == RESOURCE_TYPE, AuditLog.resource_id == str(export_id))
+        .order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
         .all()
     )
 

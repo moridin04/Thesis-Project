@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Annotated, Any, Optional
+from typing import Annotated, Optional
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 
@@ -66,15 +66,14 @@ class PublicExportOut(BaseModel):
 
 
 class ExportAuditOut(BaseModel):
+    """One audit_logs row for a public export."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    export_id: Optional[int]
-    actor_id: Optional[int]
-    actor_name: Optional[str] = None
-    actor_role: Optional[str]
     action: str
-    detail: Optional[dict[str, Any]]
+    actor_username: Optional[str]
+    details: Optional[str]
     created_at: UtcDatetime
 
 

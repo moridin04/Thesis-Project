@@ -27,8 +27,8 @@ export async function patchAccountStatus(accountId, isActive) {
   return mapAccount(data)
 }
 
-export async function fetchAuditLogs() {
-  const { data } = await api.get('/admin/audit-logs')
+export async function fetchAuditLogs(params) {
+  const { data } = await api.get('/admin/audit-logs', { params })
   return data.map(mapAuditLog)
 }
 

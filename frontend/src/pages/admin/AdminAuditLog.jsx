@@ -1,42 +1,105 @@
-import { useMemo, useState } from 'react'
-import { useUploadData } from '../../context/UploadDataContext'
+import { useEffect, useState } from 'react'
+import { LoaderCircle } from 'lucide-react'
 import PageHeader from '../../components/shared/PageHeader'
+import { fetchAuditLogs } from '../../services/adminService'
+import {
+  AUDIT_ACTION_GROUPS,
+  auditActionLabel,
+  auditLogParams,
+  hasMoreAuditRows,
+} from '../../utils/auditLog'
+
+const LOAD_ERROR = 'Unable to load audit log.'
+
+function formatTimestamp(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+}
 
 export default function AdminAuditLog() {
-  const { auditLogs, loading, error } = useUploadData()
-  const [dateFilter, setDateFilter] = useState('')
+  const [filters, setFilters] = useState({ group: '', date: '' })
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [error, setError] = useState('')
 
-  const filtered = useMemo(() => {
-    if (!dateFilter) return auditLogs
-    return auditLogs.filter((entry) => entry.timestamp.slice(0, 10) === dateFilter)
-  }, [auditLogs, dateFilter])
+  useEffect(() => {
+    let active = true
+    fetchAuditLogs(auditLogParams(filters))
+      .then((rows) => {
+        if (!active) return
+        setEntries(rows)
+        setHasMore(hasMoreAuditRows(rows.length))
+        setError('')
+      })
+      .catch(() => active && setError(LOAD_ERROR))
+      .finally(() => active && setLoading(false))
+    return () => {
+      active = false
+    }
+  }, [filters])
+
+  function updateFilter(key, value) {
+    setLoading(true)
+    setFilters((current) => ({ ...current, [key]: value }))
+  }
+
+  async function loadMore() {
+    setLoadingMore(true)
+    try {
+      const rows = await fetchAuditLogs(auditLogParams({ ...filters, offset: entries.length }))
+      setEntries((current) => [...current, ...rows])
+      setHasMore(hasMoreAuditRows(rows.length))
+    } catch {
+      setError(LOAD_ERROR)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const filtered = Boolean(filters.group || filters.date)
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Audit Log"
-        subtitle="Read-only record of uploads, approvals, rejections, and account changes."
+        subtitle="Read-only record of uploads, exports, reports, and account changes. Entries cannot be edited or deleted."
       />
 
       {error ? (
         <p className="rounded-xl border border-[color:var(--risk-high)]/30 bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)] px-4 py-3 text-sm text-foundation">
-          {typeof error === 'string' ? error : 'Unable to load audit log.'}
+          {error}
         </p>
       ) : null}
 
-      <input
-        type="date"
-        className="input-field-light max-w-xs"
-        value={dateFilter}
-        onChange={(event) => setDateFilter(event.target.value)}
-        aria-label="Filter by date"
-      />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-[minmax(0,16rem)_minmax(0,12rem)]">
+        <input
+          type="date"
+          className="input-field-light"
+          value={filters.date}
+          onChange={(event) => updateFilter('date', event.target.value)}
+          aria-label="Filter by date"
+        />
+        <select
+          className="input-field-light"
+          value={filters.group}
+          onChange={(event) => updateFilter('group', event.target.value)}
+          aria-label="Filter by action"
+        >
+          {AUDIT_ACTION_GROUPS.map((group) => (
+            <option key={group.value || 'all'} value={group.value}>
+              {group.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {loading ? (
         <p className="text-sm text-muted">Loading audit entries…</p>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[color:var(--border-subtle)]">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-[44rem] w-full text-left text-sm">
           <thead className="bg-[color:var(--color-tint-soft)] text-ocean">
             <tr>
               <th className="px-4 py-3 font-semibold">Timestamp</th>
@@ -46,18 +109,20 @@ export default function AdminAuditLog() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {entries.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-muted">
-                  No audit entries yet.
+                  {filtered ? 'No audit entries match these filters.' : 'No audit entries yet.'}
                 </td>
               </tr>
             ) : (
-              filtered.map((entry) => (
+              entries.map((entry) => (
                 <tr key={entry.id} className="border-t border-[color:var(--border-subtle)]">
-                  <td className="px-4 py-3">{new Date(entry.timestamp).toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{formatTimestamp(entry.timestamp)}</td>
                   <td className="px-4 py-3">{entry.user}</td>
-                  <td className="px-4 py-3">{entry.action}</td>
+                  <td className="whitespace-nowrap px-4 py-3" title={entry.action}>
+                    {auditActionLabel(entry.action)}
+                  </td>
                   <td className="px-4 py-3">{entry.details}</td>
                 </tr>
               ))
@@ -66,6 +131,13 @@ export default function AdminAuditLog() {
         </table>
         </div>
       )}
+
+      {!loading && hasMore ? (
+        <button type="button" className="btn-secondary" onClick={loadMore} disabled={loadingMore}>
+          {loadingMore ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : null}
+          Load more
+        </button>
+      ) : null}
     </div>
   )
 }

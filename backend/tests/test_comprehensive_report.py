@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app import generated_files
 from app.main import app
-from app.models.public_export import ExportAuditLog
+from app.models.audit_log import AuditLog
 from app.reports import comprehensive_report
 from app.reports.comprehensive_report import SECTION_TITLES, build_comprehensive_report
 
@@ -136,16 +136,19 @@ def test_cache_is_reused_until_regenerated(client: TestClient, staff_headers, ad
 
 
 def test_downloads_and_regenerations_are_audited(
-    client: TestClient, staff_headers, admin_headers, staff_account, admin_account, db_session: Session
+    client: TestClient, staff_headers, admin_headers, db_session: Session
 ):
+    assert client.get(DOWNLOAD).status_code == 401
     client.get(DOWNLOAD, headers=staff_headers)
+    client.get(DOWNLOAD, headers=admin_headers)
     client.post(REGENERATE, headers=admin_headers)
-    entries = db_session.query(ExportAuditLog).order_by(ExportAuditLog.id).all()
-    assert [(e.export_id, e.action, e.actor_id, e.actor_role) for e in entries] == [
-        (None, "report_download", staff_account.id, "staff"),
-        (None, "report_regenerate", admin_account.id, "admin"),
+    rows = db_session.query(AuditLog).filter(AuditLog.action.startswith("report_")).order_by(AuditLog.id).all()
+    data_version = comprehensive_report.report_data_version()
+    assert [(row.action, row.actor_username, row.details) for row in rows] == [
+        ("report_downloaded", "staff01", f"Comprehensive report; data version {data_version}"),
+        ("report_downloaded", "agos_admin", f"Comprehensive report; data version {data_version}"),
+        ("report_regenerated", "agos_admin", f"Comprehensive report; data version {data_version}"),
     ]
-    assert entries[0].detail["data_version"] == comprehensive_report.report_data_version()
 
 
 def test_report_has_no_public_route_and_is_not_a_public_export(client: TestClient, admin_headers):

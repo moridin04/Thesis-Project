@@ -12,8 +12,8 @@ import {
   unpublishPublicExport,
   updatePublicExport,
 } from '../../services/publicExportService'
+import { auditActionLabel } from '../../utils/auditLog'
 import {
-  AUDIT_ACTION_LABELS,
   DEFAULT_DISCLAIMER,
   EXPORT_KINDS,
   PUBLIC_EXPORT_COLUMNS,
@@ -225,9 +225,11 @@ function AuditHistory({ exportId }) {
       {state.entries.map((entry) => (
         <li key={entry.id} className="flex flex-wrap gap-x-3 gap-y-0.5 text-sm">
           <span className="tabular-nums text-muted">{formatDateTime(entry.created_at)}</span>
-          <span className="font-medium text-foundation">{AUDIT_ACTION_LABELS[entry.action] ?? entry.action}</span>
-          <span className="text-ocean">by {entry.actor_name ?? 'system'}</span>
-          {entry.detail?.reason ? <span className="w-full text-body">Reason: {entry.detail.reason}</span> : null}
+          <span className="font-medium text-foundation" title={entry.action}>
+            {auditActionLabel(entry.action)}
+          </span>
+          <span className="text-ocean">by {entry.actor_username ?? 'system'}</span>
+          {entry.details ? <span className="w-full text-body">{entry.details}</span> : null}
         </li>
       ))}
     </ol>

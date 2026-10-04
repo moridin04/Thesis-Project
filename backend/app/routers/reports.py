@@ -13,7 +13,7 @@ from app.dependencies.auth import require_admin, require_staff_or_admin
 from app.models.account import Account
 from app.reports.comprehensive_report import MissingReportInput, report_data_version
 from app.services import comprehensive_reports
-from app.services.public_exports import record_event
+from app.services.audit_service import record_audit_log_safely
 
 staff_router = APIRouter(prefix="/staff/reports", tags=["staff", "reports"])
 admin_router = APIRouter(prefix="/admin/reports", tags=["admin", "reports"])
@@ -31,6 +31,17 @@ class ReportMeta(BaseModel):
 
 def _missing_inputs(error: MissingReportInput) -> HTTPException:
     return HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Report cannot be generated. {error}")
+
+
+def _audit(db: Session, account: Account, action: str, meta: dict) -> None:
+    record_audit_log_safely(
+        db,
+        action=action,
+        actor_username=account.username,
+        resource_type="report",
+        resource_id="comprehensive",
+        details=f"Comprehensive report; data version {meta['data_version']}",
+    )
 
 
 def _meta_out(meta: dict) -> ReportMeta:
@@ -59,15 +70,10 @@ def download_comprehensive_report(
     account: Annotated[Account, Depends(require_staff_or_admin)], db: DbSession
 ) -> FileResponse:
     try:
-        path, meta, built_now = comprehensive_reports.get_or_build()
+        path, meta, _built = comprehensive_reports.get_or_build()
     except MissingReportInput as error:
         raise _missing_inputs(error) from error
-    record_event(
-        db,
-        account,
-        "report_download",
-        {"report": "comprehensive", "data_version": meta["data_version"], "built_now": built_now},
-    )
+    _audit(db, account, "report_downloaded", meta)
     return FileResponse(
         path,
         media_type="application/pdf",
@@ -83,10 +89,5 @@ def regenerate_comprehensive_report(
         _path, meta, _built = comprehensive_reports.get_or_build(force=True)
     except MissingReportInput as error:
         raise _missing_inputs(error) from error
-    record_event(
-        db,
-        account,
-        "report_regenerate",
-        {"report": "comprehensive", "data_version": meta["data_version"], "page_count": meta["page_count"]},
-    )
+    _audit(db, account, "report_regenerated", meta)
     return _meta_out(meta)

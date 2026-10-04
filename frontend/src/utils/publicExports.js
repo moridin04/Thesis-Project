@@ -12,7 +12,7 @@ export const PUBLIC_EXPORT_COLUMNS = [
   { key: 'exposure', label: 'Exposure' },
   { key: 'vulnerability', label: 'Vulnerability' },
   { key: 'dpi_scaled', label: 'DPI_Scaled' },
-  { key: 'priority_class', label: 'Priority class' },
+  { key: 'priority_class', label: 'Priority_Class' },
 ]
 
 export const DEFAULT_DISCLAIMER =
@@ -24,16 +24,6 @@ export const STATUS_LABELS = {
   rejected: 'Rejected',
   unpublished: 'Unpublished',
   superseded: 'Superseded',
-}
-
-export const AUDIT_ACTION_LABELS = {
-  created: 'Created draft',
-  updated: 'Edited draft',
-  preview_downloaded: 'Downloaded preview',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  unpublished: 'Unpublished',
-  superseded: 'Superseded by a newer version',
 }
 
 export function kindLabel(kind) {
