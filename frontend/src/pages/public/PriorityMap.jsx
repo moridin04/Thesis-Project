@@ -288,18 +288,20 @@ export default function PriorityMap() {
 
         <aside className="order-3 w-full shrink-0 bg-white p-4 text-foundation lg:w-[22rem] lg:overflow-y-auto">
           <p className="mb-3 text-sm font-semibold">Selected Barangay</p>
-          <div className="mb-3">
-            <BarangayPhoto
-              imageUrl={photo?.src}
-              alt={photo?.alt}
-              className={PHOTO_SLOT_CLASS}
-              width={photo?.width}
-              height={photo?.height}
-              loading="lazy"
-              caption={photo ? <PhotoCredit photo={photo} /> : null}
-              reserveCaptionSpace
-            />
-          </div>
+          {photo ? (
+            <div className="mb-3">
+              <BarangayPhoto
+                imageUrl={photo.src}
+                alt={photo.alt}
+                className={PHOTO_SLOT_CLASS}
+                width={photo.width}
+                height={photo.height}
+                loading="lazy"
+                caption={<PhotoCredit photo={photo} />}
+                reserveCaptionSpace
+              />
+            </div>
+          ) : null}
           {selected ? (
             <Link
               to={`/barangays/${encodeURIComponent(selected.id)}`}
