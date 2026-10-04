@@ -1043,13 +1043,44 @@ main h2,
   outline-offset: 2px;
 }
 
-.disclaimer-card .btn-primary:disabled {
+.disclaimer-card .btn-primary[aria-disabled='true'] {
   background: color-mix(in srgb, var(--color-primary) 18%, var(--brand-white));
   color: var(--color-darkest);
+  cursor: not-allowed;
+  transform: none;
 }
 
-.disclaimer-card .disclaimer-helper {
-  color: var(--color-darkest);
+.disclaimer-card .btn-primary[aria-disabled='true']:hover {
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--brand-white));
+  transform: none;
+}
+
+.disclaimer-agree {
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  margin-inline: -0.5rem;
+}
+
+.disclaimer-agree--nudge {
+  background: var(--color-tint-soft);
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+@keyframes disclaimer-nudge {
+  0%,
+  100% {
+    outline-color: var(--color-secondary);
+  }
+  50% {
+    outline-color: var(--color-primary);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .disclaimer-agree--nudge {
+    animation: disclaimer-nudge 700ms ease;
+  }
 }
 
 @keyframes disclaimer-fade {

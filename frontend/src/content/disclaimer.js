@@ -19,5 +19,3 @@ export const DISCLAIMER_CHECKBOX_LABEL = 'I have read and agree to these terms'
 export const DISCLAIMER_BUTTON_LABEL = 'I understand'
 
 export const DISCLAIMER_CLOSE_LABEL = 'Close'
-
-export const DISCLAIMER_HELPER = 'Tick the box to continue'

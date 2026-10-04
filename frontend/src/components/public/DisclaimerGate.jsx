@@ -5,7 +5,6 @@ import {
   DISCLAIMER_BUTTON_LABEL,
   DISCLAIMER_CHECKBOX_LABEL,
   DISCLAIMER_CLOSE_LABEL,
-  DISCLAIMER_HELPER,
   DISCLAIMER_LEAD,
   DISCLAIMER_TITLE,
 } from '../../content/disclaimer.js'
@@ -35,12 +34,13 @@ export function DisclaimerReopenButton({ className }) {
 export function DisclaimerDialog({
   mode,
   agreed,
+  nudge,
   onAgreedChange,
   onConfirm,
+  onBlocked,
   onDismiss,
   titleId,
   bodyId,
-  helperId,
   dialogRef,
   checkboxRef,
 }) {
@@ -62,6 +62,7 @@ export function DisclaimerDialog({
         onSubmit={(event) => {
           event.preventDefault()
           if (canConfirm) onConfirm()
+          else onBlocked()
         }}
       >
         <h2 id={titleId} className="font-display text-xl font-semibold text-heading">
@@ -73,7 +74,9 @@ export function DisclaimerDialog({
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm font-medium text-foundation">
+        <label
+          className={`disclaimer-agree flex min-h-11 cursor-pointer items-start gap-3 text-sm font-medium text-foundation${nudge ? ' disclaimer-agree--nudge' : ''}`}
+        >
           <input
             ref={checkboxRef}
             type="checkbox"
@@ -84,21 +87,13 @@ export function DisclaimerDialog({
           />
           <span>{DISCLAIMER_CHECKBOX_LABEL}</span>
         </label>
-        <div className="space-y-2">
-          <button
-            type="submit"
-            className="btn-primary w-full"
-            disabled={!canConfirm}
-            title={!canConfirm ? DISCLAIMER_HELPER : undefined}
-          >
-            {buttonLabel}
-          </button>
-          {!canConfirm ? (
-            <p id={helperId} className="disclaimer-helper text-center text-xs">
-              {DISCLAIMER_HELPER}
-            </p>
-          ) : null}
-        </div>
+        <button
+          type="submit"
+          className="btn-primary w-full"
+          aria-disabled={!canConfirm}
+        >
+          {buttonLabel}
+        </button>
       </form>
     </div>
   )
@@ -108,13 +103,14 @@ export default function DisclaimerGate({ children }) {
   const { pathname } = useLocation()
   const titleId = useId()
   const bodyId = useId()
-  const helperId = useId()
   const dialogRef = useRef(null)
   const checkboxRef = useRef(null)
   const restoreFocusRef = useRef(null)
+  const nudgeTimerRef = useRef(null)
   const [record, setRecord] = useState(() => readAcknowledgement())
   const [reopen, setReopen] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [nudge, setNudge] = useState(false)
   const excluded = isDisclaimerExcludedPath(pathname)
   const mode = reopen ? 'reopen' : 'gate'
   const open = shouldShowDisclaimer({ pathname, record, reopen })
@@ -122,6 +118,19 @@ export default function DisclaimerGate({ children }) {
   const closeReopen = useCallback(() => {
     setReopen(false)
     setAgreed(false)
+    setNudge(false)
+  }, [])
+
+  const handleAgreedChange = useCallback((checked) => {
+    setAgreed(checked)
+    if (checked) setNudge(false)
+  }, [])
+
+  const handleBlocked = useCallback(() => {
+    setNudge(true)
+    checkboxRef.current?.focus()
+    window.clearTimeout(nudgeTimerRef.current)
+    nudgeTimerRef.current = window.setTimeout(() => setNudge(false), 1200)
   }, [])
 
   const confirm = useCallback(() => {
@@ -183,6 +192,7 @@ export default function DisclaimerGate({ children }) {
   useEffect(
     () => () => {
       document.body.style.overflow = ''
+      window.clearTimeout(nudgeTimerRef.current)
     },
     [],
   )
@@ -196,12 +206,13 @@ export default function DisclaimerGate({ children }) {
         <DisclaimerDialog
           mode={mode}
           agreed={agreed}
-          onAgreedChange={setAgreed}
+          nudge={nudge}
+          onAgreedChange={handleAgreedChange}
           onConfirm={confirm}
+          onBlocked={handleBlocked}
           onDismiss={closeReopen}
           titleId={titleId}
           bodyId={bodyId}
-          helperId={helperId}
           dialogRef={dialogRef}
           checkboxRef={checkboxRef}
         />
