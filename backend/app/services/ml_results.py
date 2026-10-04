@@ -1,3 +1,9 @@
+# Staff model-results page. The numbers come from the pipeline's saved CSVs.
+# The selected model is the row with the highest mean CV F1-macro.
+# Importance lists keep the top 10 of the 11 thesis predictors.
+# This file does not refit a model or compute DPI.
+# get_model_summary is the smaller card the public overview is allowed to show.
+
 from __future__ import annotations
 
 import ast
@@ -6,16 +12,25 @@ from pathlib import Path
 
 import pandas as pd
 
+# Notebook Output folder. parents[3] is the repo root.
 OUTPUT_DIR = Path(__file__).resolve().parents[3] / "src" / "ML-thesis-updated" / "Output"
+# One row per trained model. Selection uses CV_F1_Macro_Mean from here.
 MODEL_COMPARISON_CSV = OUTPUT_DIR / "model_comparison_results.csv"
+# Random forest impurity importance. The file should name one model.
 RF_IMPORTANCE_CSV = OUTPUT_DIR / "feature_importance_random_forest.csv"
+# Gradient boosting impurity importance. The file should name one model.
 GB_IMPORTANCE_CSV = OUTPUT_DIR / "feature_importance_gradient_boosting.csv"
+# Permutation importance on held-out rows, for one model.
 PERMUTATION_IMPORTANCE_CSV = OUTPUT_DIR / "permutation_feature_importance.csv"
+# Optional. If this file is missing, the matrices stay empty and the page still loads.
 CONFUSION_MATRICES_CSV = OUTPUT_DIR / "confusion_matrices.csv"
 
+# Priority labels. Per-class columns and the test-size check use these names.
 CLASSES = ("Low", "Medium", "High")
+# How many features each importance list keeps, highest score first.
 TOP_N = 10
 
+# Display label and component group for the 11 predictors. Other names are rejected.
 FEATURE_META: dict[str, dict[str, str]] = {
     "Flood_PCT_5yr": {"label": "Flood coverage (5-yr, %)", "group": "Hazard"},
     "Flood_PCT_25yr": {"label": "Flood coverage (25-yr, %)", "group": "Hazard"},
@@ -42,6 +57,7 @@ FEATURE_META: dict[str, dict[str, str]] = {
     "Elevation_Mean": {"label": "Mean elevation (m)", "group": "Vulnerability"},
 }
 
+# Required comparison columns, including Precision, Recall, F1, and Support per class.
 MODEL_COMPARISON_COLUMNS = [
     "Model",
     "CV_F1_Macro_Mean",
@@ -53,16 +69,20 @@ MODEL_COMPARISON_COLUMNS = [
     "F1_Weighted",
     "ROC_AUC_OVR_Macro",
 ] + [f"{metric}_{cls}" for cls in CLASSES for metric in ("Precision", "Recall", "F1", "Support")]
+# Columns required in the two impurity-importance files.
 IMPORTANCE_COLUMNS = ["Feature", "Importance", "Model"]
+# Feature, mean, spread, and model name required in the permutation file.
 PERMUTATION_COLUMNS = [
     "Feature",
     "Permutation_Importance_Mean",
     "Permutation_Importance_Std",
     "Model",
 ]
+# Long form: one actual and predicted pair, plus how many rows fell in that cell.
 CONFUSION_COLUMNS = ["Model", "Actual", "Predicted", "Count"]
 
 
+# Load one results CSV and stop if a column this page needs is missing.
 def _read_csv(path: Path, required: list[str]) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"ML results file not found: {path}")
@@ -73,10 +93,12 @@ def _read_csv(path: Path, required: list[str]) -> pd.DataFrame:
     return frame
 
 
+# A blank cell stays null. ROC-AUC and the permutation std both allow that.
 def _optional_float(value) -> float | None:
     return None if pd.isna(value) else float(value)
 
 
+# Best_Params is a dict printed as text. literal_eval reads it, then we drop model__.
 def _best_params(raw) -> dict:
     if pd.isna(raw) or not str(raw).strip():
         return {}
@@ -86,6 +108,7 @@ def _best_params(raw) -> dict:
     return {str(key).removeprefix("model__"): value for key, value in params.items()}
 
 
+# Attach the thesis label and group. An unknown feature name is an error.
 def _feature_item(feature: str, importance: float, std: float | None = None) -> dict:
     meta = FEATURE_META.get(feature)
     if meta is None:
@@ -99,11 +122,14 @@ def _feature_item(feature: str, importance: float, std: float | None = None) -> 
     }
 
 
+# One record per model. selected follows mean CV F1-macro, not the test F1.
 def _models(frame: pd.DataFrame) -> tuple[list[dict], str, int]:
     if frame.empty:
         raise ValueError(f"{MODEL_COMPARISON_CSV.name} has no model rows.")
+    # idxmax keeps the earliest row if two models share the same mean.
     selected = str(frame.loc[frame["CV_F1_Macro_Mean"].idxmax(), "Model"])
 
+    # Support columns are the held-out counts. Every model must report the same total.
     test_sizes = {int(sum(row[f"Support_{cls}"] for cls in CLASSES)) for _, row in frame.iterrows()}
     if len(test_sizes) != 1:
         raise ValueError(f"Models report different test-set sizes: {sorted(test_sizes)}")
@@ -136,6 +162,7 @@ def _models(frame: pd.DataFrame) -> tuple[list[dict], str, int]:
     return models, selected, test_sizes.pop()
 
 
+# Top features by impurity score for the single model named in the file.
 def _importance(path: Path) -> tuple[str, list[dict]]:
     frame = _read_csv(path, IMPORTANCE_COLUMNS)
     models = frame["Model"].dropna().unique()
@@ -145,6 +172,7 @@ def _importance(path: Path) -> tuple[str, list[dict]]:
     return str(models[0]), [_feature_item(r["Feature"], r["Importance"]) for _, r in top.iterrows()]
 
 
+# Same top cut, using the permutation mean, and the std when the cell is filled.
 def _permutation() -> tuple[str, list[dict]]:
     frame = _read_csv(PERMUTATION_IMPORTANCE_CSV, PERMUTATION_COLUMNS)
     models = frame["Model"].dropna().unique()
@@ -164,6 +192,7 @@ def _permutation() -> tuple[str, list[dict]]:
     return str(models[0]), items
 
 
+# Group matrix rows by model. No file means the pipeline has not exported them yet.
 def _confusion() -> dict[str, list[dict]]:
     if not CONFUSION_MATRICES_CSV.exists():
         return {}
@@ -176,6 +205,7 @@ def _confusion() -> dict[str, list[dict]]:
     return matrices
 
 
+# Says why the CV winner was kept, and if another model scored higher on the test set.
 def _selection_note(models: list[dict], selected: str) -> str:
     chosen = next(m for m in models if m["model"] == selected)
     note = (
@@ -192,11 +222,13 @@ def _selection_note(models: list[dict], selected: str) -> str:
     return note
 
 
+# Public card: selected model, test size, and how many of those rows were correct.
 def get_model_summary() -> dict:
     """Public, minimal summary: selected model and its held-out accuracy count."""
     results = get_ml_results()
     selected = next(m["model"] for m in results["models"] if m["selected"])
     cells = results["confusion_matrices"].get(selected, [])
+    # Diagonal of the confusion matrix. None when that CSV was not exported.
     correct = sum(cell["count"] for cell in cells if cell["actual"] == cell["predicted"]) if cells else None
     n_test = results["n_test"]
     return {
@@ -207,6 +239,7 @@ def get_model_summary() -> dict:
     }
 
 
+# Full staff payload, cached so every chart on the page shares one CSV read.
 @lru_cache(maxsize=1)
 def get_ml_results() -> dict:
     comparison = _read_csv(MODEL_COMPARISON_CSV, MODEL_COMPARISON_COLUMNS)

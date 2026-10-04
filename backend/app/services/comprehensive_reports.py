@@ -1,3 +1,9 @@
+# Disk cache for the staff and admin comprehensive PDF.
+# reports/comprehensive_report.py builds the file from the saved ML outputs.
+# We store the PDF and a JSON sidecar under backend/generated/reports.
+# The file name includes the data-version checksum, so new outputs are a new file.
+# The reports router serves this cache. Only an admin can force a rebuild.
+
 from __future__ import annotations
 
 import json
@@ -9,15 +15,19 @@ from pathlib import Path
 from app import generated_files
 from app.reports import comprehensive_report
 
+# Folder name under backend/generated.
 REPORTS_SUBDIR = "reports"
+# One build at a time, so two requests cannot write the same PDF together.
 _build_lock = threading.Lock()
 
 
+# PDF path and the JSON sidecar beside it. The checksum is in the file name.
 def _paths(data_version: str) -> tuple[Path, Path]:
     pdf = generated_files.generated_path(REPORTS_SUBDIR, f"comprehensive-{data_version}.pdf")
     return pdf, pdf.with_suffix(".json")
 
 
+# Both files must exist. generated_at is parsed back into a datetime.
 def _read_meta(meta_path: Path, pdf_path: Path) -> dict | None:
     if not (meta_path.is_file() and pdf_path.is_file()):
         return None
@@ -26,12 +36,14 @@ def _read_meta(meta_path: Path, pdf_path: Path) -> dict | None:
     return meta
 
 
+# What the report meta route reads. None means this version has no PDF yet.
 def cached_meta() -> dict | None:
     """Metadata of the cached report for the current data version, or None if it isn't built yet."""
     pdf_path, meta_path = _paths(comprehensive_report.report_data_version())
     return _read_meta(meta_path, pdf_path)
 
 
+# Staff download and admin rebuild. force=True replaces the cached PDF.
 def get_or_build(*, force: bool = False) -> tuple[Path, dict, bool]:
     """Return (pdf path, metadata, built_now). Reuses the cached file for the current data version."""
     with _build_lock:
@@ -42,6 +54,7 @@ def get_or_build(*, force: bool = False) -> tuple[Path, dict, bool]:
             if meta is not None:
                 return pdf_path, meta, False
 
+        # Write a side file, then replace, so a failed build leaves the old PDF.
         partial = pdf_path.with_suffix(".pdf.part")
         result = comprehensive_report.build_comprehensive_report(partial)
         os.replace(partial, pdf_path)
@@ -56,6 +69,7 @@ def get_or_build(*, force: bool = False) -> tuple[Path, dict, bool]:
         return pdf_path, meta, True
 
 
+# The date in the download name is generated_at in Asia/Manila.
 def download_filename(meta: dict) -> str:
     stamp = meta["generated_at"].astimezone(comprehensive_report.MANILA_TZ).strftime("%Y-%m-%d")
     return f"Manila_Barangay_Flood_Risk_Comprehensive_Report_{stamp}.pdf"

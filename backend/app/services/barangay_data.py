@@ -1,3 +1,9 @@
+# Barangay records for the public, staff, and admin pages.
+# We read the saved predictions CSV, then attach district and area.
+# DPI, rank, and risk class are columns in that CSV. We do not compute them.
+# Upload review and the public exports read these rows.
+# ML class fields are built apart and are returned on the staff routes.
+
 from __future__ import annotations
 
 import hashlib
@@ -7,6 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
+# Pipeline output CSV. parents[3] is the repo root.
 PREDICTIONS_CSV = (
     Path(__file__).resolve().parents[3]
     / "src"
@@ -14,9 +21,13 @@ PREDICTIONS_CSV = (
     / "Output"
     / "barangay_flood_risk_predictions.csv"
 )
+# District lookup in backend/app/data, one row per barangay number.
 DISTRICT_CSV = Path(__file__).resolve().parents[1] / "data" / "manila_barangay_district_mapping.csv"
+# Area lookup in backend/app/data, matched on the barangay name.
 AREA_CSV = Path(__file__).resolve().parents[1] / "data" / "manila_barangay_area_mapping.csv"
+# Label shown in the API. The export checksum is computed separately.
 DATASET_VERSION = "barangay_flood_risk_predictions"
+# Pipeline notebook. We only search its saved text for the model name and CV score.
 NOTEBOOK_PATH = (
     Path(__file__).resolve().parents[3]
     / "src"
@@ -25,6 +36,7 @@ NOTEBOOK_PATH = (
 )
 
 
+# NaN becomes null. Other floats are rounded to 6 places in the JSON we return.
 def _clean(value):
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
@@ -33,12 +45,14 @@ def _clean(value):
     return value
 
 
+# Blank cells become null. Anything else is returned as stripped text.
 def _text(value) -> str | None:
     if value is None or pd.isna(value) or not str(value).strip():
         return None
     return str(value).strip()
 
 
+# One public barangay. priority_score copies DPI_Scaled. image_url stays null.
 def _record(row: pd.Series) -> dict:
     district = row.get("District")
     return {
@@ -68,6 +82,7 @@ def _record(row: pd.Series) -> dict:
     }
 
 
+# Area names, read once. A duplicate barangay name aborts the load.
 @lru_cache(maxsize=1)
 def _areas() -> dict[str, str]:
     """Area names keyed by the published barangay name; never by Barangay_No (818 and 818-A differ)."""
@@ -82,6 +97,7 @@ def _areas() -> dict[str, str]:
     }
 
 
+# Barangay name is the id. Blank or repeated names stop the load.
 def validate_barangay_keys(frame: pd.DataFrame) -> None:
     """Fail loudly if `Barangay` cannot serve as the unique record key."""
     names = frame["Barangay"]
@@ -94,6 +110,7 @@ def validate_barangay_keys(frame: pd.DataFrame) -> None:
         raise ValueError(f"Barangay values must be unique; duplicates found: {duplicated}.")
 
 
+# District join used at load time. The predictions row count must stay the same.
 def attach_districts_by_barangay_no(predictions: pd.DataFrame, districts: pd.DataFrame) -> pd.DataFrame:
     """Join districts on Barangay_No, the only place Barangay_No is used as a key.
 
@@ -114,16 +131,19 @@ def attach_districts_by_barangay_no(predictions: pd.DataFrame, districts: pd.Dat
     return merged
 
 
+# Predictions plus districts, cached. Startup warms this through load_barangays.
 @lru_cache(maxsize=1)
 def _frame() -> pd.DataFrame:
     predictions = pd.read_csv(PREDICTIONS_CSV)
     validate_barangay_keys(predictions)
     districts = pd.read_csv(DISTRICT_CSV)
+    # Both Barangay_No columns use nullable integers so a bad value stays missing.
     predictions["Barangay_No"] = pd.to_numeric(predictions["Barangay_No"], errors="coerce").astype("Int64")
     districts["Barangay_No"] = pd.to_numeric(districts["Barangay_No"], errors="coerce").astype("Int64")
     return attach_districts_by_barangay_no(predictions, districts)
 
 
+# First 16 hex digits of SHA-256 over the three CSVs. Exports store this.
 def current_data_version() -> str:
     """Short checksum of the files behind the public barangay records; changes when any of them does."""
     digest = hashlib.sha256()
@@ -132,16 +152,19 @@ def current_data_version() -> str:
     return digest.hexdigest()[:16]
 
 
+# Called at app startup so the first page request is not the one that reads the CSVs.
 def load_barangays() -> None:
     _frame()
     _areas()
 
 
+# Every barangay, sorted by the CSV DPI_Rank column, smallest rank number first.
 def get_all_barangays() -> list[dict]:
     frame = _frame().sort_values("DPI_Rank")
     return [_record(row) for _, row in frame.iterrows()]
 
 
+# Match on the Barangay column. None when that name is not in the CSV.
 def get_barangay_by_id(barangay_id: str) -> dict | None:
     frame = _frame()
     match = frame.loc[frame["Barangay"] == barangay_id]
@@ -150,10 +173,12 @@ def get_barangay_by_id(barangay_id: str) -> dict | None:
     return _record(match.iloc[0])
 
 
+# Public rankings route. Same rows and DPI_Rank order as get_all_barangays.
 def get_rankings() -> list[dict]:
     return get_all_barangays()
 
 
+# Staff row. agrees_with_dpi is true when the two saved class strings are equal.
 def _ml_record(row: pd.Series) -> dict:
     """Staff-only: ML predictions are in-sample and must never reach public responses."""
     dpi_class = str(row["DPI_Risk_Class"])
@@ -170,6 +195,7 @@ def _ml_record(row: pd.Series) -> dict:
     }
 
 
+# One staff ML row for a barangay name, or None when the name is missing.
 def get_barangay_ml(barangay_id: str) -> dict | None:
     frame = _frame()
     match = frame.loc[frame["Barangay"] == barangay_id]
@@ -178,6 +204,7 @@ def get_barangay_ml(barangay_id: str) -> dict | None:
     return _ml_record(match.iloc[0])
 
 
+# Staff list in DPI_Rank order. differs_only keeps rows whose class labels disagree.
 def list_barangay_ml(differs_only: bool = False) -> list[dict]:
     records = [_ml_record(row) for _, row in _frame().sort_values("DPI_Rank").iterrows()]
     if differs_only:
@@ -185,14 +212,17 @@ def list_barangay_ml(differs_only: bool = False) -> list[dict]:
     return records
 
 
+# Chosen model from the notebook text, plus the CV F1-macro printed beside that name.
 @lru_cache(maxsize=1)
 def get_model_evaluation() -> dict:
     """Read the saved pipeline notebook output for the selected model."""
     text = NOTEBOOK_PATH.read_text(encoding="utf-8")
+    # The last Best model line wins if the notebook printed the phrase more than once.
     model_names = re.findall(r"Best model: ([A-Za-z][A-Za-z ]+)", text)
     if not model_names:
         raise RuntimeError("Selected model name was not found in the pipeline notebook.")
     model_name = model_names[-1].strip()
+    # Keep the first decimal after the model name. A second decimal must follow.
     score_row = re.search(
         rf"{re.escape(model_name)}\s+(0\.\d+)\s+0\.\d+",
         text,
@@ -206,6 +236,7 @@ def get_model_evaluation() -> dict:
     }
 
 
+# Counts of the Low, Medium, and High labels, plus total 2024 population.
 def get_overview_stats() -> dict:
     rows = get_all_barangays()
     counts = {"Low": 0, "Medium": 0, "High": 0}
@@ -214,6 +245,7 @@ def get_overview_stats() -> dict:
         label = row["risk_category"]
         if label in counts:
             counts[label] += 1
+        # Sums 2024 population only. Flood percent is not applied in this total.
         exposed += row["population_2024"] or 0
     return {
         "system_name": "AGOS Manila",
@@ -228,5 +260,6 @@ def get_overview_stats() -> dict:
             {"category": "Medium", "count": counts["Medium"]},
             {"category": "Low", "count": counts["Low"]},
         ],
+        # Already sorted by DPI_Rank, so these are the first five rank numbers.
         "priority_barangays": rows[:5],
     }

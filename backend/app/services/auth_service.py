@@ -1,3 +1,9 @@
+# Password check, login rate limit, refresh cookie, and new accounts.
+# Routers call these instead of talking to the hasher themselves.
+# Failed logins share one error string. A separate reason is kept only
+# for the audit log. The limit below is in memory and resets on restart.
+# Tokens themselves are built in security.py.
+
 from __future__ import annotations
 
 import secrets
@@ -31,6 +37,7 @@ from app.security import (
 settings = get_settings()
 
 _login_attempts: dict[str, deque[datetime]] = defaultdict(deque)
+# 8 attempts per username inside 15 minutes. Older stamps are dropped.
 LOGIN_RATE_LIMIT = 8
 LOGIN_RATE_WINDOW = timedelta(minutes=15)
 # No stored password can be this long (creation caps at 128), so longer input always fails.
@@ -39,6 +46,7 @@ MAX_LOGIN_PASSWORD_LENGTH = 1024
 _DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(32))
 
 
+# The HTTP detail is generic. reason stays on the exception for the audit row.
 class LoginFailed(HTTPException):
     """Login failure with a server-side reason for the audit log; the reason is never sent."""
 
@@ -47,6 +55,7 @@ class LoginFailed(HTTPException):
         self.reason = reason
 
 
+# Account fields the client may see. The hash is not copied across.
 def _serialize_account(account: Account) -> AccountPublic:
     return AccountPublic(
         id=account.id,
@@ -58,6 +67,7 @@ def _serialize_account(account: Account) -> AccountPublic:
     )
 
 
+# HttpOnly so scripts cannot read it. Path is /api/auth only.
 def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
@@ -71,6 +81,7 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
+# Remove the refresh cookie. Logout uses this and does not touch the database.
 def clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
@@ -79,6 +90,7 @@ def clear_refresh_cookie(response: Response) -> None:
     )
 
 
+# Count this try. 429 when the username is already at the cap.
 def _enforce_login_rate_limit(username: str) -> None:
     now = datetime.now(timezone.utc)
     attempts = _login_attempts[normalize_username(username)]
@@ -93,6 +105,8 @@ def _enforce_login_rate_limit(username: str) -> None:
     attempts.append(now)
 
 
+# Return the account, or raise LoginFailed. Unknown users still run one
+# hash check against a dummy so timing does not show whether the name exists.
 def authenticate_account(
     db: Session,
     *,
@@ -120,6 +134,7 @@ def authenticate_account(
     raise LoginFailed(status.HTTP_401_UNAUTHORIZED, GENERIC_AUTH_ERROR, reason=reason)
 
 
+# Rate-limit, check the password, stamp last_login_at, and issue both tokens.
 def login_account(
     db: Session,
     *,
@@ -139,6 +154,8 @@ def login_account(
     return access_token, _serialize_account(account)
 
 
+# New access token if the refresh cookie still matches an active account.
+# The role in the token must still match the row. A new refresh cookie is set.
 def refresh_session(
     db: Session,
     *,
@@ -172,6 +189,8 @@ def refresh_session(
     return access_token, _serialize_account(account)
 
 
+# Insert a staff or admin account. A duplicate username gets a vague 400
+# so the message does not say that the name is already taken.
 def create_account(
     db: Session,
     *,
