@@ -108,10 +108,10 @@ export default function ReviewUploads() {
                     <td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td>
                     {filter === 'pending' ? (
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex gap-2">
                           <button
                             type="button"
-                            className="btn-primary disabled:opacity-70"
+                            className="btn-approve"
                             disabled={busyId === item.id}
                             onClick={() => handleApprove(item.id)}
                           >
@@ -123,7 +123,7 @@ export default function ReviewUploads() {
                           </button>
                           <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-reject"
                             disabled={busyId === item.id}
                             onClick={() => setRejectingId(item.id)}
                           >
@@ -140,7 +140,7 @@ export default function ReviewUploads() {
                             />
                             <button
                               type="button"
-                              className="btn-secondary disabled:opacity-70"
+                              className="btn-reject"
                               disabled={busyId === item.id}
                               onClick={() => handleReject(item.id)}
                             >
