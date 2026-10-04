@@ -243,12 +243,18 @@ export default function Landing() {
             </div>
 
             <div className="flood-story__context">
-              <p>
-                Livelihoods, transport, and daily routines are disrupted again and
-                again — often with little warning and even less coordinated response.
-                AGOS exists to change that: giving residents and responders clear,
-                data-driven visibility into flood risk before it becomes a crisis.
-              </p>
+              <div className="flood-story__copy">
+                <p className="flood-story__intro">
+                  Livelihoods, transport, and daily routines are disrupted again and
+                  again — often with little warning and even less coordinated response.
+                  AGOS exists to change that: giving residents and responders clear,
+                  data-driven visibility into flood risk before it becomes a crisis.
+                </p>
+                <Link to="/methodology" className="flood-story__cta">
+                  Learn how AGOS prioritizes flood risk
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </div>
 
               <div className="flood-story__stats">
                 <article className="flood-story__stat-card">
@@ -259,14 +265,17 @@ export default function Landing() {
                     flooding covered over 30% of the region, affecting more than
                     4 million people.
                   </p>
-                  <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <SourceLink href="https://www.herdin.ph">Source: HERDIN, DOH</SourceLink>
-                    <span aria-hidden>·</span>
-                    <SourceLink href="https://doi.org/10.11520/JSHWR.24.0.8.0">
-                      Source: Gilbuena (2011), Journal of Structural and Hydraulic Water
-                      Resources, DOI: 10.11520/JSHWR.24.0.8.0
-                    </SourceLink>
-                  </p>
+                  <ul className="flood-story__sources">
+                    <li>
+                      <SourceLink href="https://www.herdin.ph">Source: HERDIN, DOH</SourceLink>
+                    </li>
+                    <li>
+                      <SourceLink href="https://doi.org/10.11520/JSHWR.24.0.8.0">
+                        Source: Gilbuena (2011), Journal of Structural and Hydraulic Water
+                        Resources, DOI: 10.11520/JSHWR.24.0.8.0
+                      </SourceLink>
+                    </li>
+                  </ul>
                 </article>
                 <article className="flood-story__stat-card">
                   <CalendarClock className="flood-story__stat-icon" aria-hidden />
@@ -274,16 +283,13 @@ export default function Landing() {
                     The Philippines experiences an average of 19–20 tropical cyclones
                     annually (PAGASA).
                   </p>
-                  <p className="mt-3">
-                    <SourceLink href="https://www.pagasa.dost.gov.ph">Source: PAGASA</SourceLink>
-                  </p>
+                  <ul className="flood-story__sources">
+                    <li>
+                      <SourceLink href="https://www.pagasa.dost.gov.ph">Source: PAGASA</SourceLink>
+                    </li>
+                  </ul>
                 </article>
               </div>
-
-              <Link to="/methodology" className="flood-story__cta">
-                Learn how AGOS prioritizes flood risk
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
             </div>
           </div>
         </div>
