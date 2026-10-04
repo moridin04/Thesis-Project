@@ -8,5 +8,5 @@ export const CARTO_ATTRIBUTION = '&copy; OpenStreetMap contributors, &copy; CART
 
 /* Module scope: evaluated once per page load, however many maps mount. */
 if (!CARTO_API_KEY) {
-  console.warn('VITE_CARTO_API_KEY is not set; the Priority Map basemap is loading without a CARTO API key.')
+  console.warn('VITE_CARTO_API_KEY is not set; the CARTO basemap is loading without an API key.')
 }
