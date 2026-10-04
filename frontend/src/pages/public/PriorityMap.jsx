@@ -14,6 +14,7 @@ import {
   Waves,
 } from 'lucide-react'
 import BarangayPhoto from '../../components/shared/BarangayPhoto'
+import illustrativePhoto from '../../assets/img/recto-santa-cruz-quiapo-bus-terminal.webp'
 import PublicHeader from '../../components/public/PublicHeader'
 import { riskColors } from '../../theme/colors'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
@@ -255,11 +256,30 @@ export default function PriorityMap() {
 
         <aside className="order-3 w-full shrink-0 bg-white p-4 text-foundation lg:w-[22rem] lg:overflow-y-auto">
           <p className="mb-3 text-sm font-semibold">Selected Barangay</p>
-          <BarangayPhoto
-            imageUrl={selected?.imageUrl}
-            alt={selected ? `${selected.barangay} photo` : ''}
-            className="mb-3 h-36 w-full rounded-xl object-cover"
-          />
+          <div className="mb-3">
+            <BarangayPhoto
+              imageUrl={illustrativePhoto}
+              alt="Illustrative street scene near a bus terminal in Recto, Santa Cruz, Manila"
+              className="h-36 w-full rounded-xl object-cover object-[center_75%]"
+              width={1024}
+              height={438}
+              loading="lazy"
+              caption={
+                <>
+                  Illustrative photo, Recto area, Manila. Photo: Judgefloro, public domain, via{' '}
+                  <a
+                    href="https://commons.wikimedia.org/wiki/File:00085jfLandscape_Barangays_Roads_Villages_Recto_Santa_Cruz_Quiapo_Manilafvf_12.jpg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-foundation"
+                  >
+                    Wikimedia Commons
+                  </a>
+                  .
+                </>
+              }
+            />
+          </div>
           {selected ? (
             <Link
               to={`/barangays/${encodeURIComponent(selected.id)}`}
