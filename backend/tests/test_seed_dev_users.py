@@ -1,3 +1,9 @@
+# Seeding the local staff and admin accounts.
+# Covers scripts/seed_dev_users.py, then login with those accounts.
+# Passwords come from the test arguments, standing in for DEV_SEED_*
+# in the environment. Production is refused. A second seed updates the
+# same rows and stores hashes.
+
 from __future__ import annotations
 
 import pytest
@@ -25,6 +31,8 @@ def _accounts() -> list[DevAccount]:
     ]
 
 
+# The seed creates the staff and admin rows and stores hashes.
+# The admin username is saved in lowercase.
 def test_seed_creates_hashed_accounts_with_roles(db_session: Session):
     results = seed_dev_users(db_session, _accounts(), app_env="development")
     assert results == [("lgu_staff", "created"), ("admin", "created")]
@@ -37,6 +45,8 @@ def test_seed_creates_hashed_accounts_with_roles(db_session: Session):
     assert verify_password(ADMIN_PASSWORD, admin.password_hash)
 
 
+# Seeding the same staff username again updates that row.
+# The account count stays at two.
 def test_seed_is_idempotent_and_updates_password(db_session: Session):
     seed_dev_users(db_session, _accounts(), app_env="development")
     changed = [DevAccount("lgu_staff", "Staff", "staff", "TestOnlyChanged1")]
@@ -46,18 +56,21 @@ def test_seed_is_idempotent_and_updates_password(db_session: Session):
     assert db_session.query(Account).count() == 2
 
 
+# APP_ENV=production raises, and no account row is written.
 def test_seed_refuses_production(db_session: Session):
     with pytest.raises(RuntimeError, match="production"):
         seed_dev_users(db_session, _accounts(), app_env="production")
     assert db_session.query(Account).count() == 0
 
 
+# A password shorter than the 12-character rule is rejected.
 def test_seed_rejects_weak_password(db_session: Session):
     weak = [DevAccount("lgu_staff", "Staff", "staff", "short")]
     with pytest.raises(ValueError, match="12"):
         seed_dev_users(db_session, weak, app_env="development")
 
 
+# An empty admin password raises, and the message names DEV_SEED_ADMIN_PASSWORD.
 def test_settings_require_both_passwords():
     with pytest.raises(ValueError, match="DEV_SEED_ADMIN_PASSWORD"):
         accounts_from_settings(
@@ -65,6 +78,7 @@ def test_settings_require_both_passwords():
         )
 
 
+# After seeding, both accounts can log in. Username casing does not matter.
 def test_seeded_accounts_can_log_in_with_any_username_casing(client: TestClient, db_session: Session):
     seed_dev_users(db_session, _accounts(), app_env="development")
     staff = client.post("/api/auth/login", json={"username": "lgu_staff", "password": STAFF_PASSWORD})

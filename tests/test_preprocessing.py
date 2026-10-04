@@ -1,8 +1,10 @@
+# Check that preprocess_data adds CSI, DPI, and Pop_Density.
 import pandas as pd
 
 from src.data.preprocess_data import preprocess_data
 
 
+# One sample row should come back with those three columns.
 def test_preprocess_data_adds_indices():
     dataframe = pd.DataFrame({
         'Name': ['A'],

@@ -27,6 +27,8 @@ from app.security import (  # noqa: E402
 )
 
 
+# DEV_SEED_* names for the two development accounts.
+# Password fields stay empty until the environment or backend/.env sets them.
 class DevSeedSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",
@@ -43,6 +45,7 @@ class DevSeedSettings(BaseSettings):
     admin_password: str = ""
 
 
+# Username, display name, role, and password for one account to create or update.
 @dataclass(frozen=True)
 class DevAccount:
     username: str
@@ -51,6 +54,8 @@ class DevAccount:
     password: str
 
 
+# Build the staff and admin specs. Raise if either password is missing.
+# The error names the missing DEV_SEED_* variables.
 def accounts_from_settings(settings: DevSeedSettings) -> list[DevAccount]:
     missing = [
         name
@@ -93,6 +98,9 @@ def seed_dev_users(db: Session, accounts: list[DevAccount], *, app_env: str) -> 
     return results
 
 
+# Read the specs, initialize the database, and seed both accounts.
+# Print each username and whether the row was created or updated.
+# A missing password or APP_ENV=production ends with exit code 1.
 def main() -> int:
     from app.config import get_settings
     from app.database import SessionLocal, init_db

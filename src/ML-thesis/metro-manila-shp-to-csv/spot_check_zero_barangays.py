@@ -7,6 +7,10 @@ pipeline notebooks, or existing validated CSVs other than writing its own
 results file: zero_barangay_spot_check_results.csv
 """
 
+# Check listed zero-flood barangays against the source shapefiles.
+# Group 1 is checked on the 5-year and 25-year layers. Group 2 is 5-year only.
+# An overlap larger than 1e-6 square meters is called a discrepancy.
+# This file writes its own results CSV and leaves the validated flood CSV as-is.
 from __future__ import annotations
 
 import os
@@ -48,6 +52,7 @@ GROUP1_BOTH_ZERO = [188, 546, 547, 549, 573]  # check 5yr + 25yr
 GROUP2_5YR_ONLY = [120, 36, 38, 552, 554, 778]  # check 5yr only
 
 
+# First matching column, or an error if none of the names exist.
 def find_first_existing_column(df, candidates, label):
     col = next((c for c in candidates if c in df.columns), None)
     if not col:
@@ -55,6 +60,7 @@ def find_first_existing_column(df, candidates, label):
     return col
 
 
+# Integer from a Barangay N name, or None when there is no number.
 def extract_barangay_number(name):
     if pd.isna(name):
         return None
@@ -62,6 +68,7 @@ def extract_barangay_number(name):
     return int(match.group(1)) if match else None
 
 
+# Stop if a required shapefile or CSV is not on disk.
 def require_file(path: str) -> None:
     if not os.path.exists(path):
         raise FileNotFoundError(
@@ -71,6 +78,7 @@ def require_file(path: str) -> None:
         )
 
 
+# True when the barangay touches the flood layer bounding box.
 def geom_within_extent(geom, extent_bounds) -> bool:
     """True if barangay intersects the flood layer total bounding box."""
     minx, miny, maxx, maxy = extent_bounds
@@ -78,6 +86,8 @@ def geom_within_extent(geom, extent_bounds) -> bool:
     return bool(geom.intersects(extent_poly))
 
 
+# Intersect the barangay with flood features near its bounding box.
+# Returns whether any hit, the total overlap area, and a detail list.
 def check_intersections(brgy_geom, flood_gdf: gpd.GeoDataFrame):
     """
     Test barangay geometry against every flood feature.
@@ -106,6 +116,7 @@ def check_intersections(brgy_geom, flood_gdf: gpd.GeoDataFrame):
     return (len(details) > 0), total_area, details
 
 
+# Label the row as a discrepancy, a geometry issue, outside, or a true zero.
 def conclude(valid_before, valid_after, within_extent, intersects, inter_area) -> str:
     if intersects and inter_area > 1e-6:
         return "DISCREPANCY FOUND - NON-ZERO INTERSECTION DETECTED"
@@ -118,6 +129,7 @@ def conclude(valid_before, valid_after, within_extent, intersects, inter_area) -
     return "CONFIRMED TRUE ZERO"
 
 
+# First admin shapefile in the list that opens and has rows.
 def resolve_admin_file() -> str:
     """Pick a readable admin shapefile (complete .dbf required)."""
     errors = []
@@ -139,6 +151,7 @@ def resolve_admin_file() -> str:
     )
 
 
+# Load Manila barangays, keep a number, and project to EPSG:32651.
 def load_manila_admin() -> gpd.GeoDataFrame:
     global ADMIN_FILE
     ADMIN_FILE = resolve_admin_file()
@@ -174,6 +187,7 @@ def load_manila_admin() -> gpd.GeoDataFrame:
     return admin
 
 
+# Load one flood layer in EPSG:32651 and repair only invalid shapes.
 def load_flood(path: str) -> gpd.GeoDataFrame:
     """Load flood layer. Avoid full-layer buffer(0) — too slow on LiPAD multipolygons."""
     require_file(path)
@@ -193,6 +207,7 @@ def load_flood(path: str) -> gpd.GeoDataFrame:
     return flood
 
 
+# Bounding box of the flood layer, without unioning every polygon.
 def flood_extent_bounds(flood_gdf: gpd.GeoDataFrame):
     """Use total_bounds (fast) instead of unary_union (very slow on big multipolygons)."""
     if flood_gdf.empty:
@@ -200,6 +215,7 @@ def flood_extent_bounds(flood_gdf: gpd.GeoDataFrame):
     return tuple(float(x) for x in flood_gdf.total_bounds)
 
 
+# Test one barangay on the layers in its group and return one result row.
 def evaluate_barangay(row, flood_layers: dict, layers_to_check: list[str],
                       extent_cache: dict) -> dict:
     name = row["barangay"]
@@ -269,6 +285,7 @@ def evaluate_barangay(row, flood_layers: dict, layers_to_check: list[str],
     }
 
 
+# Load the target numbers, compare them to the shapefiles, and save a CSV.
 def main() -> int:
     print("=" * 72, flush=True)
     print("Zero-flood barangay spot check (read-only vs source shapefiles)", flush=True)

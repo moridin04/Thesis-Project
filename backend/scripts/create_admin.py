@@ -21,6 +21,8 @@ from app.security import (  # noqa: E402
 )
 
 
+# Ask for the password twice. Repeat until the two entries match and
+# validate_password_strength accepts them. The typing is not echoed.
 def prompt_password() -> str:
     while True:
         password = getpass.getpass("Administrator password: ")
@@ -32,6 +34,10 @@ def prompt_password() -> str:
         return password
 
 
+# Create the administrator, or update the row after a typed yes.
+# Username and full name use the bootstrap settings when those are set.
+# The password comes from the bootstrap setting or from the prompt above.
+# We store the hash. Saying no leaves the existing row unchanged.
 def main() -> int:
     settings = get_settings()
     init_db()

@@ -1,3 +1,10 @@
+# Metro Manila flood risk script. Scores use fixed weights.
+# CSI is 0.5 * 5-year score + 0.3 * 25-year score + 0.2 * 100-year score.
+# DPI is (CSI * 0.6) + (Vulnerability_Score * 0.4).
+# Entropy weights are not computed in this file.
+# A missing DPI is Low. A DPI of 6.5 or higher is High.
+# A DPI of 3.5 or higher is Medium. Anything lower is Low.
+# The models later try to predict those proxy labels.
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -51,6 +58,7 @@ BASELINE_CLF_NAMES = {MODEL_NAMES[k] for k in ("dummy_clf", "logreg", "dt2", "or
 BASELINE_REG_NAMES = {MODEL_NAMES[k] for k in ("dummy_reg", "ridge_reg")}
 
 
+# Mean-impute, scale, then fit the estimator. Used by the run and the PDF.
 def make_preprocess_pipe(estimator):
     """Imputer → Scaler → Model pipeline (shared by console & PDF evaluation)."""
     return Pipeline([
@@ -60,6 +68,7 @@ def make_preprocess_pipe(estimator):
     ])
 
 
+# Reference classifiers: majority class, logistic, depth-2 tree, and ridge.
 def get_baseline_clf_models(pipe_fn=make_preprocess_pipe):
     return {
         MODEL_NAMES["dummy_clf"]: pipe_fn(DummyClassifier(strategy="most_frequent")),
@@ -69,6 +78,7 @@ def get_baseline_clf_models(pipe_fn=make_preprocess_pipe):
     }
 
 
+# Main classifiers: random forest, gradient boosting, and a small neural net.
 def get_primary_clf_models(pipe_fn=make_preprocess_pipe):
     return {
         MODEL_NAMES["rf"]:  pipe_fn(RandomForestClassifier(n_estimators=200, random_state=42)),
@@ -77,6 +87,7 @@ def get_primary_clf_models(pipe_fn=make_preprocess_pipe):
     }
 
 
+# Reference regressors: predict the training mean, and ridge regression.
 def get_baseline_reg_models(pipe_fn=make_preprocess_pipe):
     return {
         MODEL_NAMES["dummy_reg"]: pipe_fn(DummyRegressor(strategy="mean")),
@@ -84,6 +95,7 @@ def get_baseline_reg_models(pipe_fn=make_preprocess_pipe):
     }
 
 
+# Main regressors: random forest, gradient boosting, and a small neural net.
 def get_primary_reg_models(pipe_fn=make_preprocess_pipe):
     return {
         MODEL_NAMES["rf"]:  pipe_fn(RandomForestRegressor(n_estimators=200, random_state=42)),
@@ -92,6 +104,7 @@ def get_primary_reg_models(pipe_fn=make_preprocess_pipe):
     }
 
 
+# Warn if an export column is missing, or if a model name is bare MLP.
 def _run_consistency_checks(df):
     """Non-fatal pre-export consistency checks."""
     warnings = []
@@ -653,6 +666,8 @@ def run_ml_pipeline(df):
 
     return df, pipeline_results
 
+# Rebuild DPI with other CSI weights and other CSI-vulnerability balances.
+# Spearman correlation shows whether the barangay ranking stays similar.
 def run_sensitivity_analysis(df):
     """Sensitivity analysis of DPI weights per methodology.
     Varies CSI sub-weights and CSI-vulnerability balance,
@@ -723,6 +738,7 @@ def run_sensitivity_analysis(df):
 
     return {"min_rho": min_rho, "mean_rho": mean_rho, "n_configs": n}
 
+# Print class shares, Spearman checks against DPI, examples, and dense rows.
 def run_validation_checks(df):
     print("\nValidation & Consistency Checks")
     print("  Note: DPI is treated as the deterministic proxy label (not external ground truth).")
@@ -790,6 +806,7 @@ def run_validation_checks(df):
     except Exception:
         pass
 
+# Short action text from the DPI class and the K-means archetype.
 def get_recommendation(row):
     """Generate archetype-aware recommendations combining DPI risk class
     with K-Means cluster archetype for more nuanced interventions."""
@@ -818,6 +835,7 @@ def get_recommendation(row):
         else:
             return "Low Priority: Maintenance and routine monitoring only."
 
+# Attach that action text and write the selected columns to Excel.
 def export_results(df):
     df['Recommendation'] = df.apply(get_recommendation, axis=1)
     output_cols = [
@@ -839,6 +857,7 @@ def export_results(df):
     df[output_cols].to_excel("final_methodology_aligned_results.xlsx", index=False)
     print("\nResults exported.")
 
+# Build the PDF from the table and the scores the pipeline already stored.
 def generate_pdf_report(df, pipeline_results=None):
     """Comprehensive PDF report including summary statistics, cluster diagnostics,
     model performance comparison, top-risk barangays, and per-category details.

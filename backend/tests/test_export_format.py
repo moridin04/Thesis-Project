@@ -1,3 +1,9 @@
+# Layout of the approved public CSV and HTML exports.
+# Covers app.exports and the column checks in public_exports.
+# The CSV stays 897 ranked rows with the shared class text. The HTML
+# is one self-contained file. Model fields stay off the public column
+# list. The disclaimer matches the frontend core sentence.
+
 from __future__ import annotations
 
 import io
@@ -69,6 +75,9 @@ def html_export(client: TestClient, admin_headers, db_session: Session) -> tuple
     return created, content.decode("utf-8")
 
 
+# The CSV starts with a BOM and comment lines for title, versions,
+# Manila time, the 897 records, and the disclaimer. That disclaimer
+# is also the last line.
 def test_csv_header_block_and_footer(csv_export):
     created, content = csv_export
     assert content.startswith(b"\xef\xbb\xbf")
@@ -92,6 +101,9 @@ def test_csv_header_block_and_footer(csv_export):
     assert lines[-1] == f"# Disclaimer: {DISCLAIMER}"
 
 
+# With comment lines skipped, the sheet is 897 rows in whitelist order.
+# Classes split evenly, rank follows DPI, and each class uses the
+# planning line and DRRM pillar from class_guide.
 def test_csv_loads_as_897_rows_with_planning_and_context(csv_export):
     _created, content = csv_export
     frame = pd.read_csv(io.BytesIO(content), comment="#")
@@ -107,6 +119,8 @@ def test_csv_loads_as_897_rows_with_planning_and_context(csv_export):
         assert set(subset["DRRM_Pillar"]) == {class_guide.drrm_pillar(label)}
 
 
+# Rank 1 is Barangay 310 with rounded figures. Planning text is quoted
+# so the commas in that sentence stay inside one cell.
 def test_csv_rounding_and_quoted_planning_text(csv_export):
     _created, content = csv_export
     text = content.decode("utf-8-sig")
@@ -124,6 +138,8 @@ def test_csv_rounding_and_quoted_planning_text(csv_export):
     assert f"{float(first['Hazard']):.4f}" == "0.6135"
 
 
+# District and area in the CSV and the HTML cell match barangay_data
+# for the sampled names, including Barangay 310 in Santa Cruz.
 def test_district_and_area_match_the_shared_mapping(csv_export, html_export):
     _created, content = csv_export
     frame = pd.read_csv(io.BytesIO(content), comment="#").set_index("Barangay")
@@ -136,6 +152,8 @@ def test_district_and_area_match_the_shared_mapping(csv_export, html_export):
     assert (frame.loc["Barangay 310", "District"], frame.loc["Barangay 310", "Area"]) == ("District III", "Santa Cruz")
 
 
+# The HTML shows the disclaimer, version, data version, and class badges.
+# Each class contributes 299 planning lines, and the table has 897 rows.
 def test_html_has_disclaimer_versions_badges_and_population(html_export):
     created, html = html_export
     assert escape(DISCLAIMER) in html
@@ -159,6 +177,8 @@ def test_html_has_disclaimer_versions_badges_and_population(html_export):
     assert html.count('data-class="High"') == 299
 
 
+# Planning sentences live in class_guide.py. The CSV and HTML builders
+# read them from there instead of copying the sentences into each file.
 def test_class_guide_text_lives_only_in_the_shared_module():
     sources = [
         (ROOT / "app/exports/html_report.py").read_text(),
@@ -171,6 +191,8 @@ def test_class_guide_text_lives_only_in_the_shared_module():
         assert all(text not in source for source in sources)
 
 
+# The HTML is one file: a single inline script, no remote URL, no handlers.
+# It stays under the size check and includes the print layout.
 def test_html_is_self_contained_and_reports_size(html_export):
     _created, html = html_export
     size = len(html.encode("utf-8"))
@@ -193,6 +215,9 @@ def test_html_is_self_contained_and_reports_size(html_export):
     assert "No barangays match" in html
 
 
+# The public column list is accepted. A planning column also keeps
+# priority class. District and area alone are rejected. Model fields
+# are rejected and named in the error.
 def test_whitelist_accepts_context_and_planning_and_rejects_staff_fields(client: TestClient, admin_headers):
     ok = client.post(
         BASE,
@@ -228,6 +253,7 @@ def test_whitelist_accepts_context_and_planning_and_rejects_staff_fields(client:
         assert bad in response.json()["detail"]
 
 
+# Approving a later CSV leaves the first approved file bytes unchanged.
 def test_approved_snapshot_is_not_rewritten_by_later_versions(client: TestClient, admin_headers, db_session: Session):
     first, before = _snapshot(client, admin_headers, db_session, "csv", approve=True)
     _snapshot(client, admin_headers, db_session, "csv", approve=True)
@@ -235,6 +261,7 @@ def test_approved_snapshot_is_not_rewritten_by_later_versions(client: TestClient
     assert after == before
 
 
+# The backend export disclaimer equals DISCLAIMER_CORE in the frontend.
 def test_export_disclaimer_matches_the_frontend_core_sentence():
     from app.exports.disclaimer import EXPORT_DISCLAIMER
 

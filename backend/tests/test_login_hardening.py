@@ -1,3 +1,9 @@
+# Login answers must look the same when sign-in fails.
+# Covers authenticate_account in app.services.auth_service.
+# Unknown user, wrong password, and inactive account share one 401 body.
+# The reason stays on the audit row. Login must not reveal whether
+# the username exists.
+
 from __future__ import annotations
 
 import pytest
@@ -26,6 +32,7 @@ def _login(client: TestClient, username, password):
     return client.post(LOGIN, json={"username": username, "password": password})
 
 
+# Unknown name, wrong password, and inactive account return the same 401 body.
 def test_unknown_wrong_and_inactive_are_indistinguishable(client: TestClient, accounts):
     responses = [
         _login(client, "no_such_user", PASSWORD),
@@ -38,6 +45,8 @@ def test_unknown_wrong_and_inactive_are_indistinguishable(client: TestClient, ac
     assert len({r.content for r in responses}) == 1
 
 
+# Every failure hashes once. An unknown name uses the dummy hash so
+# timing does not show whether the username exists.
 def test_every_failure_path_runs_one_password_verification(
     client: TestClient, accounts, monkeypatch
 ):
@@ -63,6 +72,7 @@ def test_every_failure_path_runs_one_password_verification(
     assert calls == [auth_service._DUMMY_PASSWORD_HASH]
 
 
+# After the cap, a known name and an unknown name get the same 429 text.
 @pytest.mark.parametrize("username", ["active_user", "no_such_user"])
 def test_rate_limited_response_is_generic(client: TestClient, accounts, username):
     for _ in range(LOGIN_RATE_LIMIT):
@@ -72,6 +82,8 @@ def test_rate_limited_response_is_generic(client: TestClient, accounts, username
     assert response.json() == {"detail": GENERIC_RATE_LIMIT_ERROR}
 
 
+# Empty, wrong-typed, and email payloads are 422 with the generic message.
+# The response body does not echo the submitted password.
 @pytest.mark.parametrize(
     "payload",
     [
@@ -90,12 +102,15 @@ def test_empty_or_malformed_input_returns_generic_message(client: TestClient, ac
     assert PASSWORD not in response.text
 
 
+# Broken JSON is the same generic 422, so the client sees no parser detail.
 def test_malformed_json_returns_generic_message(client: TestClient):
     response = client.post(LOGIN, content=b"{bad", headers={"Content-Type": "application/json"})
     assert response.status_code == 422
     assert response.json() == {"detail": GENERIC_AUTH_ERROR}
 
 
+# A bad username shape, or a password outside the length rule, is still
+# the generic 401. Login does not describe the format rules.
 @pytest.mark.parametrize(
     "username,password",
     [("a" * 40, PASSWORD), ("Bad Name!", PASSWORD), ("active_user", "short"), ("active_user", "x" * 200)],
@@ -106,6 +121,8 @@ def test_login_does_not_reveal_format_or_length_rules(client: TestClient, accoun
     assert response.json() == {"detail": GENERIC_AUTH_ERROR}
 
 
+# The response body leaves out the failure reason. That text is only
+# on the login_failed audit rows, including the rate-limit reason.
 def test_failure_reasons_only_in_audit_log(client: TestClient, db_session: Session, accounts):
     bodies = [
         _login(client, "no_such_user", PASSWORD).text,
@@ -130,6 +147,8 @@ def test_failure_reasons_only_in_audit_log(client: TestClient, db_session: Sessi
             assert reason not in body
 
 
+# Creating an account with a too-short username still returns a list
+# of field errors. The generic login message is only for login.
 def test_other_routes_keep_detailed_validation(client: TestClient, admin_account):
     token = _login(client, "agos_admin", "AdminPass1234").json()["access_token"]
     response = client.post(

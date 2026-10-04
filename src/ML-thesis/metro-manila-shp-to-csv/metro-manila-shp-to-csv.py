@@ -1,3 +1,7 @@
+# Measure flood overlap for each Manila barangay from the shapefiles.
+# Polygons are clipped to the city, then overlap is stored in square meters.
+# A flag marks a longer return period that covers less than a shorter one.
+# This script does not compute DPI and does not train a model.
 import os
 import re
 import warnings
@@ -80,6 +84,7 @@ HAZARD_FILTER_RULES = {
 # HELPER FUNCTIONS
 # ============================================================
 
+# First candidate name that is a column. Raise if none of them exist.
 def find_first_existing_column(df, candidates, label):
     col = next((c for c in candidates if c in df.columns), None)
     if not col:
@@ -87,6 +92,7 @@ def find_first_existing_column(df, candidates, label):
     return col
 
 
+# True when the name looks like Barangay 1 or Barangay 202-A.
 def is_numbered_barangay(name):
     """
     Keeps:
@@ -104,6 +110,7 @@ def is_numbered_barangay(name):
     return bool(re.fullmatch(r"Barangay\s+\d+(-[A-Z])?", text, flags=re.IGNORECASE))
 
 
+# Integer in the barangay name. Barangay 202-A becomes 202.
 def extract_barangay_number(name):
     """
     Extracts numeric part from Barangay names.
@@ -118,6 +125,7 @@ def extract_barangay_number(name):
     return None
 
 
+# Read a flood layer and record its CRS, feature count, and columns.
 def inspect_layer(path, rp):
     """
     Reads flood layer metadata for diagnostics.
@@ -138,6 +146,7 @@ def inspect_layer(path, rp):
     return flood_raw, diagnostics
 
 
+# Apply an attribute filter only when that switch is turned on.
 def apply_hazard_filter(flood, rp):
     """
     Optionally filters hazard polygons based on attribute rules.
@@ -160,6 +169,7 @@ def apply_hazard_filter(flood, rp):
     return flood, "Filter enabled but no configured hazard column found"
 
 
+# Union flood polygons so overlapping shapes are not counted twice.
 def union_flood_geometries(flood, crs):
     """
     Dissolves/union flood polygons into one geometry to avoid double-counting

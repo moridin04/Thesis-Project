@@ -1,8 +1,11 @@
+# Check calculate_dpi on one made-up barangay.
+# That function only calls calculate_indices. The test expects DPI above 0.
 import pandas as pd
 
 from src.features.calculate_dpi import calculate_dpi
 
 
+# One row with population and flood area should get a DPI above 0.
 def test_calculate_dpi_returns_positive_score():
     dataframe = pd.DataFrame({
         'Name': ['A'],

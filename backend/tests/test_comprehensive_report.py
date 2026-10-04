@@ -1,3 +1,8 @@
+# The staff PDF and who is allowed to download or rebuild it.
+# Covers app.reports.comprehensive_report and the reports router.
+# Section order and the notebook figures stay. Staff may download.
+# Only an admin may regenerate. This PDF has no public route.
+
 from __future__ import annotations
 
 import io
@@ -61,6 +66,8 @@ def staff_headers(client: TestClient, staff_account) -> dict[str, str]:
     return _login(client, "staff01", "StaffPass1234")
 
 
+# All 15 section titles appear in order, with the tertile sentence
+# and the line about official hazard advisories.
 def test_all_15_section_headings_in_order(report_text):
     text, _pages = report_text
     positions = [text.index(title) for title in SECTION_TITLES]
@@ -70,6 +77,8 @@ def test_all_15_section_headings_in_order(report_text):
     assert "should not replace official government hazard advisories" in text
 
 
+# Hazard, exposure, vulnerability, the 299/299/299 split, and the
+# Gradient Boosting cross-validation score match the saved outputs.
 def test_numbers_match_the_notebook_report(report_text):
     text, _pages = report_text
     flat = re.sub(r"\s+", " ", text)
@@ -80,6 +89,8 @@ def test_numbers_match_the_notebook_report(report_text):
     assert re.search(r"Cross-Validation Performance .*? Gradient Boosting 0\.9343 ", flat)
 
 
+# The PDF has 32 pages. Page 1 has the Manila timestamp and data version.
+# Page 2 does not repeat the data version line.
 def test_page_one_has_manila_time_and_data_version(report_text):
     _text, pages = report_text
     assert len(pages) == 32
@@ -89,6 +100,7 @@ def test_page_one_has_manila_time_and_data_version(report_text):
     assert "Data version" not in pages[1]
 
 
+# No token is 401. Staff and admin can read meta. Only admin can regenerate.
 def test_role_guard(client: TestClient, staff_headers, admin_headers):
     assert client.get(META).status_code == 401
     assert client.get(DOWNLOAD).status_code == 401
@@ -99,6 +111,7 @@ def test_role_guard(client: TestClient, staff_headers, admin_headers):
     assert client.post(REGENERATE, headers=admin_headers).status_code == 200
 
 
+# A staff download is a PDF whose filename includes the Manila date.
 def test_staff_download_is_a_pdf(client: TestClient, staff_headers):
     response = client.get(DOWNLOAD, headers=staff_headers)
     assert response.status_code == 200
@@ -110,6 +123,7 @@ def test_staff_download_is_a_pdf(client: TestClient, staff_headers):
     )
 
 
+# Meta says the file is missing until a download builds the cache.
 def test_meta_reports_empty_then_cached_file(client: TestClient, staff_headers):
     empty = client.get(META, headers=staff_headers).json()
     assert empty["available"] is False
@@ -123,6 +137,8 @@ def test_meta_reports_empty_then_cached_file(client: TestClient, staff_headers):
     assert meta["generated_at"].endswith("+08:00")
 
 
+# A second download reuses the file. Regenerate builds once more.
+# The download after that uses the new file and does not build again.
 def test_cache_is_reused_until_regenerated(client: TestClient, staff_headers, admin_headers, build_calls):
     first = client.get(DOWNLOAD, headers=staff_headers).content
     second = client.get(DOWNLOAD, headers=admin_headers).content
@@ -135,6 +151,8 @@ def test_cache_is_reused_until_regenerated(client: TestClient, staff_headers, ad
     assert len(build_calls) == 2
 
 
+# The audit rows are the staff download, the admin download, and the
+# admin regenerate. Each detail includes the report data version.
 def test_downloads_and_regenerations_are_audited(
     client: TestClient, staff_headers, admin_headers, db_session: Session
 ):
@@ -151,6 +169,7 @@ def test_downloads_and_regenerations_are_audited(
     ]
 
 
+# No public path serves this PDF, and comprehensive is not an export kind.
 def test_report_has_no_public_route_and_is_not_a_public_export(client: TestClient, admin_headers):
     public_paths = [route.path for route in app.routes if route.path.startswith("/api/public")]
     assert public_paths

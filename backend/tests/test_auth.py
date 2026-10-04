@@ -1,3 +1,9 @@
+# Login, refresh, logout, and the current-account route.
+# Covers app.routers.auth and app.services.auth_service.
+# The refresh token is an HttpOnly cookie on the auth path. /me returns
+# the account and leaves out the password hash. A deactivated account
+# loses refresh and /me.
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
@@ -26,6 +32,7 @@ def _refresh_set_cookie(response) -> str:
     return matches[0].lower()
 
 
+# A successful login returns an access token and one HttpOnly refresh cookie.
 def test_login_sets_httponly_refresh_cookie(client: TestClient, auth_account: Account):
     response = _login(client)
     assert response.status_code == 200
@@ -37,6 +44,7 @@ def test_login_sets_httponly_refresh_cookie(client: TestClient, auth_account: Ac
     assert REFRESH_COOKIE_NAME in client.cookies
 
 
+# A successful login stamps last_login_at on the row and in the response.
 def test_login_records_last_login_time(
     client: TestClient,
     db_session: Session,
@@ -50,6 +58,7 @@ def test_login_records_last_login_time(
     assert auth_account.last_login_at is not None
 
 
+# Login with an empty body, or an empty password, is 422.
 def test_login_rejects_missing_fields(client: TestClient):
     assert client.post("/api/auth/login", json={}).status_code == 422
     assert (
@@ -61,6 +70,7 @@ def test_login_rejects_missing_fields(client: TestClient):
     )
 
 
+# An email field is not a login. The route expects a username.
 def test_login_rejects_legacy_email_payload(client: TestClient, auth_account: Account):
     response = client.post(
         "/api/auth/login",
@@ -69,6 +79,8 @@ def test_login_rejects_legacy_email_payload(client: TestClient, auth_account: Ac
     assert response.status_code == 422
 
 
+# After LOGIN_RATE_LIMIT failures, the correct password is still 429.
+# No access token is returned once the cap is reached.
 def test_login_rate_limited_after_repeated_attempts(
     client: TestClient,
     auth_account: Account,
@@ -83,6 +95,7 @@ def test_login_rate_limited_after_repeated_attempts(
     assert "access_token" not in response.json()
 
 
+# The refresh cookie issues a new access token, and /me accepts that token.
 def test_refresh_issues_new_access_token(client: TestClient, auth_account: Account):
     assert _login(client).status_code == 200
 
@@ -97,11 +110,13 @@ def test_refresh_issues_new_access_token(client: TestClient, auth_account: Accou
     assert me.json()["username"] == USERNAME
 
 
+# Refresh with no cookie returns 401.
 def test_refresh_without_cookie_returns_401(client: TestClient):
     response = client.post("/api/auth/refresh")
     assert response.status_code == 401
 
 
+# Turning the account off makes refresh return 401 even while the cookie remains.
 def test_refresh_rejected_after_account_deactivated(
     client: TestClient,
     db_session: Session,
@@ -115,6 +130,7 @@ def test_refresh_rejected_after_account_deactivated(
     assert response.status_code == 401
 
 
+# Logout expires the refresh cookie. A later refresh returns 401.
 def test_logout_clears_refresh_cookie(client: TestClient, auth_account: Account):
     assert _login(client).status_code == 200
     assert REFRESH_COOKIE_NAME in client.cookies
@@ -128,6 +144,7 @@ def test_logout_clears_refresh_cookie(client: TestClient, auth_account: Account)
     assert client.post("/api/auth/refresh").status_code == 401
 
 
+# /me with a bearer token returns this staff account and omits the password hash.
 def test_me_with_valid_token_returns_account(client: TestClient, auth_account: Account):
     token = _login(client).json()["access_token"]
 
@@ -141,16 +158,19 @@ def test_me_with_valid_token_returns_account(client: TestClient, auth_account: A
     assert "password_hash" not in response.text.lower()
 
 
+# /me with no token returns 401.
 def test_me_without_token_returns_401(client: TestClient):
     assert client.get("/api/auth/me").status_code == 401
 
 
+# Only the Bearer scheme is accepted. Basic with the same token returns 401.
 def test_me_with_non_bearer_scheme_returns_401(client: TestClient, auth_account: Account):
     token = _login(client).json()["access_token"]
     response = client.get("/api/auth/me", headers={"Authorization": f"Basic {token}"})
     assert response.status_code == 401
 
 
+# /me returns 403 when the account was deactivated after the token was issued.
 def test_me_rejected_for_deactivated_account(
     client: TestClient,
     db_session: Session,

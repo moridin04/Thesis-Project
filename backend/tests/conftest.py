@@ -1,3 +1,9 @@
+# Shared fixtures for the backend tests.
+# JWT settings have no default, so we set them before importing the app.
+# Tests use an in-memory SQLite database and their own tables.
+# The login attempt counter is cleared around every test so one test
+# cannot leave the next one rate-limited.
+
 from __future__ import annotations
 
 import os
@@ -26,6 +32,7 @@ from app.security import (  # noqa: E402
 from app.services import auth_service  # noqa: E402
 
 
+# Clear stored login attempts before and after every test.
 @pytest.fixture(autouse=True)
 def reset_login_rate_limit() -> Generator[None, None, None]:
     # The limiter is process-global; without a reset, login counts leak across tests.
@@ -34,6 +41,7 @@ def reset_login_rate_limit() -> Generator[None, None, None]:
     auth_service._login_attempts.clear()
 
 
+# In-memory SQLite for one test. Tables are created here and dropped after.
 @pytest.fixture()
 def db_session() -> Generator[Session, None, None]:
     engine = create_engine(
@@ -51,8 +59,11 @@ def db_session() -> Generator[Session, None, None]:
         Base.metadata.drop_all(bind=engine)
 
 
+# HTTP client whose database dependency is this test's session.
+# The override is removed when the test ends.
 @pytest.fixture()
 def client(db_session: Session) -> Generator[TestClient, None, None]:
+    # Hand this test's session to routes that depend on get_db.
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
 
@@ -62,6 +73,8 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     app.dependency_overrides.clear()
 
 
+# Save one account. The password is hashed before it is written.
+# The caller picks the username, role, and whether the account is active.
 def create_account(
     db: Session,
     *,
@@ -84,6 +97,7 @@ def create_account(
     return account
 
 
+# Active admin account. The username is agos_admin.
 @pytest.fixture()
 def admin_account(db_session: Session) -> Account:
     return create_account(
@@ -95,6 +109,7 @@ def admin_account(db_session: Session) -> Account:
     )
 
 
+# Active staff account. The username is staff01.
 @pytest.fixture()
 def staff_account(db_session: Session) -> Account:
     return create_account(
@@ -106,6 +121,7 @@ def staff_account(db_session: Session) -> Account:
     )
 
 
+# Staff account for the auth tests. The username is auth_tester.
 @pytest.fixture()
 def auth_account(db_session: Session) -> Account:
     return create_account(
