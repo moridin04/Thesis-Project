@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GeoJSON, MapContainer, ScaleControl, TileLayer } from 'react-leaflet'
 import {
@@ -14,7 +14,8 @@ import {
   Waves,
 } from 'lucide-react'
 import BarangayPhoto from '../../components/shared/BarangayPhoto'
-import illustrativePhoto from '../../assets/img/recto-santa-cruz-quiapo-bus-terminal.webp'
+import { getBarangayPhoto } from '../../data/barangayPhotos'
+import { districtAreaParts } from '../../utils/districtLabel'
 import PublicHeader from '../../components/public/PublicHeader'
 import { riskColors } from '../../theme/colors'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
@@ -84,6 +85,29 @@ function scoreOf(row, key, fallback) {
   return typeof value === 'number' ? value : fallback
 }
 
+/* Stacked panel: 16/10 capped at 240px, anchored low so the bus stays in frame.
+   Right-hand panel (lg): 5/4 frame, the tallest that keeps the panel short enough at 1280x720. */
+const PHOTO_SLOT_CLASS =
+  'aspect-[16/10] h-auto max-h-[240px] w-full rounded-xl object-cover object-[100%_85%] lg:aspect-[5/4] lg:max-h-none lg:object-[100%_60%]'
+
+function PhotoCredit({ photo }) {
+  const [before, after] = photo.creditText.split(photo.creditLinkText)
+  return (
+    <>
+      {before}
+      <a
+        href={photo.creditUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 hover:text-foundation"
+      >
+        {photo.creditLinkText}
+      </a>
+      {after}
+    </>
+  )
+}
+
 function IndicatorRow({ icon: Icon, label, value, barClass }) {
   const width = `${Math.max(0, Math.min(1, value)) * 100}%`
   return (
@@ -132,6 +156,7 @@ export default function PriorityMap() {
     return filtered
   }, [barangayName, filtered])
 
+  const photo = getBarangayPhoto(selected?.id)
   const hazard = scoreOf(selected, 'hazard', selected?.dpi ?? 0)
   const exposure = scoreOf(selected, 'exposure', selected?.dpi ?? 0)
   const vulnerability = scoreOf(selected, 'vulnerability', selected?.dpi ?? 0)
@@ -258,26 +283,14 @@ export default function PriorityMap() {
           <p className="mb-3 text-sm font-semibold">Selected Barangay</p>
           <div className="mb-3">
             <BarangayPhoto
-              imageUrl={illustrativePhoto}
-              alt="Illustrative street scene near a bus terminal in Recto, Santa Cruz, Manila"
-              className="h-36 w-full rounded-xl object-cover object-[center_75%]"
-              width={1024}
-              height={438}
+              imageUrl={photo?.src}
+              alt={photo?.alt}
+              className={PHOTO_SLOT_CLASS}
+              width={photo?.width}
+              height={photo?.height}
               loading="lazy"
-              caption={
-                <>
-                  Illustrative photo, Recto area, Manila. Photo: Judgefloro, public domain, via{' '}
-                  <a
-                    href="https://commons.wikimedia.org/wiki/File:00085jfLandscape_Barangays_Roads_Villages_Recto_Santa_Cruz_Quiapo_Manilafvf_12.jpg"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline underline-offset-2 hover:text-foundation"
-                  >
-                    Wikimedia Commons
-                  </a>
-                  .
-                </>
-              }
+              caption={photo ? <PhotoCredit photo={photo} /> : null}
+              reserveCaptionSpace
             />
           </div>
           {selected ? (
@@ -285,9 +298,16 @@ export default function PriorityMap() {
               to={`/barangays/${encodeURIComponent(selected.id)}`}
               className="mb-4 flex items-center justify-between gap-2"
             >
-              <span>
+              <span className="min-w-0">
                 <span className="block text-lg font-bold">{selected.barangay}</span>
-                <span className="text-sm text-ocean">{selected.district}</span>
+                <span className="text-sm text-ocean">
+                  {districtAreaParts(selected.district, selected.area).map((part, index) => (
+                    <Fragment key={part}>
+                      {index ? ' ' : null}
+                      <span className="whitespace-nowrap">{part}</span>
+                    </Fragment>
+                  ))}
+                </span>
               </span>
               <ChevronRight className="h-5 w-5 shrink-0 text-action" aria-hidden />
             </Link>
