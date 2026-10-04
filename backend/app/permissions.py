@@ -1,3 +1,9 @@
+# What each role is allowed to do, as plain string names.
+# Staff can view and prepare. Admin gets those plus publish, the audit
+# log, and account management. require_permission in dependencies/auth.py
+# calls has_permission before a route runs.
+# A role we do not know gets an empty set, so it is denied.
+
 from __future__ import annotations
 
 ROLE_STAFF = "staff"
@@ -21,6 +27,7 @@ AUDIT_VIEW = "audit:view"
 ACCOUNT_MANAGE = "account:manage"
 ROLE_MANAGE = "role:manage"
 
+# Prepare, upload, and view. No publish and no account admin.
 STAFF_PERMISSIONS = {
     BARANGAY_VIEW_INTERNAL,
     BARANGAY_PREPARE,
@@ -32,6 +39,7 @@ STAFF_PERMISSIONS = {
     CONTENT_PREPARE,
 }
 
+# Everything staff has, plus the publish and admin actions.
 ADMIN_PERMISSIONS = STAFF_PERMISSIONS | {
     BARANGAY_PUBLISH,
     DATASET_PUBLISH,
@@ -44,6 +52,7 @@ ADMIN_PERMISSIONS = STAFF_PERMISSIONS | {
 }
 
 
+# A copy of the set, so callers cannot mutate the constants above.
 def permissions_for_role(role: str) -> set[str]:
     if role == ROLE_ADMIN:
         return set(ADMIN_PERMISSIONS)
