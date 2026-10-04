@@ -3,7 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
 import { useUploadData } from '../../context/UploadDataContext'
 import PageHeader from '../../components/shared/PageHeader'
-import { UPLOAD_DATA_TYPES, dataTypeLabel } from '../../utils/uploadDataTypes'
+import { UPLOAD_DATA_TYPES, composeUploadNotes, dataTypeLabel } from '../../utils/uploadDataTypes'
 
 const statusStyles = {
   pending: 'upload-badge upload-badge--pending',
@@ -16,6 +16,7 @@ export default function DashboardUpload() {
   const { submitUpload, uploadsForUser, loading, error } = useUploadData()
   const [barangayName, setBarangayName] = useState('')
   const [dataType, setDataType] = useState(UPLOAD_DATA_TYPES[0].value)
+  const [source, setSource] = useState('')
   const [notes, setNotes] = useState('')
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
@@ -33,10 +34,11 @@ export default function DashboardUpload() {
       await submitUpload({
         barangayName: barangayName.trim(),
         dataType,
-        notes: notes.trim(),
+        notes: composeUploadNotes(source, notes),
         file,
       })
       setBarangayName('')
+      setSource('')
       setNotes('')
       setFile(null)
       event.target.reset()
@@ -102,6 +104,18 @@ export default function DashboardUpload() {
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label htmlFor="upload-source" className="mb-1.5 block text-sm font-medium text-ocean">
+            Data source (optional)
+          </label>
+          <input
+            id="upload-source"
+            className="input-field"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+            placeholder="e.g., agency or provider name"
+          />
         </div>
         <div>
           <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ocean">
