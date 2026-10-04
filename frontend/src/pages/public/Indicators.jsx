@@ -1,6 +1,11 @@
 import PageHeader from '../../components/shared/PageHeader'
 import { dpiAggregationNote, indicatorSections } from '../../data/siteContent'
 
+/* Shared by every section so columns line up across tables. Indicator fits "Elevation_Mean (reverse-normalized)"
+   on one line; below the min width each table scrolls inside its card instead of reflowing. */
+const TABLE_CLASS = 'w-full min-w-[42rem] table-fixed text-left text-sm'
+const COLUMN_WIDTHS = ['w-[18.5rem]', 'w-[30%]', '']
+
 export default function Indicators() {
   return (
     <div className="space-y-6">
@@ -13,8 +18,14 @@ export default function Indicators() {
         <section key={section.title} className="space-y-3">
           <h2 className="font-display text-lg font-semibold text-foundation">{section.title}</h2>
           {section.note ? <p className="text-sm text-ocean">{section.note}</p> : null}
-          <div className="card-surface overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+          {/* Inline-size containment keeps the table's min width from widening the shrink-to-fit public <main>. */}
+          <div className="card-surface overflow-x-auto [contain:inline-size]">
+            <table className={TABLE_CLASS}>
+              <colgroup>
+                {COLUMN_WIDTHS.map((width, index) => (
+                  <col key={index} className={width} />
+                ))}
+              </colgroup>
               <thead className="bg-surface">
                 <tr>
                   <th className="px-4 py-3 font-semibold text-foundation">Indicator</th>
@@ -26,8 +37,8 @@ export default function Indicators() {
                 {section.rows.map((row) => (
                   <tr key={row.indicator} className="border-t border-pale/60">
                     <td className="px-4 py-3 font-medium text-foundation">{row.indicator}</td>
-                    <td className="px-4 py-3 text-ocean">{row.formula}</td>
-                    <td className="px-4 py-3 text-ocean">{row.description}</td>
+                    <td className="break-words px-4 py-3 text-ocean">{row.formula}</td>
+                    <td className="break-words px-4 py-3 text-ocean">{row.description}</td>
                   </tr>
                 ))}
               </tbody>
