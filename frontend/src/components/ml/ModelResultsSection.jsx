@@ -5,13 +5,14 @@ import FeatureImportanceChart from './FeatureImportanceChart'
 import ModelComparisonTable from './ModelComparisonTable'
 import SelectionCallout from './SelectionCallout'
 
-function SectionCard({ title, subtitle, action, children }) {
+function SectionCard({ title, subtitle, note, action, children }) {
   return (
     <section className="card-surface space-y-3 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-base font-semibold text-foundation">{title}</h3>
           {subtitle ? <p className="mt-1 text-sm text-ocean">{subtitle}</p> : null}
+          {note ? <p className="mt-1 text-xs text-ocean">{note}</p> : null}
         </div>
         {action}
       </div>
@@ -65,6 +66,7 @@ export default function ModelResultsSection() {
         <SectionCard
           title="Feature importance"
           subtitle={activeImportanceModel ? `Built-in importance, ${activeImportanceModel}` : undefined}
+          note="MLP has no built-in importance; see permutation importance."
           action={
             importanceModels.length > 1 ? (
               <select
