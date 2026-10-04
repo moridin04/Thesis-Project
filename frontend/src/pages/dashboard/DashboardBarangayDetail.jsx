@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import BackLink from '../../components/shared/BackLink'
 import PageHeader from '../../components/shared/PageHeader'
 import RiskBadge from '../../components/shared/RiskBadge'
 import MlAgreementBadge from '../../components/staff/MlAgreementBadge'
@@ -34,10 +35,10 @@ export default function DashboardBarangayDetail() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={record?.barangay ?? id} subtitle="DPI class and model-predicted class (staff only)" />
-      <Link to="/dashboard/barangays" className="text-sm font-medium text-ocean hover:text-action">
-        ← Back to barangays
-      </Link>
+      <div>
+        <BackLink to="/dashboard/barangays">Back to barangays</BackLink>
+        <PageHeader title={record?.barangay ?? id} subtitle="DPI class and model-predicted class (staff only)" />
+      </div>
       {loading ? <p className="text-sm text-ocean">Loading…</p> : null}
       {!loading && result.error ? <p className="text-sm text-accent">{result.error}</p> : null}
       {record ? (
