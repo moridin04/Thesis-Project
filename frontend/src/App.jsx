@@ -1,3 +1,9 @@
+// Route table for the whole site. Layouts wrap groups of pages.
+// Public pages are open. Dashboard routes need a staff or admin login.
+// Admin routes need an admin login. /risk-map and /staff send people
+// to the live pages. An unknown path goes back to the landing page.
+// Role lists come from config/adminNav.js and config/dashboardNav.js.
+
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
 import RoleRoute from './auth/RoleRoute'
@@ -37,9 +43,11 @@ import { REPORT_ROUTE_ROLES } from './config/dashboardNav'
 export default function App() {
   return (
     <Routes>
+      {/* Landing is the index. Unauthorized is outside the other layouts. */}
       <Route index element={<Landing />} />
       <Route path="unauthorized" element={<Unauthorized />} />
 
+      {/* Old map URL. The priority map is the page we keep. */}
       <Route path="priority-map" element={<PriorityMap />} />
       <Route path="risk-map" element={<Navigate to="/priority-map" replace />} />
 
@@ -61,6 +69,7 @@ export default function App() {
         <Route path="login" element={<Login />} />
       </Route>
 
+      {/* Signed-in staff and admin. Reports are limited again inside. */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RoleRoute allowedRoles={['staff', 'admin']} />}>
           <Route path="dashboard" element={<DashboardLayout />}>
@@ -79,6 +88,7 @@ export default function App() {
           </Route>
         </Route>
 
+        {/* Admin only. Staff who open these URLs are turned away. */}
         <Route element={<RoleRoute allowedRoles={ADMIN_ROUTE_ROLES} />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="review-uploads" replace />} />

@@ -1,3 +1,9 @@
+/* Styles for the whole AGOS site. main.jsx imports this file.
+ * Tailwind loads first. Charts read the same palette from theme/colors.js.
+ * Labels further down name each part of the page.
+ * Text is Plus Jakarta Sans. Headings are Fraunces.
+ */
+
 @import "tailwindcss";
 
 @theme {

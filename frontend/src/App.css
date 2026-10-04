@@ -1,3 +1,9 @@
+/* Leftover rules from the Vite starter. No file in src imports this.
+ * The live site styles are in index.css. These selectors are not used
+ * on the AGOS pages. They stay here so the starter file is unchanged
+ * except for this note.
+ */
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
