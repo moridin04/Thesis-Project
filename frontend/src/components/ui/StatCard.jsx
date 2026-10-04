@@ -13,11 +13,13 @@ const toneStyles = {
   rose: 'from-risk to-[color:var(--risk-very-high)]',
   priorityHigh: 'from-[color:var(--color-priority-high)] to-[color:var(--color-priority-high)]',
   priorityMedium: 'from-[color:var(--color-priority-medium)] to-[color:var(--color-priority-medium)]',
+  priorityLow: 'from-[color:var(--color-priority-low)] to-[color:var(--color-priority-low)]',
 }
 
-/* White icons fail 3:1 on the amber fill. */
+/* White icons fail 3:1 on the amber and green fills. */
 const iconTone = {
   priorityMedium: 'text-foundation',
+  priorityLow: 'text-foundation',
 }
 
 export default function StatCard({
@@ -32,15 +34,16 @@ export default function StatCard({
   const gradient = toneStyles[tone] ?? toneStyles.foundation
 
   return (
-    <article className="card-surface relative overflow-hidden p-5">
+    <article className="card-surface relative flex flex-col overflow-hidden p-5">
       <div
         className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br ${gradient} opacity-[0.14]`}
         aria-hidden
       />
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      {/* Value sits at the bottom of the header so numbers line up when a sibling's label wraps. */}
+      <div className="flex flex-1 items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col self-stretch">
           <p className="text-sm font-medium text-body">{label}</p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-heading">
+          <p className="mt-auto pt-2 text-3xl font-semibold tracking-tight text-heading">
             {value}
           </p>
         </div>

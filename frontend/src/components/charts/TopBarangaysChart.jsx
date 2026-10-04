@@ -1,16 +1,17 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { colors, riskColors } from '../../theme/colors'
 
 const TICKS = [0, 25, 50, 75, 100]
 const VISIBLE_ROWS = 5
 const COLUMNS = 'grid grid-cols-[6.25rem_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[8.5rem_minmax(0,1fr)]'
-const GRID_LINES = `repeating-linear-gradient(to right, ${colors.pale} 0 1px, transparent 1px 25%)`
+const GRID_LINES = 'repeating-linear-gradient(to right, var(--border-teal) 0 1px, transparent 1px 25%)'
 /* Scroll area and axis share the same gutter so ticks stay aligned with the bars. */
 const GUTTER = 'pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin]'
 const TOOLTIP_ROOM = 104
 
 export default function TopBarangaysChart({ rows }) {
+  const descriptionId = useId()
   const rootRef = useRef(null)
   const activeRef = useRef(null)
   const [tip, setTip] = useState(null)
@@ -57,6 +58,7 @@ export default function TopBarangaysChart({ rows }) {
           role="region"
           tabIndex={0}
           aria-label="Highest DPI barangays, scrollable"
+          aria-describedby={descriptionId}
           onScroll={handleScroll}
           className={`absolute inset-0 overflow-y-auto rounded-lg outline-none [scrollbar-color:var(--color-pale)_transparent] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${GUTTER}`}
         >
@@ -77,7 +79,10 @@ export default function TopBarangaysChart({ rows }) {
                     <span className="truncate text-sm text-foundation" title={row.barangay}>
                       {row.barangay}
                     </span>
-                    <span className="relative block h-[18px] border-r border-pale" style={{ backgroundImage: GRID_LINES }}>
+                    <span
+                      className="relative block h-[18px] border-r border-[color:var(--border-teal)]"
+                      style={{ backgroundImage: GRID_LINES }}
+                    >
                       <span
                         className="absolute inset-y-0 left-0 rounded-r-lg"
                         style={{
@@ -100,21 +105,27 @@ export default function TopBarangaysChart({ rows }) {
         ) : null}
       </div>
       <div className={`mt-1 overflow-y-hidden ${GUTTER}`} aria-hidden="true">
-        <div className={`${COLUMNS} px-1`}>
+        <div className={`${COLUMNS} gap-y-1 px-1`}>
           <span />
-          <span className="relative h-4 text-xs text-ocean">
+          <span className="relative block h-[1.375rem] border-t border-muted text-xs text-ocean max-sm:text-[0.6875rem]">
             {TICKS.map((tick) => (
               <span
                 key={tick}
-                className={`absolute top-0 ${tick === 0 ? '' : tick === 100 ? '-translate-x-full' : '-translate-x-1/2'}`}
+                className="absolute top-0 flex -translate-x-1/2 flex-col items-center leading-4"
                 style={{ left: `${tick}%` }}
               >
+                <span className="h-[5px] w-px bg-muted" />
                 {tick}
               </span>
             ))}
           </span>
+          <span />
+          <span className="text-center text-xs text-muted-ui">DPI score (0–100)</span>
         </div>
       </div>
+      <p id={descriptionId} className="sr-only">
+        Bar chart of highest DPI barangays, scale 0 to 100
+      </p>
       {tip ? (
         <div
           className={`card-surface pointer-events-none absolute left-1 z-20 rounded-lg px-3 py-2 text-sm shadow-lg sm:left-[9.5rem] ${

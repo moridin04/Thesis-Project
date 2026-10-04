@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Building2, SearchX, ShieldAlert, Users, Waves } from 'lucide-react'
+import { Building2, SearchX, ShieldAlert, ShieldCheck, Users, Waves } from 'lucide-react'
 import PageHeader from '../../components/shared/PageHeader'
 import StatCard from '../../components/shared/StatCard'
 import RiskDistributionChart from '../../components/charts/RiskDistributionChart'
@@ -8,8 +8,8 @@ import TopBarangaysChart from '../../components/charts/TopBarangaysChart'
 import PriorityBarangaysTable from '../../components/tables/PriorityBarangaysTable'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
 import { riskColors } from '../../theme/colors'
+import { PRIORITY_LEVELS as LEVELS, countLevel, summaryCounts } from '../../utils/overviewSummary'
 
-const LEVELS = ['High', 'Medium', 'Low']
 const TOP_OPTIONS = [5, 10, 20]
 const DEFAULT_TOP = 5
 const FILTER_KEYS = ['q', 'district', 'priority', 'top']
@@ -19,10 +19,6 @@ function formatCompact(n) {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(n)
-}
-
-function countLevel(rows, level) {
-  return rows.filter((row) => row.riskLevel === level).length
 }
 
 export default function PublicDashboard({ showArea = false }) {
@@ -90,6 +86,7 @@ export default function PublicDashboard({ showArea = false }) {
   const topRows = filtered.slice(0, top)
   const totalCount = barangays.length
   const population = filtered.reduce((sum, row) => sum + row.population, 0)
+  const counts = summaryCounts(barangays, filtered, filtersActive)
 
   const distribution = LEVELS.map((level) => ({
     name: level,
@@ -179,25 +176,31 @@ export default function PublicDashboard({ showArea = false }) {
             </p>
           </section>
 
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <StatCard
               label="Barangays analyzed"
-              value={filtered.length.toLocaleString()}
-              hint={filtersActive ? `of ${totalCount.toLocaleString()} total` : undefined}
+              value={counts.analyzed.toLocaleString()}
+              hint={counts.analyzedHint}
               icon={Building2}
               tone="slate"
             />
             <StatCard
               label="High priority"
-              value={countLevel(filtered, 'High').toLocaleString()}
+              value={counts.High.toLocaleString()}
               icon={ShieldAlert}
               tone="priorityHigh"
             />
             <StatCard
               label="Medium priority"
-              value={countLevel(filtered, 'Medium').toLocaleString()}
+              value={counts.Medium.toLocaleString()}
               icon={Waves}
               tone="priorityMedium"
+            />
+            <StatCard
+              label="Low priority"
+              value={counts.Low.toLocaleString()}
+              icon={ShieldCheck}
+              tone="priorityLow"
             />
             <StatCard
               label="Population (2024)"
