@@ -1,6 +1,6 @@
 # Thesis-Project
 
-Comparative Analysis of Random Forest, Gradient Boosting, and Multi-Layer Perceptron Models for Flood Risk Level Classification in Selected Barangays of the National Capital Region in the Philippines.
+Barangay-Level Flood Risk Classification and Mapping in the City of Manila Using Machine Learning and a Multi-Criteria Disaster Prioritization Index
 
 ## Layout
 
