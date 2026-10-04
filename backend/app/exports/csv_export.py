@@ -1,4 +1,4 @@
-"""Compact public CSV: a "# " comment header, Rank plus the whitelisted columns, and a disclaimer footer."""
+"""Public CSV: a "# " comment header, Rank plus the selected whitelist columns, and a disclaimer footer."""
 
 from __future__ import annotations
 
@@ -12,12 +12,22 @@ from app.exports.records import PUBLIC_EXPORT_COLUMNS
 CSV_TITLE = "AGOS Barangay Risk Summary"
 
 # Display rounding only; stored data keeps full precision.
-_DECIMALS = {"hazard": 4, "exposure": 4, "vulnerability": 4, "dpi_scaled": 2}
+_DECIMALS = {
+    "dpi_scaled": 2,
+    "flood_pct_5yr": 2,
+    "flood_pct_25yr": 2,
+    "elevation_mean": 2,
+    "hazard": 4,
+    "exposure": 4,
+    "vulnerability": 4,
+}
 
 
 def _cell(key: str, value) -> str:
     if value is None:
         return ""
+    if key == "population_2024":
+        return str(int(round(float(value))))
     if key in _DECIMALS:
         return f"{float(value):.{_DECIMALS[key]}f}"
     return str(value)
@@ -39,7 +49,6 @@ def render_csv(
     columns: list[str],
     rows: list[dict],
 ) -> bytes:
-    ranges = class_guide.class_ranges(rows)
     header = [f"# {CSV_TITLE}"]
     if title.strip() != CSV_TITLE:
         header.append(f"# Title: {title.strip()}")
@@ -48,21 +57,22 @@ def render_csv(
     header += [
         f"# Version: {version} | Data version: {data_version} | "
         f"Generated: {generated_at:%Y-%m-%d %H:%M} (Asia/Manila) | Records: {len(rows)}",
+        f"# Source: {class_guide.SOURCE_NOTE}",
         *_comment_lines(disclaimer, "Disclaimer: "),
         f"# {class_guide.TERTILE_NOTE}",
-        "# Class guide (DRRM pillars, short; planning summary):",
-        *(f"# {line}" for line in class_guide.csv_guide_lines(ranges)),
         f"# Columns: Rank by DPI_Scaled, highest first (ties by barangay number). "
-        f"DPI = {class_guide.DPI_NAME}, scaled 0 to 100.",
-        "# Rounding: Hazard, Exposure and Vulnerability to 4 decimals; DPI_Scaled to 2 decimals. "
+        f"DPI = {class_guide.DPI_NAME}, scaled 0 to 100. "
+        "Flood_PCT_5yr and Flood_PCT_25yr are percent 0 to 100; Elevation_Mean is in meters.",
+        "# Rounding: DPI_Scaled, Flood_PCT_5yr, Flood_PCT_25yr and Elevation_Mean to 2 decimals; "
+        "Hazard, Exposure and Vulnerability to 4 decimals; Population_2024 as a whole number. "
         "Stored data is unchanged.",
     ]
 
     buffer = io.StringIO()
-    buffer.write("\n".join(header) + "\n")
-    writer = csv.writer(buffer, lineterminator="\n")
+    buffer.write("\r\n".join(header) + "\r\n")
+    writer = csv.writer(buffer, lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL)
     writer.writerow(["Rank", *(PUBLIC_EXPORT_COLUMNS[key] for key in columns)])
     writer.writerows([row["rank"], *(_cell(key, row[key]) for key in columns)] for row in rows)
-    buffer.write("\n".join(_comment_lines(disclaimer, "Disclaimer: ")) + "\n")
+    buffer.write("\r\n".join(_comment_lines(disclaimer, "Disclaimer: ")) + "\r\n")
     # BOM so Excel opens the file as UTF-8.
     return ("\ufeff" + buffer.getvalue()).encode("utf-8")

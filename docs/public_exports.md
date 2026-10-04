@@ -7,55 +7,70 @@ new drafts, and an existing approved export stays as it is until a newer version
 
 DPI is the **Disaster Prioritization Index** everywhere (code, exports, docs).
 
+Suggested titles (placeholders, no file extension): `AGOS Barangay Risk Summary - CSV` and
+`AGOS Barangay Risk Summary - Report`.
+
 ## Public-safe columns
 
-Only these fields can be selected: barangay, district, area, hazard, exposure, vulnerability,
-dpi_scaled, priority_class (`backend/app/exports/records.py`). District and Area come from the
-shared district and area mapping in `backend/app/services/barangay_data.py`.
+Only these fields can be selected, in this order (`backend/app/exports/records.py`): barangay,
+district, area, dpi_scaled, priority_class, population_2024, flood_pct_5yr, flood_pct_25yr,
+elevation_mean, hazard, exposure, vulnerability, planning_reference, drrm_pillar.
 
-## Priority Class Guide
+Barangay, DPI_Scaled and Priority_Class are required. If Planning_Reference or DRRM_Pillar is
+selected, Priority_Class is included automatically. Staff-only fields (model-predicted class,
+confidence, agreement, upload metadata, anything else) are rejected with 422.
 
-`backend/app/exports/class_guide.py` holds the guide for High, Medium and Low: DRRM pillars,
-planning actions condensed from the pipeline's `Planning_Reference` and `DRRM_Pillar` wording, and
-the DPI range of each class (computed from the exported rows). Both outputs render it from there;
-it is never repeated on table rows.
+District and Area come from the shared mapping in `backend/app/services/barangay_data.py`.
+Planning_Reference and DRRM_Pillar are not stored per barangay: they are looked up from
+`backend/app/exports/class_guide.py` by priority class.
 
 ## CSV (`AGOS_Barangay_Risk_Summary_v{version}_{YYYY-MM-DD}.csv`)
 
-UTF-8 with BOM. Comment lines start with `# ` and come before the column row:
+UTF-8 with BOM, CRLF line endings, and standard CSV quoting for text that contains commas.
+Comment lines start with `# ` and come before the column row:
 
 - `# AGOS Barangay Risk Summary` (plus `# Title:` and `# Description:` when set)
 - `# Version: N | Data version: X | Generated: YYYY-MM-DD HH:MM (Asia/Manila) | Records: 897`
+- `# Source: Verified analytical dataset (barangay_flood_risk_predictions.csv)`
 - `# Disclaimer: ...` (the approved disclaimer, unchanged)
 - `# Priority classes are relative tertiles across Manila barangays.`
-- Class guide: one line per class, e.g. `# High (DPI 22.93 to 100.00): pillars ...; planning: ...`
-- `# Columns: ...` and `# Rounding: ...` notes
+- `# Columns: ...` (Rank by DPI_Scaled; DPI name; flood percent 0 to 100; elevation in meters)
+- `# Rounding: ...`
 
-Columns: `Rank, Barangay, District, Area, Hazard, Exposure, Vulnerability, DPI_Scaled,
-Priority_Class` (only the selected ones after Rank). Rank is by DPI_Scaled, highest first, ties by
-barangay number. Hazard, Exposure and Vulnerability are rounded to 4 decimals and DPI_Scaled to 2
-for readability; stored data is unchanged. The last line repeats the disclaimer.
+Columns (only the selected ones after Rank): `Rank, Barangay, District, Area, DPI_Scaled,
+Priority_Class, Population_2024, Flood_PCT_5yr, Flood_PCT_25yr, Elevation_Mean, Hazard, Exposure,
+Vulnerability, Planning_Reference, DRRM_Pillar`. Rank is by DPI_Scaled, highest first, ties by
+barangay number.
 
-`pandas.read_csv(path, comment="#")` loads 897 rows and 9 columns.
+Rounding is display-only; stored data is unchanged:
+
+- DPI_Scaled, Flood_PCT_5yr, Flood_PCT_25yr, Elevation_Mean: 2 decimals
+- Hazard, Exposure, Vulnerability: 4 decimals
+- Population_2024: whole number, no thousands separator
+- flood percent cells are numbers 0 to 100 (the unit is in the header, not a `%` sign)
+
+The last line repeats the disclaimer. `pandas.read_csv(path, comment="#")` loads 897 rows.
 
 ## HTML report (`AGOS_Barangay_Risk_Report_v{version}_{YYYY-MM-DD}.html`)
 
-One self-contained file (inline CSS, embedded logo, no external requests, about 230 KB):
+One self-contained file (inline CSS, embedded logo, no external requests, no script tags):
 
 1. Teal header band with the AGOS logo, title and chips for Version, Data version, Generated and Records
 2. Disclaimer callout
-3. Summary cards: High, Medium and Low counts with DPI ranges
-4. Priority class guide: pillars as chips, planning actions as bullets
-5. Top 10 highest priority barangays
-6. By district: District I to VI with area names, the top 10 of each district and a `<details>`
-   expander for the rest
-7. Footer with version, data version and disclaimer
+3. Summary cards: High, Medium and Low counts, DPI ranges and population covered, plus the citywide
+   Population (2024) represented figure computed from the rows
+4. One table of all 897 barangays in rank order
+5. Footer with version, data version and disclaimer
 
-Table columns: Rank, Barangay, District and Area (e.g. `III · Santa Cruz`), Hazard, Exposure and
-Vulnerability (2 decimals with a thin bar), DPI (1 decimal), Priority badge (text plus color).
+Table columns match the CSV (District and Area share one cell, e.g. `III · Santa Cruz`). Numbers
+are right-aligned with tabular figures; population uses a thousands separator; DPI, flood percent
+and elevation use 2 decimals. Priority is a coloured badge with text. Planning_Reference is 12px
+muted text; DRRM_Pillar is one chip per pillar. A CSS-only “Hide planning columns” checkbox
+compacts the screen view; print always shows those columns. Optional CSS-only High/Medium/Low
+filters hide rows on screen only.
 
-Print: A4 with 15 mm margins, cards and rows kept whole, headings kept with the content below them,
-repeating table headers, every expander opened, colors kept, and a running footer with the version and disclaimer on every page.
+Print: A4 landscape with 12 mm margins, repeating table headers, rows kept whole, colours kept,
+planning columns visible, and a running footer with the version and disclaimer on every page.
 
 ## Audit trail
 

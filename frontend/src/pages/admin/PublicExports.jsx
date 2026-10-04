@@ -16,11 +16,17 @@ import { auditActionLabel } from '../../utils/auditLog'
 import {
   DEFAULT_DISCLAIMER,
   EXPORT_KINDS,
+  PUBLIC_EXPORT_COLUMN_GROUPS,
   PUBLIC_EXPORT_COLUMNS,
   STATUS_LABELS,
+  exportColumnLabel,
   formatApprovedDate,
+  isMandatoryExportColumn,
   kindLabel,
+  planningNeedsPriorityClass,
   previewFilename,
+  titlePlaceholder,
+  toggleExportColumn,
 } from '../../utils/publicExports'
 
 const STATUS_BADGE_CLASSES = {
@@ -97,10 +103,10 @@ function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
   )
   const fieldId = useId()
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  const toggleColumn = (key) =>
-    update('columns', form.columns.includes(key) ? form.columns.filter((item) => item !== key) : [...form.columns, key])
+  const toggleColumn = (key) => update('columns', toggleExportColumn(form.columns, key))
+  const planningHint = planningNeedsPriorityClass(form.columns)
 
-  const valid = form.title.trim() && form.disclaimer.trim() && form.columns.length > 0
+  const valid = form.title.trim() && form.disclaimer.trim() && form.columns.length > 0 && !planningHint
 
   return (
     <form
@@ -138,6 +144,7 @@ function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
             value={form.title}
             maxLength={160}
             required
+            placeholder={titlePlaceholder(form.kind)}
             onChange={(event) => update('title', event.target.value)}
           />
         </label>
@@ -152,24 +159,35 @@ function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
           onChange={(event) => update('description', event.target.value)}
         />
       </label>
-      <fieldset className="space-y-2">
+      <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-foundation">Columns</legend>
-        <p className="text-xs text-muted">Only these public fields can be exported.</p>
-        <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
-          {PUBLIC_EXPORT_COLUMNS.map((column) => (
-            <label key={column.key} className="flex min-h-11 items-center gap-2 text-sm text-foundation sm:min-h-0">
-              <input
-                type="checkbox"
-                className="h-4 w-4 accent-[color:var(--color-primary)]"
-                checked={form.columns.includes(column.key)}
-                onChange={() => toggleColumn(column.key)}
-              />
-              {column.label}
-            </label>
-          ))}
-        </div>
-        {form.columns.length === 0 ? (
-          <p className="text-sm text-[color:var(--color-accent)]">Select at least one column.</p>
+        <p className="text-xs text-muted">Only these public fields can be exported. Barangay, DPI_Scaled and Priority_Class are required.</p>
+        {PUBLIC_EXPORT_COLUMN_GROUPS.map((group) => (
+          <div key={group.id} className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{group.label}</p>
+            <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+              {group.keys.map((key) => (
+                <label key={key} className="flex min-h-11 items-center gap-2 text-sm text-foundation sm:min-h-0">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[color:var(--color-primary)]"
+                    checked={form.columns.includes(key)}
+                    disabled={isMandatoryExportColumn(key)}
+                    onChange={() => toggleColumn(key)}
+                  />
+                  {exportColumnLabel(key)}
+                </label>
+              ))}
+            </div>
+            {group.id === 'planning' ? (
+              <p id={`${fieldId}-planning-hint`} className="text-xs text-muted">
+                Planning and DRRM columns require Priority_Class.
+              </p>
+            ) : null}
+          </div>
+        ))}
+        {planningHint ? (
+          <p className="text-sm text-[color:var(--color-accent)]">Turn on Priority_Class to export Planning or DRRM columns.</p>
         ) : null}
       </fieldset>
       <label className="block space-y-1.5 text-sm font-medium text-foundation" htmlFor={`${fieldId}-disclaimer`}>

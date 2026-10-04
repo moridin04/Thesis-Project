@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app import generated_files
 from app.exports.csv_export import render_csv
 from app.exports.html_report import render_report
-from app.exports.records import PUBLIC_EXPORT_COLUMNS, ranked_rows
+from app.exports.records import MANDATORY_COLUMNS, PLANNING_COLUMNS, PUBLIC_EXPORT_COLUMNS, ranked_rows
 from app.models.account import Account
 from app.models.audit_log import AuditLog
 from app.models.public_export import EXPORT_KINDS, PublicExport
@@ -42,6 +42,14 @@ def validate_columns(columns: list[str]) -> list[str]:
             detail=f"Columns not allowed in public exports: {', '.join(rejected)}.",
         )
     seen = set(columns)
+    if seen & set(PLANNING_COLUMNS):
+        seen.add("priority_class")
+    missing = [key for key in MANDATORY_COLUMNS if key not in seen]
+    if missing:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Public exports must include: {', '.join(MANDATORY_COLUMNS)}.",
+        )
     return [key for key in PUBLIC_EXPORT_COLUMNS if key in seen]
 
 

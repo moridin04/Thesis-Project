@@ -24,8 +24,9 @@ DISCLAIMER = (
     "across Manila barangays, not official flood warnings."
 )
 COLUMNS = list(PUBLIC_EXPORT_COLUMNS)
-CSV_COLUMNS = ["Rank", "Barangay", "District", "Area", "Hazard", "Exposure", "Vulnerability", "DPI_Scaled", "Priority_Class"]
+CSV_COLUMNS = ["Rank", *PUBLIC_EXPORT_COLUMNS.values()]
 SAMPLED = ["Barangay 310", "Barangay 628", "Barangay 649", "Barangay 20", "Barangay 188"]
+ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(autouse=True)
@@ -40,10 +41,15 @@ def admin_headers(client: TestClient, admin_account) -> dict[str, str]:
     return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
-def _snapshot(client: TestClient, headers: dict, db: Session, kind: str, approve: bool = False) -> tuple[dict, bytes]:
+def _snapshot(client: TestClient, headers: dict, db: Session, kind: str, approve: bool = False, columns=None) -> tuple[dict, bytes]:
     created = client.post(
         BASE,
-        json={"kind": kind, "title": "Barangay Risk Summary", "columns": COLUMNS, "disclaimer": DISCLAIMER},
+        json={
+            "kind": kind,
+            "title": "Barangay Risk Summary",
+            "columns": COLUMNS if columns is None else columns,
+            "disclaimer": DISCLAIMER,
+        },
         headers=headers,
     ).json()
     if approve:
@@ -76,35 +82,46 @@ def test_csv_header_block_and_footer(csv_export):
     today = datetime.now(ZoneInfo("Asia/Manila")).strftime("%Y-%m-%d")
     assert re.search(rf"Generated: {today} \d\d:\d\d \(Asia/Manila\)", meta)
     assert "Records: 897" in meta
+    assert any(class_guide.SOURCE_NOTE in line for line in header)
     assert f"# Disclaimer: {DISCLAIMER}" in header
     assert f"# {class_guide.TERTILE_NOTE}" in header
-    guide = [line for line in header if line.startswith(("# High (", "# Medium (", "# Low ("))]
-    assert [line.split(" (")[0] for line in guide] == ["# High", "# Medium", "# Low"]
-    assert all(len(line) < 160 for line in guide)
-    assert "# High (DPI 22.93 to 100.00)" in guide[0]
     assert any(line.startswith("# Rounding:") for line in header)
     assert any(line.startswith("# Columns:") and class_guide.DPI_NAME in line for line in header)
+    assert "percent 0 to 100" in " ".join(header)
+    assert "meters" in " ".join(header)
     assert lines[-1] == f"# Disclaimer: {DISCLAIMER}"
 
 
-def test_csv_loads_as_897_rows_of_the_9_public_columns(csv_export):
+def test_csv_loads_as_897_rows_with_planning_and_context(csv_export):
     _created, content = csv_export
     frame = pd.read_csv(io.BytesIO(content), comment="#")
-    assert frame.shape == (897, 9)
+    assert frame.shape == (897, 15)
     assert list(frame.columns) == CSV_COLUMNS
     assert frame["Priority_Class"].value_counts().to_dict() == {"High": 299, "Medium": 299, "Low": 299}
     assert list(frame["Rank"]) == list(range(1, 898))
     assert frame["DPI_Scaled"].is_monotonic_decreasing
-    text = content.decode("utf-8-sig")
-    for forbidden in ("Planning_Reference", "DRRM_Pillar", "Population", "Elevation", "Flood_PCT", "ML_"):
-        assert forbidden not in text
+    assert int(frame["Population_2024"].sum()) == 1_902_590
+    for label in class_guide.CLASS_ORDER:
+        subset = frame.loc[frame["Priority_Class"] == label]
+        assert set(subset["Planning_Reference"]) == {class_guide.planning_reference(label)}
+        assert set(subset["DRRM_Pillar"]) == {class_guide.drrm_pillar(label)}
 
 
-def test_csv_rounding(csv_export):
+def test_csv_rounding_and_quoted_planning_text(csv_export):
     _created, content = csv_export
-    first = content.decode("utf-8-sig").splitlines()
-    row = next(line for line in first if line.startswith("1,"))
-    assert row == "1,Barangay 310,District III,Santa Cruz,0.6135,0.8478,0.4277,100.00,High"
+    text = content.decode("utf-8-sig")
+    row = next(line for line in text.splitlines() if line.startswith("1,"))
+    assert row.startswith("1,Barangay 310,District III,Santa Cruz,100.00,High,13761,43.28,98.96,2.00,0.6135,0.8478,0.4277,")
+    assert "43.280626" not in text
+    planning = class_guide.planning_reference("High")
+    assert f'"{planning}"' in row
+    frame = pd.read_csv(io.BytesIO(content), comment="#")
+    first = frame.iloc[0]
+    assert first["Barangay"] == "Barangay 310"
+    assert float(first["DPI_Scaled"]) == 100.0
+    assert int(first["Population_2024"]) == 13761
+    assert f"{float(first['Flood_PCT_5yr']):.2f}" == "43.28"
+    assert f"{float(first['Hazard']):.4f}" == "0.6135"
 
 
 def test_district_and_area_match_the_shared_mapping(csv_export, html_export):
@@ -119,45 +136,81 @@ def test_district_and_area_match_the_shared_mapping(csv_export, html_export):
     assert (frame.loc["Barangay 310", "District"], frame.loc["Barangay 310", "Area"]) == ("District III", "Santa Cruz")
 
 
-def test_html_has_disclaimer_versions_badges_and_guide_once(html_export):
+def test_html_has_disclaimer_versions_badges_and_population(html_export):
     created, html = html_export
     assert escape(DISCLAIMER) in html
     assert f"Version {created['version']}" in html
     assert barangay_data.current_data_version() in html
+    assert "1,902,590" in html
     for label in class_guide.CLASS_ORDER:
         badge = {"High": "h", "Medium": "m", "Low": "l"}[label]
         assert f'<b class="{badge}">{label}</b>' in html
-        for action in class_guide.CLASS_GUIDE[label]["actions"]:
-            assert html.count(escape(action)) == 1, action
-    for pillar in class_guide.PILLAR_SHORT:
-        expected = sum(pillar in class_guide.CLASS_GUIDE[label]["pillars"] for label in class_guide.CLASS_ORDER)
-        assert html.count(f"<li>{escape(pillar)}</li>") == expected
-    assert html.count('id="s-guide"') == 1
-    assert html.count("<details>") == 6
+        assert html.count(escape(class_guide.planning_reference(label))) == 299
+    assert html.count("<script") == 0
+    assert 'id="hp"' in html
+    assert html.count('<table class="t">') == 1
+    assert html.count("<tr class=") == 897
 
 
-def test_html_rows_never_carry_planning_text(html_export):
+def test_class_guide_text_lives_only_in_the_shared_module():
+    sources = [
+        (ROOT / "app/exports/html_report.py").read_text(),
+        (ROOT / "app/exports/csv_export.py").read_text(),
+        (ROOT / "app/exports/records.py").read_text(),
+    ]
+    for label in class_guide.CLASS_ORDER:
+        text = class_guide.planning_reference(label)
+        assert text in (ROOT / "app/exports/class_guide.py").read_text()
+        assert all(text not in source for source in sources)
+
+
+def test_html_is_self_contained_and_reports_size(html_export):
     _created, html = html_export
-    planning = {record["planning_reference"] for record in barangay_data.get_all_barangays()}
-    pillars = {record["drrm_pillar"] for record in barangay_data.get_all_barangays()}
-    tables = re.findall(r'<table class="t">.*?</table>', html, flags=re.S)
-    rows = [row for table in tables for row in re.findall(r"<tr>.*?</tr>", table, flags=re.S)]
-    assert len(rows) > 897
-    for row in rows:
-        assert not any(text in row for text in planning | pillars)
-        assert "Disaster" not in row and "planning" not in row.lower()
-    assert "Planning_Reference" not in html and "DRRM_Pillar" not in html
-
-
-def test_html_is_self_contained_and_small(html_export):
-    _created, html = html_export
+    size = len(html.encode("utf-8"))
+    print(f"HTML size: {size} bytes")
     assert "http://" not in html and "https://" not in html
     assert not re.search(r"""(src|href)\s*=\s*["']?(?!data:|#)[a-z]+:""", html)
-    assert "<link" not in html and "@import" not in html
-    assert len(html.encode("utf-8")) < 300_000
-    assert "@page{size:A4;margin:15mm}" in html
+    assert "<link" not in html and "@import" not in html and "<script" not in html
+    assert size < 600_000
+    assert "@page{size:A4 landscape;margin:12mm}" in html
     assert "print-color-adjust:exact" in html
     assert 'class="pf"' in html
+    assert "Hide planning columns" in html
+
+
+def test_whitelist_accepts_context_and_planning_and_rejects_staff_fields(client: TestClient, admin_headers):
+    ok = client.post(
+        BASE,
+        json={"kind": "csv", "title": "x", "columns": COLUMNS, "disclaimer": DISCLAIMER},
+        headers=admin_headers,
+    )
+    assert ok.status_code == 201
+    auto = client.post(
+        BASE,
+        json={
+            "kind": "csv",
+            "title": "x",
+            "columns": ["barangay", "dpi_scaled", "planning_reference"],
+            "disclaimer": DISCLAIMER,
+        },
+        headers=admin_headers,
+    )
+    assert auto.status_code == 201
+    assert "priority_class" in auto.json()["columns"]
+    missing = client.post(
+        BASE,
+        json={"kind": "csv", "title": "x", "columns": ["district", "area"], "disclaimer": DISCLAIMER},
+        headers=admin_headers,
+    )
+    assert missing.status_code == 422
+    for bad in ("model_predicted_class", "confidence", "agreement", "ml_predicted_class", "unknown_field"):
+        response = client.post(
+            BASE,
+            json={"kind": "csv", "title": "x", "columns": ["barangay", "dpi_scaled", "priority_class", bad], "disclaimer": DISCLAIMER},
+            headers=admin_headers,
+        )
+        assert response.status_code == 422
+        assert bad in response.json()["detail"]
 
 
 def test_approved_snapshot_is_not_rewritten_by_later_versions(client: TestClient, admin_headers, db_session: Session):

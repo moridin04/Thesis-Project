@@ -1,8 +1,9 @@
 """Priority Class Guide shared by the public CSV and HTML report.
 
-Wording is condensed from the pipeline's Planning_Reference and DRRM_Pillar columns
+Wording is taken from the pipeline's Planning_Reference and DRRM_Pillar columns
 (src/ML-thesis-updated/Output/barangay_flood_risk_predictions.csv); it adds no new claims.
-Keep this the only copy: both renderers read it from here.
+Keep this the only copy: both renderers read it from here. Values are keyed by priority class,
+not stored per barangay.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from collections.abc import Iterable
 DPI_NAME = "Disaster Prioritization Index"
 CLASS_ORDER = ("High", "Medium", "Low")
 TERTILE_NOTE = "Priority classes are relative tertiles across Manila barangays."
+SOURCE_NOTE = "Verified analytical dataset (barangay_flood_risk_predictions.csv)"
 
 PILLAR_SHORT = {
     "Disaster Prevention and Mitigation": "Prevention",
@@ -26,6 +28,7 @@ CLASS_GUIDE: dict[str, dict] = {
             "Disaster Preparedness",
             "Disaster Response and Early Recovery",
         ],
+        "planning_reference": "Priority site validation, detailed evacuation planning, pre-positioning review, infrastructure assessment, and enhanced preparedness review.",
         "actions": [
             "Priority site validation",
             "Detailed evacuation planning",
@@ -37,6 +40,7 @@ CLASS_GUIDE: dict[str, dict] = {
     },
     "Medium": {
         "pillars": ["Disaster Prevention and Mitigation", "Disaster Preparedness"],
+        "planning_reference": "Periodic drainage/waterway clearing, more frequent early-warning checks, community drills, relief-stock review, and evacuation-route verification.",
         "actions": [
             "Periodic drainage and waterway clearing",
             "More frequent early-warning checks",
@@ -48,6 +52,7 @@ CLASS_GUIDE: dict[str, dict] = {
     },
     "Low": {
         "pillars": ["Disaster Prevention and Mitigation", "Disaster Preparedness"],
+        "planning_reference": "Routine monitoring, drainage inspection, annual information updating, and regular drills.",
         "actions": [
             "Routine monitoring",
             "Drainage inspection",
@@ -75,6 +80,14 @@ def range_text(bounds: tuple[float, float] | None) -> str:
 
 def short_pillars(label: str) -> str:
     return ", ".join(PILLAR_SHORT[p] for p in CLASS_GUIDE[label]["pillars"])
+
+
+def planning_reference(label: str) -> str:
+    return CLASS_GUIDE[label]["planning_reference"]
+
+
+def drrm_pillar(label: str) -> str:
+    return "; ".join(CLASS_GUIDE[label]["pillars"])
 
 
 def csv_guide_lines(ranges: dict[str, tuple[float, float]]) -> list[str]:

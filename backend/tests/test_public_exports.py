@@ -72,7 +72,7 @@ def test_staff_gets_403_and_anonymous_401(client: TestClient, staff_headers):
 
 @pytest.mark.parametrize(
     "bad_column",
-    ["ml_predicted_class", "ml_prediction_confidence", "agrees_with_dpi", "uploaded_by", "population_2024"],
+    ["ml_predicted_class", "ml_prediction_confidence", "agrees_with_dpi", "uploaded_by", "model_predicted_class"],
 )
 def test_columns_outside_whitelist_are_rejected(client: TestClient, admin_headers, bad_column):
     response = client.post(
@@ -108,7 +108,7 @@ def test_patch_only_allowed_for_drafts(client: TestClient, admin_headers):
 def test_csv_snapshot_has_disclaimer_whitelisted_header_and_checksum(
     client: TestClient, admin_headers, db_session: Session
 ):
-    created = _create(client, admin_headers, columns=["district", "barangay", "priority_class"])
+    created = _create(client, admin_headers, columns=["barangay", "district", "dpi_scaled", "priority_class"])
     approved = client.post(f"{BASE}/{created['id']}/approve", headers=admin_headers).json()
     record = db_session.get(PublicExport, approved["id"])
     content = Path(record.file_path).read_bytes()
@@ -117,7 +117,7 @@ def test_csv_snapshot_has_disclaimer_whitelisted_header_and_checksum(
     assert lines[0].startswith("# ")
     assert any(line == f"# Disclaimer: {DISCLAIMER}" for line in lines)
     header = next(line for line in lines if not line.startswith("#"))
-    assert header == "Rank,Barangay,District,Priority_Class"
+    assert header == "Rank,Barangay,District,DPI_Scaled,Priority_Class"
     assert approved["row_count"] == len(barangay_data.get_all_barangays())
 
 

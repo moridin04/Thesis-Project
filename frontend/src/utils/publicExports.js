@@ -3,17 +3,39 @@ export const EXPORT_KINDS = [
   { value: 'report', label: 'Report' },
 ]
 
+export const TITLE_PLACEHOLDERS = {
+  csv: 'AGOS Barangay Risk Summary - CSV',
+  report: 'AGOS Barangay Risk Summary - Report',
+}
+
 /* Mirrors the server whitelist; the server rejects anything else with 422. */
 export const PUBLIC_EXPORT_COLUMNS = [
   { key: 'barangay', label: 'Barangay' },
   { key: 'district', label: 'District' },
   { key: 'area', label: 'Area' },
+  { key: 'dpi_scaled', label: 'DPI_Scaled' },
+  { key: 'priority_class', label: 'Priority_Class' },
+  { key: 'population_2024', label: 'Population_2024' },
+  { key: 'flood_pct_5yr', label: 'Flood_PCT_5yr' },
+  { key: 'flood_pct_25yr', label: 'Flood_PCT_25yr' },
+  { key: 'elevation_mean', label: 'Elevation_Mean' },
   { key: 'hazard', label: 'Hazard' },
   { key: 'exposure', label: 'Exposure' },
   { key: 'vulnerability', label: 'Vulnerability' },
-  { key: 'dpi_scaled', label: 'DPI_Scaled' },
-  { key: 'priority_class', label: 'Priority_Class' },
+  { key: 'planning_reference', label: 'Planning_Reference' },
+  { key: 'drrm_pillar', label: 'DRRM_Pillar' },
 ]
+
+export const PUBLIC_EXPORT_COLUMN_GROUPS = [
+  { id: 'identity', label: 'Identity', keys: ['barangay', 'district', 'area'] },
+  { id: 'scores', label: 'Scores', keys: ['dpi_scaled', 'priority_class', 'hazard', 'exposure', 'vulnerability'] },
+  { id: 'context', label: 'Context', keys: ['population_2024', 'flood_pct_5yr', 'flood_pct_25yr', 'elevation_mean'] },
+  { id: 'planning', label: 'Planning', keys: ['planning_reference', 'drrm_pillar'] },
+]
+
+export const MANDATORY_EXPORT_COLUMNS = ['barangay', 'dpi_scaled', 'priority_class']
+
+const COLUMN_BY_KEY = Object.fromEntries(PUBLIC_EXPORT_COLUMNS.map((column) => [column.key, column]))
 
 export const DEFAULT_DISCLAIMER =
   'For information purposes only. Not a warning system. Priority classes are relative tertiles across Manila barangays, not official flood warnings.'
@@ -28,6 +50,35 @@ export const STATUS_LABELS = {
 
 export function kindLabel(kind) {
   return EXPORT_KINDS.find((item) => item.value === kind)?.label ?? kind
+}
+
+export function titlePlaceholder(kind) {
+  return TITLE_PLACEHOLDERS[kind] ?? TITLE_PLACEHOLDERS.csv
+}
+
+export function isMandatoryExportColumn(key) {
+  return MANDATORY_EXPORT_COLUMNS.includes(key)
+}
+
+export function exportColumnLabel(key) {
+  return COLUMN_BY_KEY[key]?.label ?? key
+}
+
+/** True when Planning or DRRM is selected without Priority_Class. */
+export function planningNeedsPriorityClass(columns) {
+  const selected = new Set(columns)
+  return (selected.has('planning_reference') || selected.has('drrm_pillar')) && !selected.has('priority_class')
+}
+
+export function toggleExportColumn(columns, key) {
+  if (isMandatoryExportColumn(key)) {
+    return PUBLIC_EXPORT_COLUMNS.map((column) => column.key).filter((item) => columns.includes(item) || item === key)
+  }
+  const selected = new Set(columns)
+  if (selected.has(key)) selected.delete(key)
+  else selected.add(key)
+  if (planningNeedsPriorityClass(selected)) selected.add('priority_class')
+  return PUBLIC_EXPORT_COLUMNS.map((column) => column.key).filter((item) => selected.has(item))
 }
 
 export function formatApprovedDate(value) {
