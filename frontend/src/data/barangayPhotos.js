@@ -1,3 +1,8 @@
+/*
+ * Illustrative photo for a barangay profile, keyed by barangay id.
+ * PriorityMap.jsx calls getBarangayPhoto. Only Barangay 310 has a photo.
+ * The credit text stays with the image so the caption can name the source.
+ */
 /* Keyed by barangay id (the value used in /barangays/:id and by the public API). */
 const BARANGAY_PHOTOS = {
   'Barangay 310': {
@@ -12,6 +17,7 @@ const BARANGAY_PHOTOS = {
   },
 }
 
+// The photo for that id, or null when the id is missing or unknown.
 export function getBarangayPhoto(barangay) {
   if (typeof barangay !== 'string' || !Object.hasOwn(BARANGAY_PHOTOS, barangay)) return null
   return BARANGAY_PHOTOS[barangay]

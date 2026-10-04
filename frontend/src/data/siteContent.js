@@ -1,12 +1,20 @@
+/*
+ * Static methodology, indicator, and recommendation copy.
+ * Methodology, Indicators, and Recommendations import these sections.
+ * datasetMeta sits here, but no page imports that object yet.
+ */
+// Prototype dataset label. Nothing in the pages reads it yet.
 export const datasetMeta = {
   version: '2026.1-mock',
   lastUpdated: '2026-08-22',
   sourceNote: 'Prototype dataset for thesis demonstration only.',
 }
 
+// Paragraph on the indicators page that explains how DPI is combined.
 export const dpiAggregationNote =
   'The Disaster Prioritization Index (DPI) uses a two-level aggregation: individual indicators within each component (Hazard, Exposure, Vulnerability) are normalized and equally averaged into a component score. The three component scores are then combined using entropy-derived weights to produce the final DPI, which is used to classify barangays into Low, Medium, and High flood risk priority.'
 
+// Indicator tables: hazard, exposure, vulnerability, and id fields.
 export const indicatorSections = [
   {
     title: 'Hazard Score Indicators',
@@ -96,6 +104,7 @@ export const indicatorSections = [
   },
 ]
 
+// Methodology page sections, from sources through the governance notes.
 export const methodologySections = [
   {
     title: 'Data sources',
@@ -123,12 +132,14 @@ export const methodologySections = [
   },
 ]
 
+// Four NDRRMP pillars and the lead agency named for each one.
 export const ndrrmpPillars = [
   { pillar: 'Prevention and Mitigation', lead: 'DOST' },
   { pillar: 'Preparedness', lead: 'DILG' },
   { pillar: 'Response and Early Recovery', lead: 'DSWD' },
   { pillar: 'Rehabilitation and Recovery', lead: 'NEDA' },
 ]
+// Planning notes keyed by High, Medium, and Low for the recommendations page.
 export const recommendationsByCategory = {
   High: [
     'Prioritize evacuation planning and shelter readiness.',

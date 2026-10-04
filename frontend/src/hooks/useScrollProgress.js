@@ -1,3 +1,8 @@
+/*
+ * Scroll position from 0 to 1 for the public progress bar.
+ * components/public/ScrollProgress.jsx reads this hook.
+ * Updates go through requestAnimationFrame so React is not set on every event.
+ */
 import { useEffect, useState } from 'react'
 
 /** Thin scroll-progress value 0–1, updated via rAF (no constant React spam). */

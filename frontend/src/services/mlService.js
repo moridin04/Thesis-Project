@@ -1,5 +1,11 @@
+/*
+ * Loads model metrics for the staff model-results section.
+ * useMlResults.js calls this, and the chart components read the shape.
+ * The route is GET /ml/results.
+ */
 import api from './api'
 
+// Rename snake_case fields and fill gaps so the charts can assume arrays.
 export async function fetchMlResults() {
   const { data } = await api.get('/ml/results')
   return {

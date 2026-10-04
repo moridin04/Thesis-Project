@@ -1,3 +1,9 @@
+/*
+ * Blocks public pages until the visitor accepts the disclaimer.
+ * main.jsx wraps the app in this gate. Login and admin are excluded.
+ * disclaimerAck.js stores the ack under agos.disclaimer.ack.
+ * If storage throws, the ack stays in memory for this tab only.
+ */
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
@@ -22,6 +28,7 @@ import {
 } from '../../content/disclaimerAck.js'
 import { DisclaimerContext, useDisclaimer } from './disclaimerContext.js'
 
+// Footer and map button. Opens the dialog again without a new checkbox.
 export function DisclaimerReopenButton({ className }) {
   const { reopen } = useDisclaimer()
   return (
@@ -31,6 +38,7 @@ export function DisclaimerReopenButton({ className }) {
   )
 }
 
+// The card. Gate mode needs the checkbox. Reopen mode can just close.
 export function DisclaimerDialog({
   mode,
   agreed,
@@ -48,6 +56,7 @@ export function DisclaimerDialog({
   const canConfirm = canConfirmDisclaimer(mode, agreed)
   const buttonLabel = reopen ? DISCLAIMER_CLOSE_LABEL : DISCLAIMER_BUTTON_LABEL
 
+  // Backdrop clicks dismiss only in reopen mode. The first gate stays up.
   return (
     <div
       className="disclaimer-overlay"
@@ -99,6 +108,7 @@ export function DisclaimerDialog({
   )
 }
 
+// Remembers the ack, locks scroll while open, and keeps Tab in the dialog.
 export default function DisclaimerGate({ children }) {
   const { pathname } = useLocation()
   const titleId = useId()
@@ -107,25 +117,30 @@ export default function DisclaimerGate({ children }) {
   const checkboxRef = useRef(null)
   const restoreFocusRef = useRef(null)
   const nudgeTimerRef = useRef(null)
+  // localStorage, then sessionStorage, then memory if those stores threw.
   const [record, setRecord] = useState(() => readAcknowledgement())
   const [reopen, setReopen] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [nudge, setNudge] = useState(false)
   const excluded = isDisclaimerExcludedPath(pathname)
+  // Reopen is a second look. Gate is the first visit that must be accepted.
   const mode = reopen ? 'reopen' : 'gate'
   const open = shouldShowDisclaimer({ pathname, record, reopen })
 
+  // Close the second look. The stored acknowledgement is left as it is.
   const closeReopen = useCallback(() => {
     setReopen(false)
     setAgreed(false)
     setNudge(false)
   }, [])
 
+  // A tick clears the shake that follows an early submit.
   const handleAgreedChange = useCallback((checked) => {
     setAgreed(checked)
     if (checked) setNudge(false)
   }, [])
 
+  // Submitted with the box unticked. Shake the row and focus the checkbox.
   const handleBlocked = useCallback(() => {
     setNudge(true)
     checkboxRef.current?.focus()
@@ -133,6 +148,7 @@ export default function DisclaimerGate({ children }) {
     nudgeTimerRef.current = window.setTimeout(() => setNudge(false), 1200)
   }, [])
 
+  // First visit writes the ack. Reopen only closes. A storage throw stays in memory.
   const confirm = useCallback(() => {
     if (reopen) {
       closeReopen()
@@ -145,6 +161,7 @@ export default function DisclaimerGate({ children }) {
     setAgreed(false)
   }, [agreed, closeReopen, reopen])
 
+  // Remember focus so we can return to the button that opened the dialog.
   const handleReopen = useCallback(() => {
     if (excluded) return
     restoreFocusRef.current = document.activeElement
@@ -152,6 +169,7 @@ export default function DisclaimerGate({ children }) {
     setReopen(true)
   }, [excluded])
 
+  // While open, hide body scroll, move focus, and trap Tab in the dialog.
   useEffect(() => {
     if (!open) return undefined
     restoreFocusRef.current = restoreFocusRef.current || document.activeElement
@@ -162,6 +180,7 @@ export default function DisclaimerGate({ children }) {
     } else {
       checkboxRef.current?.focus()
     }
+    // Escape closes reopen mode only. The first gate ignores it.
     function onKeyDown(event) {
       if (event.key === 'Escape') {
         if (gateAllowsDismiss(mode, 'escape')) {
@@ -179,6 +198,7 @@ export default function DisclaimerGate({ children }) {
     }
   }, [closeReopen, mode, open])
 
+  // When the dialog closes, focus the control that opened it.
   useEffect(() => {
     if (open) return undefined
     const target = restoreFocusRef.current
@@ -189,6 +209,7 @@ export default function DisclaimerGate({ children }) {
     return undefined
   }, [open])
 
+  // If the gate unmounts mid-dialog, restore scroll and clear the shake timer.
   useEffect(
     () => () => {
       document.body.style.overflow = ''
@@ -199,6 +220,7 @@ export default function DisclaimerGate({ children }) {
 
   return (
     <DisclaimerContext.Provider value={{ reopen: handleReopen, isOpen: open }}>
+      {/* Page stays mounted but inert so keyboard focus stays in the dialog. */}
       <div className={open ? 'disclaimer-inert' : undefined} {...(open ? { inert: true, 'aria-hidden': 'true' } : {})}>
         {children}
       </div>

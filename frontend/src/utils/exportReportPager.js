@@ -1,8 +1,19 @@
+/*
+ * Filter and page the barangay table inside the public HTML export.
+ * backend/app/exports/html_report.py inlines this file into that report.
+ * The on-screen default is 50 rows. The choices are 25, 50, and 100.
+ */
+// Page lengths the report toolbar can select.
 export const PAGE_SIZES = [25, 50, 100]
+// Rows per page when the hash leaves size out. The report starts here.
 export const DEFAULT_PAGE_SIZE = 50
+// Priority values the class filter accepts. Anything else is dropped.
 export const PRIORITY_CLASSES = ['High', 'Medium', 'Low']
+// District numbers the district filter accepts.
 export const DISTRICTS = ['I', 'II', 'III', 'IV', 'V', 'VI']
 
+// Read page, size, class, district, and search from the URL hash.
+// Search text is cut at 120 characters.
 export function parseExportHash(hash) {
   const source = String(hash || '').replace(/^#/, '')
   let params
@@ -27,6 +38,7 @@ export function parseExportHash(hash) {
   }
 }
 
+// Write the filters back. Default page and size are left out of the hash.
 export function serializeExportHash(state) {
   const params = new URLSearchParams()
   if (state.page && state.page !== 1) params.set('page', String(state.page))
@@ -38,6 +50,7 @@ export function serializeExportHash(state) {
   return query ? `#${query}` : ''
 }
 
+// True when the row matches the class, district, and name search.
 export function rowMatches(row, state) {
   if (state.class && row.class !== state.class) return false
   if (state.district && row.district !== state.district) return false
@@ -50,6 +63,7 @@ export function rowMatches(row, state) {
     .includes(q)
 }
 
+// Indexes of matching rows, so the original rank numbers stay put.
 export function filterIndices(rows, state) {
   const matched = []
   for (let index = 0; index < rows.length; index += 1) {
@@ -58,6 +72,7 @@ export function filterIndices(rows, state) {
   return matched
 }
 
+// Start and end labels for this page. No matches stays on page 1.
 export function paginate(matchCount, page, size) {
   const safeSize = PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE
   const totalPages = Math.max(1, Math.ceil(matchCount / safeSize) || 1)
@@ -75,6 +90,7 @@ export function paginate(matchCount, page, size) {
   }
 }
 
+// Page buttons: first, last, and two pages on either side of the current one.
 export function pageNumbers(current, totalPages) {
   const pages = new Set([1, totalPages])
   for (let value = current - 2; value <= current + 2; value += 1) {
@@ -91,11 +107,13 @@ export function pageNumbers(current, totalPages) {
   return items
 }
 
+// Status line such as "Showing 1 to 50 of 897 barangays".
 export function statusText(info) {
   if (!info.total) return 'Showing 0 of 0 barangays'
   return `Showing ${info.start} to ${info.end} of ${info.total} barangays`
 }
 
+// Match indexes that belong on the current page.
 export function visibleMatchSlice(matched, info) {
   if (info.total === 0) return []
   return matched.slice(info.start - 1, info.end)

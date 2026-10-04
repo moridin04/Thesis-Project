@@ -1,5 +1,12 @@
+/*
+ * District and area labels for rankings and the priority table.
+ * Rankings.jsx uses districtAreaLabel. The table uses districtAreaParts.
+ * compareDistrictArea sorts District I before District X, then by area.
+ */
+// Roman numerals we expect in a Manila district name.
 const ROMAN = { I: 1, V: 5, X: 10, L: 50 }
 
+// Subtract when a smaller numeral comes before a larger one, as in IX.
 function romanToNumber(text) {
   let total = 0
   for (let i = 0; i < text.length; i += 1) {
@@ -10,6 +17,7 @@ function romanToNumber(text) {
   return total
 }
 
+// District number, or infinity when the text is not "District N".
 function districtNumber(district) {
   const match = /^District\s+([IVXL]+|\d+)$/i.exec(String(district ?? '').trim())
   if (!match) return Number.POSITIVE_INFINITY

@@ -1,5 +1,11 @@
+/*
+ * Public barangay, overview, ranking, and model-summary calls.
+ * The map, rankings, profile, compare, and methodology pages use these.
+ * toBarangayView turns API rows into the field names those pages read.
+ */
 import api from './api'
 
+// Map one API barangay row into the fields the public pages render.
 function toBarangayView(row) {
   const hazard = Number(row.hazard) || 0
   const exposure = Number(row.exposure) || 0
@@ -31,28 +37,32 @@ function toBarangayView(row) {
   }
 }
 
+// City-wide counts for the public overview.
 export async function fetchPublicOverview() {
   const { data } = await api.get('/public/overview')
   return data
 }
 
+// All public barangay rows, mapped for the map and dashboard.
 export async function fetchPublicBarangays() {
   const { data } = await api.get('/public/barangays')
   return data.map(toBarangayView)
 }
 
+// One barangay for the profile page. The id is encoded for the URL.
 export async function fetchPublicBarangay(id) {
   const { data } = await api.get(`/public/barangays/${encodeURIComponent(id)}`)
   return toBarangayView(data)
 }
 
+// Model comparison text for the methodology page.
 export async function fetchPublicModelSummary() {
   const { data } = await api.get('/public/model-summary')
   return data
 }
 
+// Ranked barangays for the rankings and compare pages.
 export async function fetchPublicRankings() {
   const { data } = await api.get('/public/rankings')
   return data.map(toBarangayView)
 }
-

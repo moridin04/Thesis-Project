@@ -1,3 +1,9 @@
+/*
+ * Public name, tagline, and short disclaimer for AGOS.
+ * BrandLogo, LoadingScreen, the landing page, and methodology read BRAND.
+ * The longer gate copy lives in content/disclaimer.js, not here.
+ */
+// Shared wording so the header and the landing page stay in sync.
 export const BRAND = {
   name: 'AGOS Manila',
   acronym: 'Analytics and Geospatial Overview for Safety',

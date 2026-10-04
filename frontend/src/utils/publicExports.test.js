@@ -1,3 +1,8 @@
+/*
+ * Checks public export button labels, the summary line, and column rules.
+ * The helpers live in publicExports.js for the admin page and the map.
+ * Mandatory columns and the planning-field rule must stay intact.
+ */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
@@ -12,6 +17,7 @@ import {
   toggleExportColumn,
 } from './publicExports.js'
 
+// With nothing approved, both buttons say they are not available yet.
 test('public export buttons are disabled with "Not yet available" when nothing is approved', () => {
   for (const published of [[], undefined, null]) {
     for (const kind of ['csv', 'report']) {
@@ -22,6 +28,7 @@ test('public export buttons are disabled with "Not yet available" when nothing i
   }
 })
 
+// Only the approved kind is enabled, and it shows that version and date.
 test('only the approved kind becomes available, with its version and approval date', () => {
   const published = [{ kind: 'csv', version: 3, approved_at: '2026-10-01T02:00:00Z', row_count: 897 }]
   const csv = publicExportButtonState(published, 'csv')
@@ -31,6 +38,7 @@ test('only the approved kind becomes available, with its version and approval da
   assert.equal(publicExportButtonState(published, 'report').label, 'Not yet available')
 })
 
+// The map card lists each approved kind with its version and date.
 test('export card summary lists each approved kind with version and date', () => {
   assert.equal(publishedExportsSummary([]), '')
   const summary = publishedExportsSummary([
@@ -40,6 +48,7 @@ test('export card summary lists each approved kind with version and date', () =>
   assert.match(summary, /^Approved: CSV v2 \(.*2026\) · Report v1 \(.*2026\)$/)
 })
 
+// Columns match the server list. Planning fields pull priority class back in.
 test('column checklist matches the server whitelist, grouped, with mandatory columns', () => {
   assert.deepEqual(
     PUBLIC_EXPORT_COLUMNS.map((column) => column.key),

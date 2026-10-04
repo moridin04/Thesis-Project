@@ -1,3 +1,8 @@
+/*
+ * Labels, filters, and page size for the admin audit log.
+ * AdminAuditLog.jsx sends auditLogParams to fetchAuditLogs.
+ * AUDIT_PAGE_SIZE is 50, so each request asks for at most 50 rows.
+ */
 /* Readable labels for audit_logs actions; unknown actions fall back to a humanised form. */
 export const AUDIT_ACTION_LABELS = {
   login_success: 'Signed in',
@@ -32,8 +37,10 @@ export const AUDIT_ACTION_GROUPS = [
   { value: 'accounts', label: 'Accounts' },
 ]
 
+// Caps each GET /admin/audit-logs request at 50 rows.
 export const AUDIT_PAGE_SIZE = 50
 
+// Known actions use the table above. Others become capitalized words.
 export function auditActionLabel(action) {
   if (!action) return ''
   if (AUDIT_ACTION_LABELS[action]) return AUDIT_ACTION_LABELS[action]

@@ -1,3 +1,8 @@
+/*
+ * Animates landing-page stat numbers when they scroll into view.
+ * Landing.jsx calls initCountUp after the page renders.
+ * Reduced motion leaves the printed numbers in place.
+ */
 /**
  * Count-up animation for `.stat-number` elements when scrolled into view.
  */
@@ -16,6 +21,7 @@ export function initCountUp() {
     return
   }
 
+  // Keep a suffix such as % and count the digits up to the printed number.
   function animateCount(el) {
     const rawText = el.textContent.trim()
     const suffix = rawText.replace(/[0-9]/g, '')

@@ -1,3 +1,8 @@
+/*
+ * Shared uploads, accounts, and audit rows for the signed-in workspace.
+ * main.jsx mounts this next to AuthProvider. Staff see their own uploads.
+ * Admins also load every upload, the account list, and the audit log.
+ */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import {
@@ -17,6 +22,7 @@ import {
 
 const UploadDataContext = createContext(null)
 
+// Loads workspace data after auth, then exposes the upload and account actions.
 export function UploadDataProvider({ children }) {
   const { account, isAuthenticated, role, loading: authLoading } = useAuth()
   const [uploads, setUploads] = useState([])
@@ -25,8 +31,10 @@ export function UploadDataProvider({ children }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Staff and admin share this provider. Only role admin hits the admin routes.
   const isAdmin = role === 'admin'
 
+  // Admin loads every upload. Everyone else loads only their own.
   const refreshUploads = useCallback(async () => {
     if (!isAuthenticated) {
       setUploads([])
@@ -37,6 +45,7 @@ export function UploadDataProvider({ children }) {
     setUploads(rows)
   }, [isAdmin, isAuthenticated])
 
+  // Account table. Staff skip the admin accounts route.
   const refreshUsers = useCallback(async () => {
     if (!isAuthenticated || !isAdmin) {
       setUsers([])
@@ -46,6 +55,7 @@ export function UploadDataProvider({ children }) {
     setUsers(rows)
   }, [isAdmin, isAuthenticated])
 
+  // Audit list for admins. Other roles keep an empty list.
   const refreshAuditLogs = useCallback(async () => {
     if (!isAuthenticated || !isAdmin) {
       setAuditLogs([])
@@ -55,6 +65,7 @@ export function UploadDataProvider({ children }) {
     setAuditLogs(rows)
   }, [isAdmin, isAuthenticated])
 
+  // Reload uploads, and for an admin the users and audit log as well.
   const refreshAll = useCallback(async () => {
     if (!isAuthenticated) {
       setUploads([])
@@ -74,11 +85,13 @@ export function UploadDataProvider({ children }) {
     }
   }, [isAuthenticated, refreshAuditLogs, refreshUploads, refreshUsers])
 
+  // After auth settles, reload when the signed-in account or role changes.
   useEffect(() => {
     if (authLoading) return
     refreshAll()
   }, [authLoading, refreshAll, account?.id, role])
 
+  // Build the multipart body the upload route expects, then prepend the row.
   const submitUpload = useCallback(
     async ({ barangayName, dataType, notes, file }) => {
       const formData = new FormData()
@@ -97,6 +110,7 @@ export function UploadDataProvider({ children }) {
     [isAdmin, refreshAuditLogs],
   )
 
+  // Replace that upload in memory, then refresh the audit log.
   const approveUpload = useCallback(
     async (uploadId) => {
       const record = await approveUploadRequest(uploadId)
@@ -109,6 +123,7 @@ export function UploadDataProvider({ children }) {
     [refreshAuditLogs],
   )
 
+  // Same as approve, but the row comes back rejected.
   const rejectUpload = useCallback(
     async (uploadId, rejectionReason = '') => {
       const record = await rejectUploadRequest(uploadId, rejectionReason)
@@ -121,6 +136,7 @@ export function UploadDataProvider({ children }) {
     [refreshAuditLogs],
   )
 
+  // Role and active status are two different admin routes.
   const updateUser = useCallback(
     async (userId, patch) => {
       let updated
@@ -141,6 +157,7 @@ export function UploadDataProvider({ children }) {
     [refreshAuditLogs],
   )
 
+  // Map the form fields onto the create-account payload.
   const addUser = useCallback(
     async ({ name, username, password, role: nextRole }) => {
       const created = await createAccount({
@@ -192,6 +209,7 @@ export function UploadDataProvider({ children }) {
   )
 }
 
+// Manage Users, Review Uploads, and the staff upload page read this.
 export function useUploadData() {
   const context = useContext(UploadDataContext)
   if (!context) {
