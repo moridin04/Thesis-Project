@@ -29,6 +29,8 @@ import DashboardBarangayDetail from './pages/dashboard/DashboardBarangayDetail'
 import ReviewUploads from './pages/admin/ReviewUploads'
 import ManageUsers from './pages/admin/ManageUsers'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
+import PublicExports from './pages/admin/PublicExports'
+import { ADMIN_ROUTE_ROLES } from './config/adminNav'
 
 export default function App() {
   return (
@@ -72,10 +74,11 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route element={<RoleRoute allowedRoles={['admin']} />}>
+        <Route element={<RoleRoute allowedRoles={ADMIN_ROUTE_ROLES} />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="review-uploads" replace />} />
             <Route path="review-uploads" element={<ReviewUploads />} />
+            <Route path="public-exports" element={<PublicExports />} />
             <Route path="manage-users" element={<ManageUsers />} />
             <Route path="audit-log" element={<AdminAuditLog />} />
           </Route>

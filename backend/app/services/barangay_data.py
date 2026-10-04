@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -121,6 +122,14 @@ def _frame() -> pd.DataFrame:
     predictions["Barangay_No"] = pd.to_numeric(predictions["Barangay_No"], errors="coerce").astype("Int64")
     districts["Barangay_No"] = pd.to_numeric(districts["Barangay_No"], errors="coerce").astype("Int64")
     return attach_districts_by_barangay_no(predictions, districts)
+
+
+def current_data_version() -> str:
+    """Short checksum of the files behind the public barangay records; changes when any of them does."""
+    digest = hashlib.sha256()
+    for path in (PREDICTIONS_CSV, DISTRICT_CSV, AREA_CSV):
+        digest.update(path.read_bytes())
+    return digest.hexdigest()[:16]
 
 
 def load_barangays() -> None:

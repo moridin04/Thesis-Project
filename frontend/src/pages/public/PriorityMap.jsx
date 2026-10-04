@@ -19,7 +19,8 @@ import { districtAreaParts } from '../../utils/districtLabel'
 import PublicHeader from '../../components/public/PublicHeader'
 import { riskColors } from '../../theme/colors'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
-import { buildReportHtml, downloadTextFile, exportBasename, rowsToCsv } from '../../utils/agosExport'
+import { kindLabel, publicExportButtonState, publishedExportsSummary } from '../../utils/publicExports'
+import { fetchPublishedExports, publishedExportDownloadUrl } from '../../services/publicExportService'
 import { CARTO_ATTRIBUTION, CARTO_TILE_URL } from '../../components/public/cartoBasemap'
 import 'leaflet/dist/leaflet.css'
 
@@ -78,6 +79,20 @@ function BoundaryMap({ selectedName, onSelect, riskByName, mapRef }) {
       <ScaleControl position="bottomleft" imperial={false} />
     </MapContainer>
   )
+}
+
+function usePublishedExports() {
+  const [published, setPublished] = useState([])
+  useEffect(() => {
+    let active = true
+    fetchPublishedExports()
+      .then((data) => active && setPublished(data))
+      .catch(() => active && setPublished([]))
+    return () => {
+      active = false
+    }
+  }, [])
+  return published
 }
 
 function scoreOf(row, key, fallback) {
@@ -148,39 +163,17 @@ export default function PriorityMap() {
     return filtered[0] ?? barangays[0]
   }, [barangayName, filtered, barangays])
 
-  const exportRows = useMemo(() => {
-    if (barangayName !== 'All Barangays') {
-      const match = filtered.find((row) => row.barangay === barangayName)
-      return match ? [match] : []
-    }
-    return filtered
-  }, [barangayName, filtered])
-
   const photo = getBarangayPhoto(selected?.id)
   const hazard = scoreOf(selected, 'hazard', selected?.dpi ?? 0)
   const exposure = scoreOf(selected, 'exposure', selected?.dpi ?? 0)
   const vulnerability = scoreOf(selected, 'vulnerability', selected?.dpi ?? 0)
 
-  const exportDisabled = exportRows.length === 0
-  const exportDisabledTitle = 'No barangays match the current filters.'
-
-  function exportCsv() {
-    if (exportDisabled) return
-    downloadTextFile(
-      `${exportBasename()}.csv`,
-      rowsToCsv(exportRows),
-      'text/csv;charset=utf-8',
-    )
-  }
-
-  function exportReport() {
-    if (exportDisabled) return
-    downloadTextFile(
-      `${exportBasename()}.html`,
-      buildReportHtml(exportRows),
-      'text/html;charset=utf-8',
-    )
-  }
+  const publishedExports = usePublishedExports()
+  const exportButtons = ['csv', 'report'].map((kind) => ({
+    kind,
+    ...publicExportButtonState(publishedExports, kind),
+  }))
+  const anyExportAvailable = exportButtons.some((button) => button.available)
 
   return (
     <div className="flex min-h-screen flex-col bg-foundation text-white lg:h-screen lg:overflow-hidden">
@@ -347,36 +340,41 @@ export default function PriorityMap() {
           </span>
           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
         </Link>
-        <div
-          className={`flex flex-col gap-3 rounded-xl bg-slate-800 p-4 text-left ${exportDisabled ? 'opacity-60' : ''}`}
-          title={exportDisabled ? exportDisabledTitle : undefined}
-        >
+        <div className="flex flex-col gap-3 rounded-xl bg-slate-800 p-4 text-left">
           <div className="flex items-center gap-3">
             <Download className="h-5 w-5 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold">Export</span>
-              <span className="block text-xs text-white/70">Download the current filtered view.</span>
+              <span className="block text-xs text-white/70">
+                {anyExportAvailable
+                  ? publishedExportsSummary(publishedExports)
+                  : 'Approved downloads will appear here once published.'}
+              </span>
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={exportCsv}
-              disabled={exportDisabled}
-              title={exportDisabled ? exportDisabledTitle : 'Export as CSV'}
-              className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium enabled:hover:bg-white/20 disabled:cursor-not-allowed"
-            >
-              Export as CSV
-            </button>
-            <button
-              type="button"
-              onClick={exportReport}
-              disabled={exportDisabled}
-              title={exportDisabled ? exportDisabledTitle : 'Export as Report'}
-              className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium enabled:hover:bg-white/20 disabled:cursor-not-allowed"
-            >
-              Export as Report
-            </button>
+            {exportButtons.map((button) =>
+              button.available ? (
+                <a
+                  key={button.kind}
+                  href={publishedExportDownloadUrl(button.kind)}
+                  title={button.detail}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/20"
+                >
+                  {button.label}
+                </a>
+              ) : (
+                <button
+                  key={button.kind}
+                  type="button"
+                  disabled
+                  title={button.detail}
+                  className="cursor-not-allowed rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium opacity-60"
+                >
+                  <span className="font-normal text-white/80">{kindLabel(button.kind)}:</span> {button.label}
+                </button>
+              ),
+            )}
           </div>
         </div>
       </div>
