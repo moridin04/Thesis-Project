@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { GeoJSON, MapContainer, ScaleControl, TileLayer } from 'react-leaflet'
 import {
   BarChart3,
-  Bookmark,
   ChevronRight,
   Compass,
   Download,
@@ -22,7 +21,10 @@ import { buildReportHtml, downloadTextFile, exportBasename, rowsToCsv } from '..
 import { CARTO_ATTRIBUTION, CARTO_TILE_URL } from '../../components/public/cartoBasemap'
 import 'leaflet/dist/leaflet.css'
 
-function BoundaryMap({ selectedName, onSelect, riskByName }) {
+const MANILA_CENTER = [14.5995, 120.9842]
+const MANILA_ZOOM = 13
+
+function BoundaryMap({ selectedName, onSelect, riskByName, mapRef }) {
   const [data, setData] = useState(null)
 
   useEffect(() => {
@@ -42,8 +44,9 @@ function BoundaryMap({ selectedName, onSelect, riskByName }) {
 
   return (
     <MapContainer
-      center={[14.5995, 120.9842]}
-      zoom={13}
+      ref={mapRef}
+      center={MANILA_CENTER}
+      zoom={MANILA_ZOOM}
       className="h-full min-h-[320px] w-full"
       scrollWheelZoom
     >
@@ -102,6 +105,7 @@ export default function PriorityMap() {
   const { rows: barangays, loading, error } = usePublicBarangays()
   const [district, setDistrict] = useState('All Districts')
   const [barangayName, setBarangayName] = useState('All Barangays')
+  const [map, setMap] = useState(null)
 
   const districts = useMemo(() => {
     return [...new Set(barangays.map((row) => row.district).filter(Boolean))].sort()
@@ -231,22 +235,26 @@ export default function PriorityMap() {
 
         <section className="relative order-1 min-h-[320px] flex-1 lg:order-2">
           <BoundaryMap
+            mapRef={setMap}
             selectedName={selected?.barangay}
             riskByName={new Map(barangays.map((row) => [row.barangay, row.riskLevel]))}
             onSelect={(name) => {
               if (name) setBarangayName(name)
             }}
           />
-          <div className="pointer-events-none absolute right-3 top-3 z-[500] rounded-full bg-foundation/90 p-2 text-white">
-            <Compass className="h-5 w-5" aria-label="North" />
-          </div>
+          <button
+            type="button"
+            onClick={() => map?.flyTo(MANILA_CENTER, MANILA_ZOOM, { duration: 0.8 })}
+            className="absolute right-3 top-3 z-[500] cursor-pointer rounded-full bg-foundation/90 p-2 text-white transition-colors hover:bg-foundation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+            aria-label="Reset map to Manila view"
+            title="Reset to Manila view"
+          >
+            <Compass className="h-5 w-5" aria-hidden />
+          </button>
         </section>
 
         <aside className="order-3 w-full shrink-0 bg-white p-4 text-foundation lg:w-[22rem] lg:overflow-y-auto">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold">Selected Barangay</p>
-            <Bookmark className="h-4 w-4 text-ocean" aria-hidden />
-          </div>
+          <p className="mb-3 text-sm font-semibold">Selected Barangay</p>
           <BarangayPhoto
             imageUrl={selected?.imageUrl}
             alt={selected ? `${selected.barangay} photo` : ''}
