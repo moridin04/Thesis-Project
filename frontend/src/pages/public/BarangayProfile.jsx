@@ -314,13 +314,15 @@ export default function BarangayProfile() {
       </section>
 
       <section className="rounded-2xl border border-pale bg-white p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold text-foundation">Planning reference</h2>
-          {profile.riskLevel ? <RiskBadge category={profile.riskLevel} /> : null}
+        <div className="border-b border-pale/50 pb-4">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h2 className="font-display text-lg font-semibold text-foundation">Planning reference</h2>
+            {profile.riskLevel ? <RiskBadge category={profile.riskLevel} /> : null}
+          </div>
+          <p className="mt-1 text-xs text-ocean">
+            Illustrative planning reference, not an official directive.
+          </p>
         </div>
-        <p className="mt-1 text-xs text-ocean">
-          Illustrative planning reference, not an official directive.
-        </p>
         {profile.planningReference || pillars.length ? (
           <dl className="mt-4 grid gap-4 text-sm md:grid-cols-[2fr_1fr]">
             <div>
