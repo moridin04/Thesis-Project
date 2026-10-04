@@ -1,3 +1,9 @@
+# JSON shapes for the model-results API.
+# The numbers themselves are read from the saved training output in
+# services/ml_results.py. This file only says which fields the
+# response has, so the staff results page can rely on them.
+# Nothing here recomputes scores or rankings.
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -5,6 +11,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
+# Precision, recall, F1, and support for one class label.
 class ClassMetrics(BaseModel):
     precision: float
     recall: float
@@ -12,6 +19,7 @@ class ClassMetrics(BaseModel):
     support: int
 
 
+# Scores for one trained model. selected marks the one we kept.
 class ModelResult(BaseModel):
     model: str
     selected: bool
@@ -26,6 +34,7 @@ class ModelResult(BaseModel):
     per_class: dict[str, ClassMetrics]
 
 
+# One feature's importance, with a display label and a group name.
 class FeatureImportanceItem(BaseModel):
     feature: str
     label: str
@@ -34,12 +43,15 @@ class FeatureImportanceItem(BaseModel):
     std: Optional[float] = None
 
 
+# One cell of a confusion matrix: actual label, predicted label, count.
 class ConfusionCell(BaseModel):
     actual: str
     predicted: str
     count: int
 
 
+# Full payload the results page asks for. n_test is the test-set size
+# already stored with the output. confusion_matrices can be empty.
 class MLResultsResponse(BaseModel):
     models: list[ModelResult]
     feature_importance: dict[str, list[FeatureImportanceItem]]

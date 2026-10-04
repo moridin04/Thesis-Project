@@ -1,3 +1,7 @@
+// Bars for the highest DPI barangays, each linking to a profile.
+// The public overview page passes the filtered top rows.
+// High #ef5f55, Medium #f6c25b, Low #5db36b. Fallback #024950.
+
 import { useCallback, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { colors, riskColors } from '../../theme/colors'
@@ -10,6 +14,7 @@ const GRID_LINES = 'repeating-linear-gradient(to right, var(--border-teal) 0 1px
 const GUTTER = 'pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin]'
 const TOOLTIP_ROOM = 104
 
+// Draws the bars, the axis, and a tip that follows the active row.
 export default function TopBarangaysChart({ rows }) {
   const descriptionId = useId()
   const rootRef = useRef(null)
@@ -19,6 +24,7 @@ export default function TopBarangaysChart({ rows }) {
   const [overflows, setOverflows] = useState(false)
   const stretch = rows.length <= VISIBLE_ROWS
 
+  // Measures whether the list is taller than the visible area.
   const scrollRef = useCallback((el) => {
     if (!el) return undefined
     const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1)
@@ -28,6 +34,7 @@ export default function TopBarangaysChart({ rows }) {
     return () => observer.disconnect()
   }, [])
 
+  // Place the tip above the row when it would run past the card.
   function showTip(el, row) {
     activeRef.current = { el, row }
     const root = rootRef.current.getBoundingClientRect()
@@ -36,17 +43,20 @@ export default function TopBarangaysChart({ rows }) {
     setTip({ row, above, top: above ? rect.top - root.top - 4 : rect.bottom - root.top + 4 })
   }
 
+  // Clear the tip when the pointer or focus leaves the row.
   function hideTip() {
     activeRef.current = null
     setTip(null)
   }
 
+  // Track the end of the list, and keep the tip on the active row.
   function handleScroll(event) {
     const el = event.currentTarget
     setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 1)
     if (activeRef.current) showTip(activeRef.current.el, activeRef.current.row)
   }
 
+  // Fade at the bottom only while more rows sit below the fold.
   const showFade = overflows && !atEnd
 
   return (
@@ -83,6 +93,7 @@ export default function TopBarangaysChart({ rows }) {
                       className="relative block h-[18px] border-r border-[color:var(--border-teal)]"
                       style={{ backgroundImage: GRID_LINES }}
                     >
+                      {/* High #ef5f55, Medium #f6c25b, Low #5db36b, else #024950. */}
                       <span
                         className="absolute inset-y-0 left-0 rounded-r-lg"
                         style={{

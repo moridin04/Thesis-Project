@@ -1,7 +1,11 @@
+// Admin workspace: header, admin menu, and page body.
+// App.jsx mounts this on /admin, and only the admin role can enter.
+// Child routes render through Outlet. This layout does not fetch data.
 import { Outlet } from 'react-router-dom'
 import PublicHeader from '../components/public/PublicHeader'
 import AdminSidebar from '../components/admin/AdminSidebar'
 
+// Header and sidebar around the active admin page.
 export default function AdminLayout() {
   return (
     <div className="page-shell-public min-h-screen">

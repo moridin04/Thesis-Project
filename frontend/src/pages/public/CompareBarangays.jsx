@@ -1,15 +1,22 @@
+// Comparison of two to four Manila barangays, shown side by side.
+// App.jsx mounts this at /compare inside PublicInsightsLayout.
+// The staff dashboard reuses it at /dashboard/compare.
+// The catalog comes from fetchPublicRankings in publicService.
 import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../../components/shared/PageHeader'
 import RiskBadge from '../../components/shared/RiskBadge'
 import { fetchPublicRankings } from '../../services/publicService'
 
+// Upper limit for the comparison. The page also refuses to go under two.
 const MAX_SLOTS = 4
 
+// Prints a number, or a dash when the value is missing.
 function formatNumber(value, digits = 1) {
   if (value == null || Number.isNaN(Number(value))) return '—'
   return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits })
 }
 
+// On the first load, selects the first three ranked rows.
 export default function CompareBarangays() {
   const [catalog, setCatalog] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
@@ -40,14 +47,17 @@ export default function CompareBarangays() {
     [catalog, selectedIds],
   )
 
+  // Replaces the barangay in one slot.
   function updateSlot(index, nextId) {
     setSelectedIds((current) => current.map((id, slot) => (slot === index ? nextId : id)))
   }
 
+  // Drops a slot. The control stays off when only two remain.
   function removeSlot(index) {
     setSelectedIds((current) => current.filter((_, slot) => slot !== index))
   }
 
+  // Adds the next catalog row that is not already selected.
   function addSlot() {
     const next = catalog.find((row) => !selectedIds.includes(row.id))
     if (next) setSelectedIds((current) => [...current, next.id])

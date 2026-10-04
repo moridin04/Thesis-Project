@@ -1,3 +1,8 @@
+/*
+ * Checks the disclaimer copy, version, and acknowledgement rules.
+ * The helpers live in disclaimer.js and disclaimerAck.js.
+ * One case also reads the Python export disclaimer so the sentences match.
+ */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -30,6 +35,7 @@ import {
   writeAcknowledgement,
 } from './disclaimerAck.js'
 
+// The core sentence matches the export helper and the Python constant.
 test('core sentence matches the public export disclaimer', () => {
   assert.equal(DISCLAIMER_CORE, DEFAULT_DISCLAIMER)
   assert.equal(
@@ -45,6 +51,7 @@ test('core sentence matches the public export disclaimer', () => {
   assert.equal(joined, DISCLAIMER_CORE)
 })
 
+// Locks the version string and the title, lead, checkbox, and button text.
 test('copy uses the agreed title, lead, checkbox and button labels', () => {
   assert.equal(DISCLAIMER_VERSION, '2026-10-05-1')
   assert.equal(DISCLAIMER_TITLE, 'Important Notice')
@@ -56,6 +63,7 @@ test('copy uses the agreed title, lead, checkbox and button labels', () => {
   assert.doesNotMatch(DISCLAIMER_BODY.join(' '), /hotline|NDRRMC|PAGASA/i)
 })
 
+// No stored ack opens the gate. A matching version keeps it closed.
 test('shows on first visit and hides when a valid acknowledgement exists', () => {
   clearDisclaimerAcknowledgement()
   assert.equal(shouldShowDisclaimer({ pathname: '/', record: null }), true)
@@ -65,12 +73,14 @@ test('shows on first visit and hides when a valid acknowledgement exists', () =>
   assert.equal(shouldShowDisclaimer({ pathname: '/', record: valid }), false)
 })
 
+// An older version string is not valid, so the gate opens again.
 test('shows again when the stored version differs', () => {
   const stale = { version: '2026-01-01-0', acknowledgedAt: '2026-01-01T00:00:00.000Z' }
   assert.equal(isValidAcknowledgement(stale), false)
   assert.equal(shouldShowDisclaimer({ pathname: '/', record: stale }), true)
 })
 
+// The first gate needs the checkbox. Confirm stores the version and time.
 test('button stays disabled until the checkbox is ticked; confirm stores version and time', () => {
   assert.equal(canConfirmDisclaimer('gate', false), false)
   assert.equal(canConfirmDisclaimer('gate', true), true)
@@ -96,6 +106,7 @@ test('button stays disabled until the checkbox is ticked; confirm stores version
   delete globalThis.sessionStorage
 })
 
+// Escape and a backdrop click close reopen mode, not the first gate.
 test('Escape and backdrop click do not close the gate; they close the footer reopen mode', () => {
   assert.equal(gateAllowsDismiss('gate', 'escape'), false)
   assert.equal(gateAllowsDismiss('gate', 'backdrop'), false)
@@ -104,6 +115,7 @@ test('Escape and backdrop click do not close the gate; they close the footer reo
   assert.equal(shouldShowDisclaimer({ pathname: '/', record: { version: DISCLAIMER_VERSION, acknowledgedAt: 'x' }, reopen: true }), true)
 })
 
+// Login and admin paths stay closed even when there is no acknowledgement.
 test('is not shown on login or admin routes', () => {
   for (const pathname of ['/login', '/login/', '/admin', '/admin/review-uploads', '/admin/login']) {
     assert.equal(isDisclaimerExcludedPath(pathname), true)
@@ -115,6 +127,7 @@ test('is not shown on login or admin routes', () => {
   }
 })
 
+// If both stores throw, the ack stays in memory so this session can continue.
 test('storage failure does not crash and still lets the user continue for the session', () => {
   const throwing = {
     getItem() {
@@ -139,6 +152,7 @@ test('storage failure does not crash and still lets the user continue for the se
   delete globalThis.sessionStorage
 })
 
+// Dialog labeling, and whether focus starts on the checkbox or Close.
 test('dialog aria attributes and initial focus target', () => {
   assert.deepEqual(disclaimerDialogAria('d-title', 'd-body'), {
     role: 'dialog',
@@ -150,6 +164,7 @@ test('dialog aria attributes and initial focus target', () => {
   assert.equal(initialDisclaimerFocus('reopen'), 'submit')
 })
 
+// The seed helper writes a valid ack. Broken JSON counts as no ack.
 test('seed helper writes a valid acknowledgement used by other tests', () => {
   const memory = new Map()
   globalThis.localStorage = {

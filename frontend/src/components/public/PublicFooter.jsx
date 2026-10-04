@@ -1,3 +1,7 @@
+// Site footer with link columns, a phone line, and social icons.
+// The landing page and PublicLayout both render it.
+// Link lists live in this file. The logo is a local image.
+
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowUp, Phone } from 'lucide-react'
 import { DisclaimerReopenButton } from './DisclaimerGate'
@@ -53,11 +57,13 @@ const socialLinks = [
   },
 ]
 
+// Scrolls up, and skips motion when the reader asked for less motion.
 function scrollToTop() {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
 }
 
+// Footer columns plus a button that returns to the top of the page.
 export default function PublicFooter() {
   const { pathname } = useLocation()
 

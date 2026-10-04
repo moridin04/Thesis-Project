@@ -1,3 +1,7 @@
+// Home page for AGOS Manila.
+// App.jsx mounts this at /, the index route.
+// Photos and team names come from landingImagery and landingTeam.
+// Scroll fade and count-up run here. This page does not call an API.
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -99,6 +103,7 @@ const audiences = [
   },
 ]
 
+// One team card: initials, name, and a mail link.
 function TeamMemberCard({ member, colorIndex }) {
   const initials = getInitials(member.name)
   const avatarColor = avatarColors[colorIndex % avatarColors.length]
@@ -124,13 +129,17 @@ function TeamMemberCard({ member, colorIndex }) {
   )
 }
 
+// Landing sections: hero, flood story, actions, audiences, and team.
 export default function Landing() {
   useEffect(() => {
     initScrollFade()
     initCountUp()
   }, [])
 
+  // If the URL has a hash, scroll that section into view.
+  // hashchange covers later clicks that only change the hash.
   useEffect(() => {
+    // Reads the hash and scrolls to that section when it exists.
     function scrollToHash() {
       const { hash } = window.location
       if (!hash) return
@@ -234,12 +243,18 @@ export default function Landing() {
             </div>
 
             <div className="flood-story__context">
-              <p>
-                Livelihoods, transport, and daily routines are disrupted again and
-                again — often with little warning and even less coordinated response.
-                AGOS exists to change that: giving residents and responders clear,
-                data-driven visibility into flood risk before it becomes a crisis.
-              </p>
+              <div className="flood-story__copy">
+                <p className="flood-story__intro">
+                  Livelihoods, transport, and daily routines are disrupted again and
+                  again — often with little warning and even less coordinated response.
+                  AGOS exists to change that: giving residents and responders clear,
+                  data-driven visibility into flood risk before it becomes a crisis.
+                </p>
+                <Link to="/methodology" className="flood-story__cta">
+                  Learn how AGOS prioritizes flood risk
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </div>
 
               <div className="flood-story__stats">
                 <article className="flood-story__stat-card">
@@ -250,14 +265,17 @@ export default function Landing() {
                     flooding covered over 30% of the region, affecting more than
                     4 million people.
                   </p>
-                  <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <SourceLink href="https://www.herdin.ph">Source: HERDIN, DOH</SourceLink>
-                    <span aria-hidden>·</span>
-                    <SourceLink href="https://doi.org/10.11520/JSHWR.24.0.8.0">
-                      Source: Gilbuena (2011), Journal of Structural and Hydraulic Water
-                      Resources, DOI: 10.11520/JSHWR.24.0.8.0
-                    </SourceLink>
-                  </p>
+                  <ul className="flood-story__sources">
+                    <li>
+                      <SourceLink href="https://www.herdin.ph">Source: HERDIN, DOH</SourceLink>
+                    </li>
+                    <li>
+                      <SourceLink href="https://doi.org/10.11520/JSHWR.24.0.8.0">
+                        Source: Gilbuena (2011), Journal of Structural and Hydraulic Water
+                        Resources, DOI: 10.11520/JSHWR.24.0.8.0
+                      </SourceLink>
+                    </li>
+                  </ul>
                 </article>
                 <article className="flood-story__stat-card">
                   <CalendarClock className="flood-story__stat-icon" aria-hidden />
@@ -265,16 +283,13 @@ export default function Landing() {
                     The Philippines experiences an average of 19–20 tropical cyclones
                     annually (PAGASA).
                   </p>
-                  <p className="mt-3">
-                    <SourceLink href="https://www.pagasa.dost.gov.ph">Source: PAGASA</SourceLink>
-                  </p>
+                  <ul className="flood-story__sources">
+                    <li>
+                      <SourceLink href="https://www.pagasa.dost.gov.ph">Source: PAGASA</SourceLink>
+                    </li>
+                  </ul>
                 </article>
               </div>
-
-              <Link to="/methodology" className="flood-story__cta">
-                Learn how AGOS prioritizes flood risk
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
             </div>
           </div>
         </div>

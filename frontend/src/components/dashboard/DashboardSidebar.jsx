@@ -1,3 +1,7 @@
+// Side menu for the LGU dashboard, under the public header.
+// layouts/DashboardLayout renders it for staff and admin.
+// Links come from dashboardNavItemsForRole in config/dashboardNav.
+
 import { NavLink } from 'react-router-dom'
 import {
   BarChart3,
@@ -23,6 +27,7 @@ const NAV_ICONS = {
   upload: Upload,
 }
 
+// Keeps links that the signed-in role is allowed to open.
 export default function DashboardSidebar() {
   const { account } = useAuth()
   const navItems = dashboardNavItemsForRole(account?.role)

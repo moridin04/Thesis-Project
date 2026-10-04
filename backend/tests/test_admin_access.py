@@ -1,3 +1,9 @@
+# Who may open the operations dashboard and the admin routes.
+# Covers the role checks in app.dependencies.auth and the admin router.
+# Staff may use operations. Admin pages, account creation, and publish
+# stay on the admin role. A missing or bad token is rejected. The last
+# active administrator cannot be deactivated.
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -23,6 +29,7 @@ def _login(client: TestClient, username: str, password: str) -> str:
     return response.json()["access_token"]
 
 
+# Staff can open the operations dashboard. That route allows both roles.
 def test_staff_can_access_operations(client: TestClient, staff_account):
     token = _login(client, "staff01", "StaffPass1234")
     response = client.get(
@@ -32,6 +39,7 @@ def test_staff_can_access_operations(client: TestClient, staff_account):
     assert response.status_code == 200
 
 
+# The admin dashboard is admin-only. A staff token receives 403.
 def test_staff_forbidden_from_admin_endpoints(client: TestClient, staff_account):
     token = _login(client, "staff01", "StaffPass1234")
     response = client.get(
@@ -41,6 +49,7 @@ def test_staff_forbidden_from_admin_endpoints(client: TestClient, staff_account)
     assert response.status_code == 403
 
 
+# Creating accounts is an admin action. Staff receive 403.
 def test_staff_cannot_create_accounts(client: TestClient, staff_account):
     token = _login(client, "staff01", "StaffPass1234")
     response = client.post(
@@ -56,6 +65,7 @@ def test_staff_cannot_create_accounts(client: TestClient, staff_account):
     assert response.status_code == 403
 
 
+# Publishing a dataset is admin-only. Staff receive 403.
 def test_staff_cannot_publish_datasets(client: TestClient, staff_account):
     token = _login(client, "staff01", "StaffPass1234")
     response = client.post(
@@ -65,6 +75,7 @@ def test_staff_cannot_publish_datasets(client: TestClient, staff_account):
     assert response.status_code == 403
 
 
+# An admin token can open the admin dashboard.
 def test_admin_can_access_admin_endpoints(client: TestClient, admin_account):
     token = _login(client, "agos_admin", "AdminPass1234")
     response = client.get(
@@ -74,6 +85,7 @@ def test_admin_can_access_admin_endpoints(client: TestClient, admin_account):
     assert response.status_code == 200
 
 
+# An admin can publish a dataset. The status in the body is published.
 def test_admin_can_publish_dataset(client: TestClient, admin_account):
     token = _login(client, "agos_admin", "AdminPass1234")
     response = client.post(
@@ -84,11 +96,14 @@ def test_admin_can_publish_dataset(client: TestClient, admin_account):
     assert response.json()["status"] == "published"
 
 
+# With no token, both dashboards return 401.
 def test_anonymous_protected_returns_401(client: TestClient):
     assert client.get("/api/operations/dashboard").status_code == 401
     assert client.get("/api/admin/dashboard").status_code == 401
 
 
+# A bearer token that is not valid, and one that is already expired,
+# are both rejected on /api/auth/me.
 def test_malformed_and_expired_tokens_rejected(client: TestClient, staff_account):
     assert (
         client.get(
@@ -120,6 +135,8 @@ def test_malformed_and_expired_tokens_rejected(client: TestClient, staff_account
     )
 
 
+# A refresh token cannot be used as the access token.
+# An access token cannot be used as the refresh cookie.
 def test_token_type_interchange_rejected(client: TestClient, staff_account):
     refresh = create_refresh_token(account_id=staff_account.id, role="staff")
     assert (
@@ -135,6 +152,7 @@ def test_token_type_interchange_rejected(client: TestClient, staff_account):
     assert client.post("/api/auth/refresh").status_code == 401
 
 
+# Logout succeeds, and the account list leaves out the password hash.
 def test_logout_and_password_hash_never_returned(client: TestClient, admin_account):
     token = _login(client, "agos_admin", "AdminPass1234")
     assert client.post("/api/auth/logout").status_code == 200
@@ -146,6 +164,8 @@ def test_logout_and_password_hash_never_returned(client: TestClient, admin_accou
     assert "password_hash" not in accounts.text.lower()
 
 
+# The status route refuses to deactivate the only active administrator.
+# That keeps the admin routes from being locked with no one left to sign in.
 def test_cannot_deactivate_final_admin(client: TestClient, admin_account):
     token = _login(client, "agos_admin", "AdminPass1234")
     response = client.patch(

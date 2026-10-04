@@ -1,3 +1,7 @@
+// Public list of Manila barangays ordered by DPI score.
+// App.jsx mounts this at /rankings inside PublicInsightsLayout.
+// Rows come from fetchPublicRankings in publicService.
+// Search, district, and priority filters run in the browser.
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import PageHeader from '../../components/shared/PageHeader'
@@ -6,13 +10,16 @@ import { fetchPublicRankings } from '../../services/publicService'
 import { riskLegend } from '../../theme/colors'
 import { districtAreaLabel } from '../../utils/districtLabel'
 
+// Twenty barangays per page of the table.
 const PAGE_SIZE = 20
 
+// Ranked table. Changing a filter sends the view back to page 1.
 export default function Rankings() {
   const [priorityBarangays, setPriorityBarangays] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchParams] = useSearchParams()
+  // q in the URL only fills the box on first render. Typing stays local.
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [district, setDistrict] = useState('All districts')
   const [priority, setPriority] = useState('All priority levels')
@@ -61,6 +68,7 @@ export default function Rankings() {
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
+  // pageRows is one slice of 20. pageCount grows with the filtered list.
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
@@ -183,6 +191,7 @@ export default function Rankings() {
         </p>
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: pageCount }, (_, index) => index + 1)
+            // Keep the first page, the last page, and pages within 2 of this one.
             .filter((number) => number === 1 || number === pageCount || Math.abs(number - currentPage) <= 2)
             .map((number) => (
               <button

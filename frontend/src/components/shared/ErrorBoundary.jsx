@@ -1,19 +1,27 @@
+// Catches a render crash and shows a short recovery message.
+// main.jsx wraps the whole app in this boundary.
+// It does not read a data module. The message is the error text.
+
 import { Component } from 'react'
 
+// If a child throws, we store the error and replace the page.
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
     this.state = { error: null }
   }
 
+  // React calls this to record the error on the next render.
   static getDerivedStateFromError(error) {
     return { error }
   }
 
+  // Log the stack so we can see it in the browser console.
   componentDidCatch(error, info) {
     console.error('AGOS render error:', error, info)
   }
 
+  // Recovery card when there is an error, otherwise the children.
   render() {
     if (this.state.error) {
       return (

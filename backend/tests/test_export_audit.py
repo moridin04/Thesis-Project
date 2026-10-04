@@ -1,3 +1,9 @@
+# Audit rows for public exports and the admin audit log.
+# Covers app.services.audit_service and the admin audit route.
+# Each admin action is its own row. Public downloads share one row for
+# ten minutes and store no address, browser, or cookie. A failed audit
+# write still lets the file download. Staff cannot open the audit log.
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -56,6 +62,8 @@ def _export_rows(db: Session, action: str | None = None) -> list[AuditLog]:
     return query.order_by(AuditLog.id).all()
 
 
+# Create, edit, preview, approve, reject, and unpublish each write one row.
+# Approving a newer CSV also writes the system row that marks v1 superseded.
 def test_each_admin_action_writes_exactly_one_row(client: TestClient, admin_headers, db_session: Session):
     first = _create(client, admin_headers)
     assert [(r.action, r.actor_username, r.details) for r in _export_rows(db_session)] == [
@@ -88,6 +96,8 @@ def test_each_admin_action_writes_exactly_one_row(client: TestClient, admin_head
     assert rows[6][3].startswith("CSV v2 - Barangay Risk Summary; sha256 ")
 
 
+# A public download is stored as actor public. Repeats inside the window
+# raise the count. Address, browser, and cookie text are absent from the log.
 def test_public_download_is_anonymous_and_collapsed(client: TestClient, admin_headers, db_session: Session):
     csv_export = _create(client, admin_headers)
     client.post(f"{BASE}/{csv_export['id']}/approve", headers=admin_headers)
@@ -113,6 +123,7 @@ def test_public_download_is_anonymous_and_collapsed(client: TestClient, admin_he
         assert identifier not in stored
 
 
+# A download older than the ten-minute window starts a second audit row.
 def test_public_downloads_after_ten_minutes_start_a_new_row(client: TestClient, admin_headers, db_session: Session):
     created = _create(client, admin_headers)
     client.post(f"{BASE}/{created['id']}/approve", headers=admin_headers)
@@ -124,6 +135,7 @@ def test_public_downloads_after_ten_minutes_start_a_new_row(client: TestClient, 
     assert [r.details for r in _export_rows(db_session, "export_downloaded_public")] == ["CSV v1", "CSV v1"]
 
 
+# Three admin previews stay three rows. They are not folded like public downloads.
 def test_staff_and_admin_events_are_never_collapsed(client: TestClient, admin_headers, db_session: Session):
     created = _create(client, admin_headers)
     for _ in range(3):
@@ -131,6 +143,8 @@ def test_staff_and_admin_events_are_never_collapsed(client: TestClient, admin_he
     assert len(_export_rows(db_session, "export_previewed")) == 3
 
 
+# When the audit insert raises, the public CSV, the admin preview, and
+# the staff PDF are still returned.
 def test_failing_audit_write_does_not_block_downloads(
     client: TestClient, admin_headers, staff_headers, db_session: Session, monkeypatch
 ):
@@ -149,6 +163,9 @@ def test_failing_audit_write_does_not_block_downloads(
     assert report.status_code == 200 and report.content.startswith(b"%PDF")
 
 
+# Login, upload, export, and report rows are listed together, newest first.
+# Group filters keep their action prefixes. A bad group is 422.
+# Pages do not overlap, and a Manila date with no rows is empty.
 def test_audit_log_endpoint_merges_events_newest_first_and_filters(
     client: TestClient, admin_headers, staff_headers, db_session: Session
 ):
@@ -189,6 +206,7 @@ def test_audit_log_endpoint_merges_events_newest_first_and_filters(
     assert client.get(AUDIT, params={"date": other_day}, headers=admin_headers).json() == []
 
 
+# Audit paths allow GET and HEAD only. No token is 401. Staff is 403.
 def test_audit_rows_are_read_only_and_access_unchanged(client: TestClient, staff_headers):
     audit_routes = [route for route in app.routes if "audit" in getattr(route, "path", "")]
     assert audit_routes

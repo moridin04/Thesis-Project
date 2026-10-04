@@ -1,3 +1,8 @@
+/*
+ * Photos for the landing page hero carousel and the flood mosaic.
+ * Landing.jsx imports heroCarouselImages and floodMosaicImages.
+ * Replacing a file in assets/img updates the picture without layout changes.
+ */
 import heroFloodJeepney from '../assets/img/hero-flood-jeepney.jpg'
 import heroJeepneyCommuter from '../assets/img/hero-jeepney-commuter.jpg'
 import floodedMarketAlley from '../assets/img/flooded-market-alley.jpg'

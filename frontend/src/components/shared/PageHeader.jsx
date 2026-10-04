@@ -1,3 +1,8 @@
+// Page title, optional subtitle, and an optional action.
+// Public, dashboard, and admin pages all use this header.
+// The words are props from the page. No data module.
+
+// Heading row. The action slot is omitted when the page has none.
 export default function PageHeader({ title, subtitle, action }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">

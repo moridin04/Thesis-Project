@@ -1,3 +1,9 @@
+# Login, refresh, logout, and the current account, under /api/auth.
+# The access token is in the JSON body. The refresh token is an HttpOnly
+# cookie set by auth_service, so page scripts cannot read it.
+# Failed and successful logins are written to the audit log by username.
+# That log has no IP or browser column. Live roles are staff and admin.
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -27,6 +33,9 @@ from app.services.auth_service import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+# Check the password, set the refresh cookie, and return the access token.
+# A failure is audited with a server-side reason, then re-raised. The client
+# still sees the generic error from LoginFailed, not that reason.
 @router.post("/login", response_model=AuthResponse)
 def login(
     payload: LoginRequest,
@@ -56,6 +65,7 @@ def login(
         raise
 
 
+# Mint a new access token from the refresh cookie, and rotate that cookie.
 @router.post("/refresh", response_model=TokenResponse)
 def refresh(
     request: Request,
@@ -76,12 +86,14 @@ def refresh(
     return TokenResponse(access_token=access_token)
 
 
+# Drop the refresh cookie. The access token is left to expire on its own.
 @router.post("/logout", response_model=MessageResponse)
 def logout(response: Response) -> MessageResponse:
     clear_refresh_cookie(response)
     return MessageResponse(message="Logged out successfully.")
 
 
+# The signed-in account, without the password hash. 401 or 403 if not active.
 @router.get("/me", response_model=AccountPublic)
 def me(
     current_account: Annotated[Account, Depends(require_active_account)],

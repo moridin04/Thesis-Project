@@ -1,3 +1,7 @@
+// Text link with a left arrow that sends the reader back.
+// Dashboard barangay detail uses it to return to the list.
+// It only needs a route string. No data module.
+
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 

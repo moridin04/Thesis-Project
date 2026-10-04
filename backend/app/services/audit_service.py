@@ -1,3 +1,9 @@
+# Writes and lists audit_logs rows. Callers pass a username and a short
+# detail string. The table has no IP address or user-agent column, so
+# those are never stored, including for anonymous public downloads.
+# The admin audit page and the export history both read this table.
+# Day filters use Asia/Manila, then compare against naive UTC timestamps.
+
 from __future__ import annotations
 
 import logging
@@ -12,10 +18,14 @@ from app.models.audit_log import AuditLog
 
 logger = logging.getLogger(__name__)
 
+# Calendar day for the audit filter is Manila local time, stored as naive UTC.
 MANILA_TZ = ZoneInfo("Asia/Manila")
+# Username we write when a visitor downloads a file. Not a real account.
 PUBLIC_ACTOR = "public"
+# Username we write when approval replaces an older export automatically.
 SYSTEM_ACTOR = "system"
 PUBLIC_DOWNLOAD_ACTION = "export_downloaded_public"
+# Repeat downloads of the same file inside this window update one row's count.
 PUBLIC_DOWNLOAD_WINDOW = timedelta(minutes=10)
 
 # Action-name prefixes behind each Audit Log filter option.
@@ -29,6 +39,7 @@ AUDIT_GROUPS: dict[str, tuple[str, ...]] = {
 _COUNT_SUFFIX = re.compile(r"^(?P<base>.*?)(?: \(x(?P<count>\d+)\))?$")
 
 
+# Stage a row on the caller's session. The caller commits it with the change.
 def add_audit_log(
     db: Session,
     *,
@@ -50,6 +61,7 @@ def add_audit_log(
     return entry
 
 
+# Insert one row and commit it now. Login and the publish routes use this.
 def record_audit_log(
     db: Session,
     *,
@@ -70,6 +82,7 @@ def record_audit_log(
     db.commit()
 
 
+# Same write, but a database error is logged and swallowed so the file still downloads.
 def record_audit_log_safely(db: Session, **fields) -> None:
     """For downloads: a failed audit write is logged and swallowed so the file is still served."""
     try:
@@ -79,6 +92,7 @@ def record_audit_log_safely(db: Session, **fields) -> None:
         logger.exception("Audit write failed for action %s", fields.get("action"))
 
 
+# One row per file per 10 minutes. The actor is "public", never an IP or browser.
 def record_public_download(db: Session, *, resource_id: str, label: str) -> None:
     """Anonymous download: no IP, user agent or cookie is stored. Repeats within 10 minutes bump a count."""
     try:
@@ -113,11 +127,14 @@ def record_public_download(db: Session, *, resource_id: str, label: str) -> None
         logger.exception("Audit write failed for a public export download")
 
 
+# Midnight to next midnight in Manila, as naive UTC, to match SQLite timestamps.
 def _manila_day_bounds(day: date) -> tuple[datetime, datetime]:
     start = datetime.combine(day, time.min, tzinfo=MANILA_TZ).astimezone(timezone.utc).replace(tzinfo=None)
     return start, start + timedelta(days=1)
 
 
+# Newest first. group matches an action prefix. day is one Manila date.
+# limit defaults to 50. offset skips that many rows for the next page.
 def list_audit_logs(
     db: Session, *, group: str | None = None, day: date | None = None, limit: int = 50, offset: int = 0
 ) -> list[AuditLog]:

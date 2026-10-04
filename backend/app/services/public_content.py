@@ -1,7 +1,14 @@
+# Static text for the public methodology pages.
+# The public router returns these dicts unchanged.
+# DPI wording and indicator formulas here are display text for the page.
+# METHODOLOGY embeds INDICATORS so that wording lives in one place.
+# RECOMMENDATIONS is a short action list for each priority class.
+
 """Static public content served by read-only endpoints."""
 
 from __future__ import annotations
 
+# Body of /public/indicators. The formulas are page copy, not code that runs.
 INDICATORS = {
     "aggregation_note": (
         "The Disaster Prioritization Index (DPI) uses a two-level aggregation: "
@@ -100,6 +107,7 @@ INDICATORS = {
     ],
 }
 
+# Body of /public/methodology, including the data sources the page names.
 METHODOLOGY = {
     "data_sources": ["LiPAD flood-hazard layers", "PSA population 2020 and 2024", "NAMRIA DTM elevation"],
     "preprocessing": "Spatial joins, min-max normalization, and equal averaging within each component.",
@@ -115,6 +123,7 @@ METHODOLOGY = {
     ),
 }
 
+# Body of /public/recommendations, keyed by Low, Medium, and High.
 RECOMMENDATIONS = {
     "High": ["Prioritize evacuation planning", "Coordinate with barangay disaster teams"],
     "Medium": ["Monitor seasonal rainfall advisories", "Update community hazard maps"],

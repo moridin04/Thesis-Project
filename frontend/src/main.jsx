@@ -1,3 +1,8 @@
+// Browser entry. Mounts the React tree on the #root element.
+// Auth and upload state wrap every page. The disclaimer gate wraps App
+// so public routes can ask for agreement before they render.
+// ScrollToTop sits next to the router and runs on navigation.
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

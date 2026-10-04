@@ -1,3 +1,8 @@
+/*
+ * Checks paging, filters, and the URL hash for the HTML export table.
+ * The functions live in exportReportPager.js and are inlined into the report.
+ * Sample rows use 897 barangays so the page counts match the real set.
+ */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
@@ -15,6 +20,7 @@ import {
   visibleMatchSlice,
 } from './exportReportPager.js'
 
+// 897 rows split across the six districts and three classes.
 function sampleRows() {
   const rows = []
   const districts = DISTRICTS
@@ -30,6 +36,7 @@ function sampleRows() {
   return rows
 }
 
+// 50 rows per page over 897 barangays is 18 pages. The last page ends at 897.
 test('897 rows at 50 per page give 18 pages and the first page is 1 to 50', () => {
   const info = paginate(897, 1, 50)
   assert.equal(DEFAULT_PAGE_SIZE, 50)
@@ -43,6 +50,7 @@ test('897 rows at 50 per page give 18 pages and the first page is 1 to 50', () =
   assert.equal(last.end, 897)
 })
 
+// High is the first 299 rows. Filtering must not renumber their ranks.
 test('High filter yields 299 rows and 6 pages; ranks stay overall ranks', () => {
   const rows = sampleRows()
   const matched = filterIndices(rows, { class: 'High', district: '', q: '' })
@@ -58,6 +66,7 @@ test('High filter yields 299 rows and 6 pages; ranks stay overall ranks', () => 
   assert.equal(rows[lastSlice[lastSlice.length - 1]].class, 'High')
 })
 
+// A name search finds Barangay 310 and does not care about letter case.
 test('search 310 returns the matching barangay and ignores case', () => {
   const rows = sampleRows()
   const matched = filterIndices(rows, { class: '', district: '', q: '310' })
@@ -67,6 +76,7 @@ test('search 310 returns the matching barangay and ignores case', () => {
   assert.equal(rowMatches(rows[309], { q: 'BARANGAY 310' }), true)
 })
 
+// Bad page, size, class, or district fall back. The search text is kept.
 test('invalid hash values fall back to defaults', () => {
   assert.deepEqual(parseExportHash('#page=nope&size=7&class=Critical&district=X&q=<b>x</b>'), {
     page: 1,
@@ -86,12 +96,14 @@ test('invalid hash values fall back to defaults', () => {
   assert.equal(serializeExportHash({ page: 3, size: 50, class: 'High', district: 'VI', q: '310' }), '#page=3&class=High&district=VI&q=310')
 })
 
+// The button list keeps the ends, a window around the current page, and gaps.
 test('page number list includes first, last, current plus or minus 2, and ellipsis', () => {
   assert.deepEqual(pageNumbers(1, 18), [1, 2, 3, '...', 18])
   assert.deepEqual(pageNumbers(8, 18), [1, '...', 6, 7, 8, 9, 10, '...', 18])
   assert.deepEqual(pageNumbers(18, 18), [1, '...', 16, 17, 18])
 })
 
+// A district filter keeps each row's original rank. Combined search can be empty.
 test('district plus search keeps overall rank numbers', () => {
   const rows = sampleRows()
   const only = filterIndices(rows, { class: '', district: 'VI', q: '' })

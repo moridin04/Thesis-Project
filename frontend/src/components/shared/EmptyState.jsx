@@ -1,5 +1,10 @@
+// Centered message for a page that has nothing to show yet.
+// No page imports this file. PagePlaceholder is the one in use.
+// Title and description are props. No data module.
+
 import { Construction } from 'lucide-react'
 
+// Shows the title, and the description only when one was passed.
 export default function EmptyState({ title, description }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-pale bg-white/90 px-6 py-16 text-center shadow-sm">

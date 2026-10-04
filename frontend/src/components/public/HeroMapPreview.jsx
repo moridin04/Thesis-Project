@@ -1,3 +1,9 @@
+// Draws a fake barangay map for a hero card on the landing page.
+// The current Landing page does not import this file.
+// It does not read a data module. Fills are theme tokens.
+// Low uses tint #afdde5 and secondary #0fa4af.
+// Medium uses --risk-moderate #b8893d. High uses accent #964734.
+
 /**
  * Stylized static choropleth preview for the landing hero visual card.
  * Simplified barangay polygons — not geographically precise.

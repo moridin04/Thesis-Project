@@ -1,7 +1,11 @@
+// Staff and admin workspace: header, dashboard menu, and page body.
+// App.jsx mounts this on /dashboard for the staff and admin roles.
+// Child routes render through Outlet. This layout does not fetch data.
 import { Outlet } from 'react-router-dom'
 import PublicHeader from '../components/public/PublicHeader'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 
+// Header and sidebar around the active dashboard page.
 export default function DashboardLayout() {
   return (
     <div className="page-shell-public min-h-screen">

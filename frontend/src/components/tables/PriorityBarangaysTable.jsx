@@ -1,3 +1,7 @@
+// Sortable table of barangays, DPI score, and flood share.
+// The public overview page shows it under the charts.
+// Rows are passed in. District sorting uses utils/districtLabel.
+
 import { Fragment, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
@@ -15,10 +19,12 @@ const columns = [
   { key: 'floodPct25yr', label: '25-yr flood', type: 'number' },
 ]
 
+// Formats a population with Philippine digit grouping.
 function formatPopulation(n) {
   return n.toLocaleString('en-PH')
 }
 
+// Compares two rows. Risk uses Low, then Medium, then High.
 function compare(a, b, column, showArea) {
   if (showArea && column.key === 'district') return compareDistrictArea(a, b)
   const x = a[column.key]
@@ -31,6 +37,7 @@ function compare(a, b, column, showArea) {
   return x - y
 }
 
+// Sorts by the clicked column and flips direction on a second click.
 export default function PriorityBarangaysTable({ rows, showArea = false }) {
   const navigate = useNavigate()
   const [sort, setSort] = useState({ key: 'priorityScore', dir: 'desc' })
@@ -40,12 +47,14 @@ export default function PriorityBarangaysTable({ rows, showArea = false }) {
     return sort.dir === 'asc' ? result : -result
   })
 
+  // Flip direction if this column is already active.
   function toggleSort(key) {
     setSort((current) =>
       current.key === key ? { key, dir: current.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' },
     )
   }
 
+  // Profile URL for one barangay id.
   function profilePath(row) {
     return `/barangays/${encodeURIComponent(row.id)}`
   }
@@ -87,6 +96,7 @@ export default function PriorityBarangaysTable({ rows, showArea = false }) {
                 onClick={() => navigate(profilePath(row))}
               >
                 <td className="px-4 py-3 font-medium text-foundation">
+                  {/* Link click should not also trigger the row navigation. */}
                   <Link
                     to={profilePath(row)}
                     className="whitespace-nowrap hover:text-action"
@@ -95,6 +105,7 @@ export default function PriorityBarangaysTable({ rows, showArea = false }) {
                     {row.barangay}
                   </Link>
                 </td>
+                {/* Keep district and area as separate pieces so each stays intact. */}
                 {showArea ? (
                   <td className="px-4 py-3 text-ocean">
                     {districtAreaParts(row.district, row.area).map((part, index) => (

@@ -1,9 +1,15 @@
+// Modal that asks the user to confirm a sensitive action.
+// Reports and public exports use it before publish or reject.
+// The parent owns the action. This file only collects the answer.
+
 import { useEffect, useId, useRef, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 
+// Shared quiet button style so cancel matches other admin buttons.
 export const NEUTRAL_BUTTON_CLASS =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-[color:var(--border-subtle)] bg-white px-5 py-3 text-[0.9375rem] font-semibold text-foundation transition-colors hover:bg-[color:var(--color-tint-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-50'
 
+// Focuses the first field. Escape cancels unless a request is running.
 export default function ConfirmDialog({
   title,
   message,
@@ -23,6 +29,7 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     firstFieldRef.current?.focus()
+    // Escape cancels, but not while a request is still running.
     function onKeyDown(event) {
       if (event.key === 'Escape' && !busy) onCancel()
     }
@@ -31,6 +38,7 @@ export default function ConfirmDialog({
   }, [busy, onCancel])
 
   const trimmed = reason.trim()
+  // A required reason must be non-empty before confirm is allowed.
   const canConfirm = !busy && (!requireReason || trimmed.length > 0)
 
   return (

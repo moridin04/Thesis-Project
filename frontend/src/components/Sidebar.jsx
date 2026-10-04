@@ -1,3 +1,7 @@
+// Dark menu for the older public shell in components/Layout.
+// App.jsx does not mount that layout anymore.
+// The nav targets are listed in this file.
+
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   BookOpen,
@@ -24,6 +28,7 @@ const navItems = [
   { to: '/recommendations', label: 'Recommendations', icon: Lightbulb },
 ]
 
+// Keeps Barangay Detail active on any /barangays/ path.
 export default function Sidebar() {
   const { pathname } = useLocation()
 

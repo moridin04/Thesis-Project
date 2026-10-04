@@ -1,5 +1,12 @@
+/*
+ * Axis ticks for the feature-importance chart.
+ * FeatureImportanceChart.jsx calls importanceTicks with the largest value.
+ * The step is rounded so the axis matches the earlier chart scale.
+ */
+// Small gap so a value that already sits on a tick is not rounded up.
 const EPSILON = 1e-9
 
+// Trim floating-point noise before the chart prints the label.
 function clean(value) {
   return Number(value.toFixed(10))
 }

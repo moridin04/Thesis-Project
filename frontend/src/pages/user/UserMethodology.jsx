@@ -1,5 +1,9 @@
+// Older user-methodology placeholder. App.jsx does not mount this file.
+// The live page is pages/public/Methodology.jsx at /methodology.
+// This file only renders PagePlaceholder and calls no service.
 import PagePlaceholder from '../../components/PagePlaceholder'
 
+// Static placeholder card for a plain-language methodology.
 export default function UserMethodology() {
   return (
     <PagePlaceholder

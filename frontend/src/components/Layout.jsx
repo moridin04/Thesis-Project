@@ -1,3 +1,7 @@
+// Older public frame: dark sidebar, pinned top bar, page outlet.
+// App.jsx does not mount this file. Routes use layouts/ instead.
+// Titles are local. A barangay path overrides them with the id.
+
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -37,6 +41,7 @@ const pageMeta = {
   },
 }
 
+// Chooses the title, then offsets the page for the side menu.
 export default function Layout() {
   const { pathname } = useLocation()
   const barangayMatch = pathname.match(/^\/barangays\/([^/]+)/)

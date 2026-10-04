@@ -1,3 +1,9 @@
+# Request and response bodies for public exports.
+# Admins create a draft, then approve, reject, or unpublish it.
+# Visitors only get PublicExportMeta (no file path, no hash, no
+# account ids). The routes are in routers/public_exports.py.
+# Timestamps are tagged as UTC because SQLite returns them naive.
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -6,6 +12,7 @@ from typing import Annotated, Optional
 from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 
 
+# SQLite stores datetimes without a timezone. We treat those as UTC.
 def _as_utc(value: datetime | None) -> datetime | None:
     # SQLite returns naive datetimes; they are stored in UTC.
     if value is not None and value.tzinfo is None:
@@ -15,12 +22,16 @@ def _as_utc(value: datetime | None) -> datetime | None:
 
 UtcDatetime = Annotated[datetime, AfterValidator(_as_utc)]
 
+# Titles and the disclaimer cannot be blank after trimming. Length caps
+# match the columns on the public_exports table.
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
 Disclaimer = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+# Required text when an admin rejects or unpublishes. Approve has no reason.
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
 
 
+# Body for a new draft. kind is checked again in the service.
 class PublicExportCreate(BaseModel):
     kind: str
     title: Title
@@ -29,6 +40,7 @@ class PublicExportCreate(BaseModel):
     disclaimer: Disclaimer
 
 
+# Partial edit of a draft. Fields left out stay as they are.
 class PublicExportUpdate(BaseModel):
     title: Optional[Title] = None
     description: Optional[Description] = None
@@ -36,10 +48,13 @@ class PublicExportUpdate(BaseModel):
     disclaimer: Optional[Disclaimer] = None
 
 
+# Reason text for reject and unpublish.
 class StatusReason(BaseModel):
     reason: Reason
 
 
+# What the admin list shows. Names and stale are filled by the router,
+# not stored as columns. stale means the data version has moved on.
 class PublicExportOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -77,6 +92,7 @@ class ExportAuditOut(BaseModel):
     created_at: UtcDatetime
 
 
+# The small set of fields the public site is allowed to see.
 class PublicExportMeta(BaseModel):
     kind: str
     title: str

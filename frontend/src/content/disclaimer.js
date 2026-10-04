@@ -1,5 +1,12 @@
+/*
+ * Copy and version stamp for the public disclaimer dialog.
+ * DisclaimerGate shows this text before the public pages.
+ * disclaimerAck.js stores DISCLAIMER_VERSION with the acknowledgement.
+ */
+// Stored with each ack. Change this string when the disclaimer text changes.
 export const DISCLAIMER_VERSION = '2026-10-05-1'
 
+// One sentence shared with the public CSV and HTML export disclaimer.
 export const DISCLAIMER_CORE =
   'For information purposes only. Not a warning system. Priority classes are relative tertiles across Manila barangays, not official flood warnings.'
 
@@ -7,6 +14,7 @@ export const DISCLAIMER_TITLE = 'Important Notice'
 
 export const DISCLAIMER_LEAD = 'AGOS is a flood-risk prioritization tool for Manila barangays.'
 
+// Paragraphs inside the dialog, under the lead sentence.
 export const DISCLAIMER_BODY = [
   'For information purposes only. Not a warning system.',
   'Priority classes (High, Medium, Low) are relative tertiles across Manila barangays. They are not official flood warnings or forecasts.',

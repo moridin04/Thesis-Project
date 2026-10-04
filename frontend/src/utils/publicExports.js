@@ -1,8 +1,15 @@
+/*
+ * Column lists and button labels for public CSV and HTML exports.
+ * The admin Public Exports page and the priority map both use this.
+ * DEFAULT_DISCLAIMER is the same sentence as content/disclaimer.js.
+ */
+// The two files an admin can publish.
 export const EXPORT_KINDS = [
   { value: 'csv', label: 'CSV' },
   { value: 'report', label: 'Report' },
 ]
 
+// Suggested titles. The admin can still type a different one.
 export const TITLE_PLACEHOLDERS = {
   csv: 'AGOS Barangay Risk Summary - CSV',
   report: 'AGOS Barangay Risk Summary - Report',
@@ -26,6 +33,7 @@ export const PUBLIC_EXPORT_COLUMNS = [
   { key: 'drrm_pillar', label: 'DRRM_Pillar' },
 ]
 
+// Groups for the column checklist on the admin form.
 export const PUBLIC_EXPORT_COLUMN_GROUPS = [
   { id: 'identity', label: 'Identity', keys: ['barangay', 'district', 'area'] },
   { id: 'scores', label: 'Scores', keys: ['dpi_scaled', 'priority_class', 'hazard', 'exposure', 'vulnerability'] },
@@ -33,12 +41,15 @@ export const PUBLIC_EXPORT_COLUMN_GROUPS = [
   { id: 'planning', label: 'Planning', keys: ['planning_reference', 'drrm_pillar'] },
 ]
 
+// Always included. The checklist cannot turn these off.
 export const MANDATORY_EXPORT_COLUMNS = ['barangay', 'dpi_scaled', 'priority_class']
 
+// Lookup from a column key to its label.
 const COLUMN_BY_KEY = Object.fromEntries(PUBLIC_EXPORT_COLUMNS.map((column) => [column.key, column]))
 
 export { DISCLAIMER_CORE as DEFAULT_DISCLAIMER } from '../content/disclaimer.js'
 
+// Words for the status badges on the admin export table.
 export const STATUS_LABELS = {
   draft: 'Draft',
   approved: 'Approved',
@@ -47,18 +58,22 @@ export const STATUS_LABELS = {
   superseded: 'Superseded',
 }
 
+// "CSV" or "Report". An unknown kind is shown as it is stored.
 export function kindLabel(kind) {
   return EXPORT_KINDS.find((item) => item.value === kind)?.label ?? kind
 }
 
+// Placeholder title for this kind, or the CSV title if the kind is unknown.
 export function titlePlaceholder(kind) {
   return TITLE_PLACEHOLDERS[kind] ?? TITLE_PLACEHOLDERS.csv
 }
 
+// True for barangay, scaled DPI, and priority class.
 export function isMandatoryExportColumn(key) {
   return MANDATORY_EXPORT_COLUMNS.includes(key)
 }
 
+// Header text for one column key.
 export function exportColumnLabel(key) {
   return COLUMN_BY_KEY[key]?.label ?? key
 }
@@ -69,6 +84,8 @@ export function planningNeedsPriorityClass(columns) {
   return (selected.has('planning_reference') || selected.has('drrm_pillar')) && !selected.has('priority_class')
 }
 
+// Add or remove a column and keep the whitelist order.
+// Choosing a planning field also keeps priority class selected.
 export function toggleExportColumn(columns, key) {
   if (isMandatoryExportColumn(key)) {
     return PUBLIC_EXPORT_COLUMNS.map((column) => column.key).filter((item) => columns.includes(item) || item === key)
@@ -80,6 +97,7 @@ export function toggleExportColumn(columns, key) {
   return PUBLIC_EXPORT_COLUMNS.map((column) => column.key).filter((item) => selected.has(item))
 }
 
+// Short Manila date, or an empty string when the timestamp is missing.
 export function formatApprovedDate(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -113,6 +131,7 @@ export function publishedExportsSummary(published) {
   return parts.length ? `Approved: ${parts.join(' · ')}` : ''
 }
 
+// Download name for an admin preview, including the version number.
 export function previewFilename(item) {
   const extension = item.kind === 'csv' ? 'csv' : 'html'
   return `AGOS_public_export_${item.kind}_v${item.version}_preview.${extension}`

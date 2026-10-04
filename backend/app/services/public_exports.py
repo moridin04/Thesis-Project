@@ -1,3 +1,9 @@
+# Create, edit, approve, reject, and unpublish the files the public can download.
+# A new export is a draft. Approve writes a final file and marks the previous
+# approved file of that kind as superseded. Reject and unpublish need a reason.
+# Each step adds an audit row with the admin username, not an IP or browser.
+# The CSV and HTML are built by exports/csv_export.py and exports/html_report.py.
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -23,15 +29,20 @@ from app.services.audit_service import (
     record_public_download,
 )
 
+# Folder name under backend/generated. The date stamp on download names is Manila time.
 EXPORTS_SUBDIR = "exports"
 MANILA_TZ = ZoneInfo("Asia/Manila")
 RESOURCE_TYPE = "public_export"
 
+# report is saved as HTML. These maps are the only kind-to-file rules.
 FILE_EXTENSIONS = {"csv": "csv", "report": "html"}
 MEDIA_TYPES = {"csv": "text/csv; charset=utf-8", "report": "text/html; charset=utf-8"}
 KIND_LABELS = {"csv": "CSV", "report": "HTML"}
 
 
+# Reject unknown keys. Choosing a planning column also keeps priority_class,
+# because that text is chosen from the class. Barangay, DPI, and class are
+# always required. The list comes back in whitelist order, not request order.
 def validate_columns(columns: list[str]) -> list[str]:
     if not columns:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Select at least one column.")
@@ -53,6 +64,7 @@ def validate_columns(columns: list[str]) -> list[str]:
     return [key for key in PUBLIC_EXPORT_COLUMNS if key in seen]
 
 
+# kind must be csv or report. Anything else is a 422.
 def _validate_kind(kind: str) -> str:
     if kind not in EXPORT_KINDS:
         raise HTTPException(
@@ -62,6 +74,8 @@ def _validate_kind(kind: str) -> str:
     return kind
 
 
+# Write the file for this version. final=False adds "-draft" to the name.
+# Approval calls this again with final=True and does not overwrite that draft.
 def _write_snapshot(export: PublicExport, *, final: bool) -> None:
     """Approved snapshots are never rewritten: approval writes a new final file once, from the draft."""
     data_version = barangay_data.current_data_version()
@@ -87,11 +101,13 @@ def _write_snapshot(export: PublicExport, *, final: bool) -> None:
     export.data_version = data_version
 
 
+# Short label for audit details, such as "CSV v2".
 def export_label(export: PublicExport) -> str:
     """"CSV v2" / "HTML v2"."""
     return f"{KIND_LABELS.get(export.kind, export.kind.upper())} v{export.version}"
 
 
+# Add an audit row on this session. The caller commits. No IP is included.
 def _audit(db: Session, export: PublicExport, actor_username: str, action: str, extra: str | None = None) -> None:
     details = f"{export_label(export)} - {export.title}" + (f"; {extra}" if extra else "")
     add_audit_log(
@@ -104,6 +120,7 @@ def _audit(db: Session, export: PublicExport, actor_username: str, action: str, 
     )
 
 
+# Load one export or 404.
 def _get(db: Session, export_id: int) -> PublicExport:
     export = db.get(PublicExport, export_id)
     if export is None:
@@ -111,6 +128,7 @@ def _get(db: Session, export_id: int) -> PublicExport:
     return export
 
 
+# 409 when the row is not in the status this action allows.
 def _require_status(export: PublicExport, *allowed: str) -> None:
     if export.status not in allowed:
         raise HTTPException(
@@ -119,14 +137,17 @@ def _require_status(export: PublicExport, *allowed: str) -> None:
         )
 
 
+# Every export, newest first. Includes drafts and rejected rows.
 def list_exports(db: Session) -> list[PublicExport]:
     return db.query(PublicExport).order_by(PublicExport.created_at.desc(), PublicExport.id.desc()).all()
 
 
+# True when an approved export was built from a different data version.
 def is_stale(export: PublicExport, current_version: str) -> bool:
     return export.status == "approved" and export.data_version != current_version
 
 
+# Next version number for this kind, status draft, and a draft snapshot on disk.
 def create_draft(
     db: Session,
     actor: Account,
@@ -159,6 +180,7 @@ def create_draft(
     return export
 
 
+# Edit a draft only. Rewrites the draft file and notes which fields changed.
 def update_draft(db: Session, actor: Account, export_id: int, changes: dict) -> PublicExport:
     export = _get(db, export_id)
     _require_status(export, "draft")
@@ -174,6 +196,8 @@ def update_draft(db: Session, actor: Account, export_id: int, changes: dict) -> 
     return export
 
 
+# Draft to approved. Other approved rows of the same kind become superseded.
+# The superseded audit actor is "system". The approval audit stores a short hash.
 def approve(db: Session, actor: Account, export_id: int) -> PublicExport:
     export = _get(db, export_id)
     _require_status(export, "draft")
@@ -202,6 +226,7 @@ def approve(db: Session, actor: Account, export_id: int) -> PublicExport:
     return export
 
 
+# Draft to rejected. The reason is stored on the row and in the audit detail.
 def reject(db: Session, actor: Account, export_id: int, reason: str) -> PublicExport:
     export = _get(db, export_id)
     _require_status(export, "draft")
@@ -213,6 +238,7 @@ def reject(db: Session, actor: Account, export_id: int, reason: str) -> PublicEx
     return export
 
 
+# Take an approved file off the public list. The reason is required.
 def unpublish(db: Session, actor: Account, export_id: int, reason: str) -> PublicExport:
     export = _get(db, export_id)
     _require_status(export, "approved")
@@ -224,6 +250,7 @@ def unpublish(db: Session, actor: Account, export_id: int, reason: str) -> Publi
     return export
 
 
+# Admin preview. Missing file is 404. The audit write must not block the file.
 def preview_file(db: Session, actor: Account, export_id: int) -> tuple[PublicExport, Path]:
     export = _get(db, export_id)
     path = Path(export.file_path or "")
@@ -240,10 +267,12 @@ def preview_file(db: Session, actor: Account, export_id: int) -> tuple[PublicExp
     return export, path
 
 
+# Count a public download. Delegates to the 10-minute window in audit_service.
 def record_public_download_event(db: Session, export: PublicExport) -> None:
     record_public_download(db, resource_id=str(export.id), label=export_label(export))
 
 
+# Audit rows for this export only, newest first. 404 if the export is missing.
 def audit_history(db: Session, export_id: int) -> list[AuditLog]:
     """This export's rows from the shared audit_logs table (the one the Audit Log page reads)."""
     _get(db, export_id)
@@ -255,6 +284,7 @@ def audit_history(db: Session, export_id: int) -> list[AuditLog]:
     )
 
 
+# The approved file the public download route serves for this kind.
 def latest_approved(db: Session, kind: str) -> PublicExport | None:
     return (
         db.query(PublicExport)
@@ -264,6 +294,7 @@ def latest_approved(db: Session, kind: str) -> PublicExport | None:
     )
 
 
+# Download name uses the Manila date of approval, or of creation if not approved.
 def download_filename(export: PublicExport) -> str:
     moment = export.approved_at or export.created_at or datetime.now(timezone.utc)
     if moment.tzinfo is None:

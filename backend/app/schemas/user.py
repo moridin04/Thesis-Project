@@ -1,3 +1,8 @@
+# Response shape for the email-based User model.
+# The live account responses use schemas/auth.py AccountPublic instead.
+# Password hash is left out. routers/user.py is the only caller, and
+# that router is not mounted in main.py.
+
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 

@@ -1,5 +1,11 @@
+/*
+ * One-time "in view" flag for scroll reveal animations.
+ * No page imports this hook yet. The landing page uses scrollFade.js.
+ * Reduced motion, or no IntersectionObserver, starts the element visible.
+ */
 import { useEffect, useRef, useState } from 'react'
 
+// Skip the wait when motion is reduced or the observer API is missing.
 function shouldStartVisible() {
   if (typeof window === 'undefined') return false
   if (typeof IntersectionObserver === 'undefined') return true

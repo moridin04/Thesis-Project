@@ -1,6 +1,11 @@
+// Page for an account that cannot open the requested area.
+// App.jsx mounts this at /unauthorized, outside the other layouts.
+// It does not read a role and does not call an API.
+// Links lead to the public home and the staff dashboard.
 import { Link } from 'react-router-dom'
 import { ShieldAlert } from 'lucide-react'
 
+// Message plus the two return links.
 export default function Unauthorized() {
   return (
     <div className="page-shell-public flex min-h-screen items-center justify-center px-6">

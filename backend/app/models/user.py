@@ -1,3 +1,9 @@
+# Email-based user table. The login main.py actually serves uses
+# Account in account.py (username, staff or admin). init_db does not
+# import this module, so startup does not create the users table.
+# routers/user.py still refers to this model, but that router is not
+# mounted in main.py.
+
 import enum
 from datetime import datetime
 
@@ -7,11 +13,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
+# "user" is the default. "admin" here is not the live admin role;
+# live admins are Account rows.
 class UserRole(str, enum.Enum):
     user = "user"
     admin = "admin"
 
 
+# native_enum=False stores the value as a string, which SQLite can hold.
 class User(Base):
     __tablename__ = "users"
 

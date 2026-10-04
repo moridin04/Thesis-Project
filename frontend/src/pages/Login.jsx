@@ -1,6 +1,10 @@
+// Older demo sign-in. App.jsx does not mount this file.
+// The live page is pages/auth/Login.jsx at /login.
+// These buttons only navigate. They do not call useAuth or an API.
 import { useNavigate } from 'react-router-dom'
 import { Shield, UserRound } from 'lucide-react'
 
+// Two buttons. One opens /app/dashboard, the other /admin/dashboard.
 export default function Login() {
   const navigate = useNavigate()
 

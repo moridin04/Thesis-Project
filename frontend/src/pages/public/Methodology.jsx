@@ -1,9 +1,15 @@
+// Methodology page: research design, model notes, and the disclaimer.
+// App.jsx mounts this at /methodology inside PublicLayout.
+// Section text comes from methodologySections in siteContent.
+// One sentence is filled by fetchPublicModelSummary.
 import { useEffect, useState } from 'react'
 import PageHeader from '../../components/shared/PageHeader'
 import { methodologySections } from '../../data/siteContent'
 import { BRAND } from '../../auth/config'
 import { fetchPublicModelSummary } from '../../services/publicService'
 
+// Loads how many held-out barangays matched the DPI class.
+// If the request fails, or the counts are missing, the sentence stays blank.
 function useModelSummarySentence() {
   const [sentence, setSentence] = useState('')
 
@@ -25,6 +31,7 @@ function useModelSummarySentence() {
   return sentence
 }
 
+// Renders each section. Risk classification can append the model sentence.
 export default function Methodology() {
   const summarySentence = useModelSummarySentence()
 

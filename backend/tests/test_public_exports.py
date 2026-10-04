@@ -1,3 +1,9 @@
+# How an admin prepares a public CSV or HTML export.
+# Covers app.services.public_exports and the public download routes.
+# Staff cannot manage these files. The public URL serves the approved
+# snapshot only. A newer draft waits until it is approved. Unpublish
+# and reject remove the file from the public route.
+
 from __future__ import annotations
 
 import hashlib
@@ -53,6 +59,7 @@ def _create(client: TestClient, headers: dict, kind: str = "csv", columns=None, 
     return response.json()
 
 
+# An admin can create a draft at version 1 and see that row in the list.
 def test_admin_can_list_and_create(client: TestClient, admin_headers):
     created = _create(client, admin_headers)
     assert created["status"] == "draft"
@@ -62,6 +69,7 @@ def test_admin_can_list_and_create(client: TestClient, admin_headers):
     assert listed[0]["stale"] is False
 
 
+# Staff receive 403 on list, create, and approve. No token is 401.
 def test_staff_gets_403_and_anonymous_401(client: TestClient, staff_headers):
     assert client.get(BASE, headers=staff_headers).status_code == 403
     assert client.post(BASE, json={}, headers=staff_headers).status_code == 403
@@ -70,6 +78,7 @@ def test_staff_gets_403_and_anonymous_401(client: TestClient, staff_headers):
     assert client.post(f"{BASE}/1/approve").status_code == 401
 
 
+# Model and uploader columns are outside the public whitelist.
 @pytest.mark.parametrize(
     "bad_column",
     ["ml_predicted_class", "ml_prediction_confidence", "agrees_with_dpi", "uploaded_by", "model_predicted_class"],
@@ -84,6 +93,7 @@ def test_columns_outside_whitelist_are_rejected(client: TestClient, admin_header
     assert bad_column in response.json()["detail"]
 
 
+# Edit uses the same whitelist. A blank disclaimer is rejected.
 def test_whitelist_also_enforced_on_edit_and_disclaimer_required(client: TestClient, admin_headers):
     created = _create(client, admin_headers)
     response = client.patch(
@@ -96,6 +106,7 @@ def test_whitelist_also_enforced_on_edit_and_disclaimer_required(client: TestCli
     assert missing.status_code == 422
 
 
+# A draft title can change. After approval the same patch is 409.
 def test_patch_only_allowed_for_drafts(client: TestClient, admin_headers):
     created = _create(client, admin_headers)
     edited = client.patch(f"{BASE}/{created['id']}", json={"title": "Edited"}, headers=admin_headers)
@@ -105,6 +116,8 @@ def test_patch_only_allowed_for_drafts(client: TestClient, admin_headers):
     assert again.status_code == 409
 
 
+# The approved file matches its checksum. The disclaimer is in the
+# comments, and the column line is only the chosen fields plus rank.
 def test_csv_snapshot_has_disclaimer_whitelisted_header_and_checksum(
     client: TestClient, admin_headers, db_session: Session
 ):
@@ -121,6 +134,7 @@ def test_csv_snapshot_has_disclaimer_whitelisted_header_and_checksum(
     assert approved["row_count"] == len(barangay_data.get_all_barangays())
 
 
+# In the HTML snapshot the disclaimer appears before the data table.
 def test_report_snapshot_puts_disclaimer_before_rows(client: TestClient, admin_headers, db_session: Session):
     created = _create(client, admin_headers, kind="report")
     approved = client.post(f"{BASE}/{created['id']}/approve", headers=admin_headers).json()
@@ -128,6 +142,7 @@ def test_report_snapshot_puts_disclaimer_before_rows(client: TestClient, admin_h
     assert text.index(DISCLAIMER) < text.index('<table class="t"')
 
 
+# A newly approved CSV supersedes the older CSV. The HTML stays approved.
 def test_approve_supersedes_previous_of_same_kind(client: TestClient, admin_headers):
     first = _create(client, admin_headers)
     report = _create(client, admin_headers, kind="report")
@@ -140,6 +155,8 @@ def test_approve_supersedes_previous_of_same_kind(client: TestClient, admin_head
     assert statuses == {first["id"]: "superseded", report["id"]: "approved", second["id"]: "approved"}
 
 
+# The public URL is 404 until approval, then serves that checksum.
+# A newer draft does not change the download until that draft is approved.
 def test_public_download_serves_only_the_approved_snapshot(client: TestClient, admin_headers, db_session: Session):
     assert client.get("/api/public/exports/csv/download").status_code == 404
     draft = _create(client, admin_headers)
@@ -172,6 +189,7 @@ def test_public_download_serves_only_the_approved_snapshot(client: TestClient, a
     assert hashlib.sha256(served).hexdigest() == newer_approved["sha256"]
 
 
+# Unpublish and reject require a reason. After either, the public download is 404.
 def test_unpublished_and_rejected_return_404(client: TestClient, admin_headers):
     first = _create(client, admin_headers)
     client.post(f"{BASE}/{first['id']}/approve", headers=admin_headers)
@@ -192,6 +210,7 @@ def test_unpublished_and_rejected_return_404(client: TestClient, admin_headers):
     assert client.get("/api/public/exports/csv/download").status_code == 404
 
 
+# Export actions write audit rows. The history for one export is newest first.
 def test_audit_entries_are_written(client: TestClient, admin_headers, db_session: Session):
     first = _create(client, admin_headers)
     client.patch(f"{BASE}/{first['id']}", json={"title": "Edited"}, headers=admin_headers)
@@ -224,6 +243,7 @@ def test_audit_entries_are_written(client: TestClient, admin_headers, db_session
     assert history[0]["created_at"].endswith(("Z", "+00:00"))
 
 
+# Preview returns the draft bytes, and the saved name ends in the draft suffix.
 def test_preview_downloads_the_draft_snapshot(client: TestClient, admin_headers, db_session: Session):
     draft = _create(client, admin_headers)
     response = client.get(f"{BASE}/{draft['id']}/preview", headers=admin_headers)
@@ -232,6 +252,8 @@ def test_preview_downloads_the_draft_snapshot(client: TestClient, admin_headers,
     assert Path(db_session.get(PublicExport, draft["id"]).file_path).name.endswith("-draft.csv")
 
 
+# A changed data version marks the row stale and leaves it approved.
+# The public download still serves that snapshot.
 def test_stale_flag_when_data_version_changes(client: TestClient, admin_headers, monkeypatch):
     draft = _create(client, admin_headers)
     client.post(f"{BASE}/{draft['id']}/approve", headers=admin_headers)

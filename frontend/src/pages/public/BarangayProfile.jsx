@@ -1,3 +1,7 @@
+// Public profile for one Manila barangay.
+// App.jsx mounts this at /barangays/:id inside PublicInsightsLayout.
+// The id comes from the route. Data comes from fetchPublicBarangay.
+// The map reads /manila-barangays.geojson and keeps a single shape.
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { GeoJSON, MapContainer, ScaleControl, TileLayer, useMap } from 'react-leaflet'
@@ -51,6 +55,7 @@ const profileDataSources = [
   { label: 'Vulnerability: DTM-derived elevation and population density' },
 ]
 
+// Moves the map so the selected shape sits inside the frame.
 function FitToData({ data }) {
   const map = useMap()
   useEffect(() => {
@@ -61,6 +66,7 @@ function FitToData({ data }) {
   return null
 }
 
+// One-barangay map. The fill color follows that priority class.
 function SelectedBarangayMap({ name, riskLevel }) {
   const [data, setData] = useState(null)
 
@@ -101,6 +107,8 @@ function SelectedBarangayMap({ name, riskLevel }) {
             <GeoJSON
               data={data}
               style={{
+                // Stroke is the accent color. Fill is riskColors for this class.
+                // A missing class uses the pale token.
                 color: 'var(--color-accent)',
                 weight: 2,
                 fillColor: riskColors[riskLevel] || 'var(--color-pale)',
@@ -115,6 +123,7 @@ function SelectedBarangayMap({ name, riskLevel }) {
   )
 }
 
+// Bar for one component score. Width is that score as a percent.
 function ScoreBar({ icon: Icon, label, value, barClass }) {
   return (
     <div className="space-y-1.5">
@@ -132,6 +141,7 @@ function ScoreBar({ icon: Icon, label, value, barClass }) {
   )
 }
 
+// Half-circle gauge. The arc color follows the priority class.
 function PriorityGauge({ value, riskLevel }) {
   const radius = 58
   const circumference = Math.PI * radius
@@ -166,6 +176,7 @@ function PriorityGauge({ value, riskLevel }) {
   )
 }
 
+// Loads the profile, then shows scores, sources, and planning notes.
 export default function BarangayProfile() {
   const { id } = useParams()
   const [profile, setProfile] = useState(null)
@@ -202,6 +213,7 @@ export default function BarangayProfile() {
   const vulnerabilityScore = profile.vulnerabilityScore ?? Math.round((profile.dpi ?? 0) * 100)
   const priorityScore = Math.round(profile.priorityScore)
 
+  // High at 67 or above, Medium at 34 or above, otherwise Low.
   const band = (score) => (score >= 67 ? 'High' : score >= 34 ? 'Medium' : 'Low')
   const factors = [
     { icon: Waves, label: 'Flood coverage', tag: band(hazardScore), bar: 'bg-[var(--risk-high)]', width: hazardScore },

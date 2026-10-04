@@ -1,5 +1,10 @@
+// Small external link with an icon, used when we cite a source.
+// The landing page places it under the data-source notes.
+// The address is a prop. No data module.
+
 import { ExternalLink } from 'lucide-react'
 
+// Opens the source in a new tab without giving that tab control.
 export default function SourceLink({ href, children }) {
   return (
     <a

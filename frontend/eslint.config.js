@@ -1,3 +1,7 @@
+// Lint setup for the frontend. The dist folder is ignored.
+// Recommended JS rules, plus the React hooks plugin and the refresh plugin.
+// JSX files are included. Browser globals are allowed.
+
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

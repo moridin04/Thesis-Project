@@ -1,3 +1,9 @@
+# Admin routes under /api/admin. Only an active admin can call them.
+# require_admin rejects staff with 403. The check is on each route.
+# Upload review uses upload_service and the DatasetUpload model.
+# Account changes use Account and auth_service.create_account.
+# The publish routes below only write an audit row. They do not edit a table.
+
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -10,6 +16,7 @@ from app.database import get_db
 from app.dependencies.auth import require_admin
 from app.models.account import Account
 from app.models.upload import DatasetUpload
+# Written into audit details. The route gate is still require_admin.
 from app.permissions import ACCOUNT_MANAGE, DATASET_PUBLISH
 from app.schemas.auth import (
     AccountCreateRequest,
@@ -17,6 +24,7 @@ from app.schemas.auth import (
     AccountRoleUpdate,
     AccountStatusUpdate,
 )
+# The only live roles: "staff" and "admin".
 from app.security import ROLE_ADMIN, ROLE_STAFF
 from app.services import barangay_data
 from app.services import audit_service
@@ -32,6 +40,8 @@ from app.services.upload_service import (
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+# All dataset uploads for an admin. Optional status narrows the list.
+# Returns UploadPublic rows from upload_service, newest first.
 @router.get("/uploads", response_model=list[UploadPublic])
 def list_all_uploads(
     _current_account: Annotated[Account, Depends(require_admin)],
@@ -41,6 +51,9 @@ def list_all_uploads(
     return list_uploads(db, status_filter=status)
 
 
+# Approve one pending upload and store its barangay snapshot.
+# upload_service refuses anything that is not still pending, and writes
+# an upload_approved audit row. The actor is the admin username.
 @router.post("/uploads/{upload_id}/approve", response_model=UploadPublic)
 def approve_upload_endpoint(
     upload_id: int,
@@ -50,6 +63,8 @@ def approve_upload_endpoint(
     return approve_upload(db, upload_id, current_account)
 
 
+# Reject one pending upload and keep the reason from the body.
+# The service clears the barangay snapshot and writes upload_rejected.
 @router.post("/uploads/{upload_id}/reject", response_model=UploadPublic)
 def reject_upload_endpoint(
     upload_id: int,
@@ -65,6 +80,8 @@ def reject_upload_endpoint(
     )
 
 
+# Pending upload count, plus overview and model numbers from barangay_data.
+# high_risk_barangays is the High priority count, not a separate query.
 @router.get("/dashboard")
 def admin_dashboard(
     current_account: Annotated[Account, Depends(require_admin)],
@@ -87,6 +104,8 @@ def admin_dashboard(
     }
 
 
+# Record dataset_approved for this id. No dataset row is updated.
+# The audit row stores the admin username, not an IP or user agent.
 @router.post("/datasets/{dataset_id}/approve")
 def approve_dataset(
     dataset_id: str,
@@ -103,6 +122,8 @@ def approve_dataset(
     return {"message": "Dataset approved.", "status": "approved"}
 
 
+# Record dataset_published. details includes the DATASET_PUBLISH name
+# so the log shows which permission this action stands for.
 @router.post("/datasets/{dataset_id}/publish")
 def publish_dataset(
     dataset_id: str,
@@ -120,6 +141,7 @@ def publish_dataset(
     return {"message": "Dataset published.", "status": "published"}
 
 
+# Record dataset_archived for this id. No file or row is moved.
 @router.post("/datasets/{dataset_id}/archive")
 def archive_dataset(
     dataset_id: str,
@@ -136,6 +158,7 @@ def archive_dataset(
     return {"message": "Dataset archived.", "status": "archived"}
 
 
+# Record barangay_published. The id is the string the client sent.
 @router.post("/barangays/{barangay_id}/publish")
 def publish_barangay(
     barangay_id: str,
@@ -152,6 +175,7 @@ def publish_barangay(
     return {"message": "Barangay changes published.", "status": "published"}
 
 
+# Record model_published. This does not replace the saved model files.
 @router.post("/models/{model_id}/publish")
 def publish_model(
     model_id: str,
@@ -168,6 +192,7 @@ def publish_model(
     return {"message": "Model results published.", "status": "published"}
 
 
+# Record report_published. The PDF download route lives in reports.py.
 @router.post("/reports/{report_id}/publish")
 def publish_report(
     report_id: str,
@@ -184,6 +209,7 @@ def publish_report(
     return {"message": "Report published.", "status": "published"}
 
 
+# Record content_published. Public page text is unchanged by this call.
 @router.post("/content/{content_id}/publish")
 def publish_content(
     content_id: str,
@@ -200,6 +226,9 @@ def publish_content(
     return {"message": "Content published.", "status": "published"}
 
 
+# Admin page of audit rows. group filters by action prefix. date is one
+# Asia/Manila calendar day. limit defaults to 50, capped at 200, with offset.
+# We return username and details only. No IP or user agent is stored.
 @router.get("/audit-logs")
 def list_audit_logs(
     _current_account: Annotated[Account, Depends(require_admin)],
@@ -225,11 +254,13 @@ def list_audit_logs(
     ]
 
 
+# ISO string for an audit row's created_at, used by the list above.
 def _utc_iso(value: datetime) -> str:
     # SQLite returns naive datetimes; they are stored in UTC.
     return (value if value.tzinfo else value.replace(tzinfo=timezone.utc)).isoformat()
 
 
+# Every account, oldest id first. AccountPublic leaves the password hash out.
 @router.get("/accounts", response_model=list[AccountPublic])
 def list_accounts(
     _current_account: Annotated[Account, Depends(require_admin)],
@@ -249,6 +280,8 @@ def list_accounts(
     ]
 
 
+# Create a staff or admin account, then log account_created.
+# create_account hashes the password. The hash is not put in the audit details.
 @router.post("/accounts", response_model=AccountPublic, status_code=201)
 def create_account_endpoint(
     payload: AccountCreateRequest,
@@ -262,6 +295,7 @@ def create_account_endpoint(
         full_name=payload.full_name,
         role=payload.role,
     )
+    # details holds the new role and the ACCOUNT_MANAGE name, not the password.
     record_audit_log(
         db,
         action="account_created",
@@ -273,6 +307,8 @@ def create_account_endpoint(
     return created
 
 
+# Switch an account between staff and admin. Any other role string is 400.
+# We refuse to demote the last active admin, so someone can still sign in.
 @router.patch("/accounts/{account_id}/role", response_model=AccountPublic)
 def update_account_role(
     account_id: int,
@@ -286,6 +322,7 @@ def update_account_role(
     if payload.role not in {ROLE_STAFF, ROLE_ADMIN}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role.")
 
+    # Only an active admin counts. An inactive admin can still be demoted.
     if target.role == ROLE_ADMIN and payload.role != ROLE_ADMIN:
         admin_count = (
             db.query(Account)
@@ -319,6 +356,8 @@ def update_account_role(
     )
 
 
+# Turn an account on or off. The row stays. Deactivating the last active
+# admin is refused, for the same reason as demotion above.
 @router.patch("/accounts/{account_id}/status", response_model=AccountPublic)
 def update_account_status(
     account_id: int,

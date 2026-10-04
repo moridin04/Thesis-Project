@@ -1,3 +1,8 @@
+// Table of cross-validation and held-out scores for each model.
+// Shown inside the model results section on the dashboard.
+// The parent passes models from the useMlResults hook.
+
+// Four decimal places, or a dash when the score is missing.
 function formatScore(value) {
   if (value == null || Number.isNaN(Number(value))) return '—'
   return Number(value).toFixed(4)
@@ -20,6 +25,7 @@ const columns = [
   { label: 'Test ROC AUC (OvR macro)', render: (model) => formatScore(model.roc_auc_ovr_macro) },
 ]
 
+// Small tag on the model that won selection.
 function SelectedBadge() {
   return (
     <span className="inline-flex items-center rounded-full bg-[color-mix(in_srgb,var(--primary)_12%,white)] px-2.5 py-0.5 text-xs font-semibold text-[var(--primary)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--primary)_28%,white)]">
@@ -28,6 +34,7 @@ function SelectedBadge() {
   )
 }
 
+// One row per model. The selected row is a light wash of #024950.
 export default function ModelComparisonTable({ models }) {
   return (
     <div className="card-surface overflow-x-auto">

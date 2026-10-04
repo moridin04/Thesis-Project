@@ -1,3 +1,7 @@
+// Older admin frame with its own sidebar and top bar.
+// App.jsx uses layouts/AdminLayout, which keeps the public header.
+// Titles come from the pageMeta object in this file.
+
 import { Outlet, useLocation } from 'react-router-dom'
 import AdminSidebar from './admin/AdminSidebar'
 import AdminTopbar from './admin/AdminTopbar'
@@ -33,6 +37,7 @@ const pageMeta = {
   },
 }
 
+// Looks up the title for the path and renders the admin page.
 export default function AdminLayout() {
   const { pathname } = useLocation()
   const meta = pageMeta[pathname] ?? pageMeta['/admin/dashboard']

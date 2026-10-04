@@ -1,3 +1,9 @@
+# Staff workspace under /api/operations. An admin can call it too.
+# require_staff_or_admin is on each route. Visitors cannot call these.
+# File uploads go through upload_service and start as pending DatasetUpload rows.
+# The submit routes that take no body only write an audit row. They copy a
+# permission name into details. The gate on the route is the role, not that name.
+
 from __future__ import annotations
 
 from typing import Annotated, Any, Optional
@@ -8,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import require_staff_or_admin
 from app.models.account import Account
+# Permission names stored in audit details on the submit routes below.
 from app.permissions import (
     CONTENT_PREPARE,
     DATASET_SUBMIT,
@@ -24,6 +31,8 @@ from app.services.upload_service import create_upload, list_uploads_for_user
 router = APIRouter(prefix="/operations", tags=["operations"])
 
 
+# Pending upload count, the account id, and the role.
+# draft_barangay_changes is fixed at 0. There is no draft table behind it.
 @router.get("/dashboard")
 def operations_dashboard(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -42,6 +51,8 @@ def operations_dashboard(
     }
 
 
+# All published barangay rows from barangay_data, same source as the public list.
+# The role check is what keeps this path on the staff side of the API.
 @router.get("/barangays")
 def operations_barangays(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -49,6 +60,7 @@ def operations_barangays(
     return barangay_data.get_all_barangays()
 
 
+# Uploads created by the signed-in account only, newest first.
 @router.get("/uploads", response_model=list[UploadPublic])
 def list_my_uploads(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -57,6 +69,8 @@ def list_my_uploads(
     return list_uploads_for_user(db, current_account.id)
 
 
+# Form upload: barangay name, data type, notes, and an optional file.
+# create_upload saves a pending row and writes an upload_submitted audit row.
 @router.post("/uploads", response_model=UploadPublic, status_code=201)
 async def submit_upload(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -76,6 +90,8 @@ async def submit_upload(
     )
 
 
+# Published dataset version. drafts is always an empty list.
+# This route does not query a drafts table.
 @router.get("/datasets")
 def operations_datasets(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -89,6 +105,8 @@ def operations_datasets(
     }
 
 
+# Write dataset_submitted and put DATASET_SUBMIT in the details.
+# Returns pending_review. It does not insert a dataset row.
 @router.post("/dataset-submissions")
 def submit_dataset(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -104,6 +122,8 @@ def submit_dataset(
     return {"message": "Dataset submission recorded as pending_review.", "status": "pending_review"}
 
 
+# Write dataset_upload_draft and put DATASET_UPLOAD in the details.
+# Returns draft. The route that stores a file is POST /operations/uploads.
 @router.post("/dataset-uploads")
 def upload_dataset_draft(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -119,6 +139,8 @@ def upload_dataset_draft(
     return {"message": "Dataset draft uploaded.", "status": "draft"}
 
 
+# Selected model name and its training cross-validation F1-macro.
+# Read from barangay_data. status in the body is always "selected".
 @router.get("/model-results")
 def operations_model_results(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -132,6 +154,8 @@ def operations_model_results(
     }
 
 
+# Write model_submitted and put MODEL_SUBMIT in the details.
+# Returns pending_review. It does not save a new model file.
 @router.post("/model-submissions")
 def submit_model(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -147,6 +171,7 @@ def submit_model(
     return {"message": "Model results submitted for review.", "status": "pending_review"}
 
 
+# Placeholder report list. drafts is always empty.
 @router.get("/reports")
 def operations_reports(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -154,6 +179,8 @@ def operations_reports(
     return {"drafts": []}
 
 
+# Write report_draft_created and put REPORT_PREPARE in the details.
+# The PDF file is built by the routes in reports.py, not here.
 @router.post("/report-drafts")
 def create_report_draft(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -169,6 +196,7 @@ def create_report_draft(
     return {"message": "Report draft created.", "status": "draft"}
 
 
+# Placeholder content list. drafts is always empty.
 @router.get("/content")
 def operations_content(
     _current_account: Annotated[Account, Depends(require_staff_or_admin)],
@@ -176,6 +204,8 @@ def operations_content(
     return {"drafts": []}
 
 
+# Write content_draft_created and put CONTENT_PREPARE in the details.
+# Returns draft. Public page text still comes from public_content.py.
 @router.post("/content-drafts")
 def create_content_draft(
     current_account: Annotated[Account, Depends(require_staff_or_admin)],

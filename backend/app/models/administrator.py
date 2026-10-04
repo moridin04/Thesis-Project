@@ -1,3 +1,9 @@
+# Older email-based admin table. The app that main.py starts does not
+# use it: admins are Account rows with role "admin" (see account.py).
+# database.init_db does not import this module, so startup does not
+# create an administrators table from this model.
+# schemas/administrator.py describes a matching response shape.
+
 from __future__ import annotations
 
 import enum
@@ -10,10 +16,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
+# Only one value. Kept as an enum so the column default stays "admin".
 class AdminRole(str, enum.Enum):
     admin = "admin"
 
 
+# Same idea as Account, but keyed by email. Not part of the live login.
 class Administrator(Base):
     __tablename__ = "administrators"
 

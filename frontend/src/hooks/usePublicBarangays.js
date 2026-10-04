@@ -1,6 +1,12 @@
+/*
+ * Loads the public barangay list once.
+ * The overview dashboard and the priority map use this hook.
+ * The request is fetchPublicBarangays in services/publicService.js.
+ */
 import { useEffect, useState } from 'react'
 import { fetchPublicBarangays } from '../services/publicService'
 
+// Drops the result if the page unmounts before the request finishes.
 export function usePublicBarangays() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)

@@ -1,3 +1,6 @@
+// JS copy of the palette in index.css, for charts that cannot read CSS variables
+// through a class. Keep these hex values the same as the tokens there.
+// riskColors points at the CSS variables so the map and the legend match.
 /** AGOS Manila semantic color tokens — single source of truth for JS consumers */
 export const colors = {
   darkest: '#003135',

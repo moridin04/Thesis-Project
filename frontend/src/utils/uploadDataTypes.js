@@ -1,3 +1,8 @@
+/*
+ * Data-type choices for the staff upload form.
+ * DashboardUpload.jsx and ReviewUploads.jsx show these labels.
+ * The stored values must stay aligned with the backend upload service.
+ */
 /* Values must match VALID_DATA_TYPES in backend/app/services/upload_service.py.
    Labels stay source-neutral: LGUs may upload equivalent data from any agency or provider. */
 export const UPLOAD_DATA_TYPES = [
@@ -9,6 +14,7 @@ export const UPLOAD_DATA_TYPES = [
   { value: 'other', label: 'Other (specify in notes)' },
 ]
 
+// Lookup from the stored value to the label shown in the tables.
 const LABELS = new Map(UPLOAD_DATA_TYPES.map((type) => [type.value, type.label]))
 
 /* Uploads saved before this list existed hold free text; show it unchanged. */

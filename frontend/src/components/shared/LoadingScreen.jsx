@@ -1,6 +1,11 @@
+// Centered logo and message while a session check is running.
+// ProtectedRoute and RoleRoute show it during auth loading.
+// The product name comes from BRAND in auth/config.
+
 import agosLogo from '../../assets/agos-logo-transparent.png'
 import { BRAND } from '../../auth/config'
 
+// Logo, product name, and the message the parent passed in.
 export default function LoadingScreen({ message = 'Loading…' }) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">

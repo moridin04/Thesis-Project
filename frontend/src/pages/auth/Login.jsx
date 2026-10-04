@@ -1,3 +1,7 @@
+// Sign-in page for staff and admin.
+// App.jsx mounts this at /login inside AuthLayout.
+// login comes from useAuth. homePathForRole chooses the next page.
+// RedirectIfAuthenticated sends an existing session to that home page.
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -16,6 +20,7 @@ const RATE_LIMIT_NOTICE = 'Too many attempts. Please try again later.'
 const inputClassName =
   'w-full rounded-xl border border-gray-200 bg-white/60 py-2.5 pl-11 pr-4 text-foundation shadow-sm transition-all placeholder:text-muted focus:border-action focus:outline-none focus:ring-2 focus:ring-action/40'
 
+// Collects credentials and signs in through useAuth.
 function LoginForm() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -26,6 +31,7 @@ function LoginForm() {
   const [rateLimited, setRateLimited] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  // Signs in, then opens the saved path when the role allows it.
   async function handleSubmit(event) {
     event.preventDefault()
     if (submitting) return
@@ -35,6 +41,8 @@ function LoginForm() {
     try {
       const account = await login({ username, password })
       const requested = location.state?.from?.pathname
+      // Staff and admin may resume a /dashboard path they asked for.
+      // Only admin may resume an /admin path. Anyone else uses homePathForRole.
       let next = homePathForRole(account.role)
       if (requested?.startsWith('/dashboard') && ['staff', 'admin'].includes(account.role)) {
         next = requested
@@ -140,6 +148,7 @@ function LoginForm() {
   )
 }
 
+// Hides the form when a session is already signed in.
 export default function Login() {
   return (
     <RedirectIfAuthenticated>

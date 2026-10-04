@@ -11,6 +11,9 @@ Population data: PSA 2024 only (Population 2024).
 The 100-year flood layer is retained for validation but excluded from CSI/DPI/ML.
 """
 
+# Manila flood-risk pipeline. DPI is an entropy-weighted sum of three scores.
+# The 0.6 and 0.4 weights from the other modeling script are not used here.
+# Stages: flood shapefiles to CSV, merge PSA 2024 population, then models.
 from __future__ import annotations
 
 import argparse
@@ -47,6 +50,7 @@ pd.set_option("display.max_columns", None)
 COLAB_CONTENT_DIR = Path("/content")
 
 
+# True when this run is inside Google Colab.
 def is_colab() -> bool:
     """Return True when running inside Google Colab."""
     if os.environ.get("COLAB_RELEASE_TAG"):
@@ -59,6 +63,7 @@ def is_colab() -> bool:
         return False
 
 
+# Folder of this script. In Colab, use /content if __file__ is missing.
 def _resolve_script_dir() -> Path:
     """Resolve script directory; fall back to /content in Colab notebooks."""
     try:
@@ -67,6 +72,7 @@ def _resolve_script_dir() -> Path:
         return COLAB_CONTENT_DIR if is_colab() else Path.cwd()
 
 
+# Default data, shapefile, and output folders for Colab or a local run.
 def get_default_paths() -> tuple[Path, Path, Path]:
     """Return (data_dir, shp_dir, output_dir) defaults for local or Colab."""
     if is_colab():
@@ -83,6 +89,7 @@ def get_default_paths() -> tuple[Path, Path, Path]:
     return script_dir, shp_dir, script_dir
 
 
+# Show the first rows. Notebooks use IPython display. Otherwise print text.
 def show_df(df: pd.DataFrame, n: int = 5) -> None:
     """Pretty-print a dataframe in notebooks when IPython display is available."""
     try:
@@ -93,6 +100,7 @@ def show_df(df: pd.DataFrame, n: int = 5) -> None:
         print(df.head(n).to_string())
 
 
+# Install packages and set folders when the notebook runs in Colab.
 def setup_colab(
     install_deps: bool = True,
     mount_drive: bool = False,
@@ -168,6 +176,7 @@ def setup_colab(
     return paths
 
 
+# Import geopandas only when the shapefile stage needs it.
 def _import_geopandas():
     """Import geopandas lazily so merge/ml stages work without it installed."""
     try:
@@ -218,16 +227,19 @@ ELEVATION_CANDIDATES = [
 ]
 
 
+# Folders and file names for each stage of this pipeline.
 @dataclass
 class PipelinePaths:
     data_dir: Path
     shp_dir: Path
     output_dir: Path
 
+    # Admin boundary shapefile.
     @property
     def admin_shp(self) -> Path:
         return self.shp_dir / "phl_admin4.shp"
 
+    # Flood shapefiles for the 5, 25, and 100 year layers.
     @property
     def flood_shps(self) -> dict[str, Path]:
         return {
@@ -236,18 +248,22 @@ class PipelinePaths:
             "100yr": self.shp_dir / "MetroManila_Flood_100year.shp",
         }
 
+    # PSA 2024 population file.
     @property
     def population_csv(self) -> Path:
         return self.data_dir / "population-dataset.csv"
 
+    # Admin base table joined during the merge.
     @property
     def base_csv(self) -> Path:
         return self.data_dir / "manila_final_base_dataset_NEW.csv"
 
+    # Optional elevation table.
     @property
     def elevation_csv(self) -> Path:
         return self.data_dir / "manila_barangay_elevation.csv"
 
+    # Flood CSV that already exists, or the default path if none does.
     def resolve_flood_csv(self) -> Path:
         """Return existing flood CSV from output or shapefile directory."""
         candidates = [
@@ -259,26 +275,32 @@ class PipelinePaths:
                 return path
         return candidates[0]
 
+    # Full merged table, before columns are cut down for modeling.
     @property
     def enriched_full_csv(self) -> Path:
         return self.output_dir / "manila-city-flood-population_enriched_FULL.csv"
 
+    # Columns kept for the modeling stage.
     @property
     def ml_ready_csv(self) -> Path:
         return self.output_dir / "manila_ml_ready_dataset.csv"
 
+    # Table after DPI and the risk class are added.
     @property
     def dpi_labels_csv(self) -> Path:
         return self.output_dir / "manila_ml_ready_with_DPI_labels.csv"
 
+    # Table after the chosen model writes a class for each row.
     @property
     def final_predictions_csv(self) -> Path:
         return self.output_dir / "manila_final_DPI_ML_predictions.csv"
 
+    # Saved copy of the chosen classifier.
     @property
     def best_model_pkl(self) -> Path:
         return self.output_dir / "best_flood_risk_model.pkl"
 
+    # Saved encoder that maps class names to integers.
     @property
     def label_encoder_pkl(self) -> Path:
         return self.output_dir / "label_encoder.pkl"
@@ -289,6 +311,7 @@ class PipelinePaths:
 # ---------------------------------------------------------------------------
 
 
+# Upper-case the name and rewrite BRGY as BARANGAY.
 def clean_barangay_name(x) -> str:
     x = str(x).upper().strip()
     x = re.sub(r"\s+", " ", x)
@@ -296,11 +319,13 @@ def clean_barangay_name(x) -> str:
     return x
 
 
+# Same cleaning, then drop spaces and hyphens for a strict join key.
 def clean_barangay_name_strict(x) -> str:
     x = clean_barangay_name(x)
     return x.replace("-", "").replace(" ", "")
 
 
+# Integer from a name like Barangay 202-A. A missing name stays None.
 def extract_barangay_number(name) -> Optional[int]:
     if pd.isna(name):
         return None
@@ -308,11 +333,13 @@ def extract_barangay_number(name) -> Optional[int]:
     return int(match.group(1)) if match else None
 
 
+# First integer in the text, or 0. Used only to sort barangay names.
 def extract_number(text) -> int:
     match = re.search(r"(\d+)", str(text))
     return int(match.group()) if match else 0
 
 
+# Make the named columns numeric. Commas and percent signs are stripped.
 def safe_numeric(df: pd.DataFrame, cols: Iterable[str]) -> pd.DataFrame:
     for col in cols:
         if col not in df.columns:
@@ -328,10 +355,13 @@ def safe_numeric(df: pd.DataFrame, cols: Iterable[str]) -> pd.DataFrame:
     return df
 
 
+# Keep only names that are actually columns in the table.
 def keep_existing(cols: Iterable[str], df: pd.DataFrame) -> list[str]:
     return [col for col in cols if col in df.columns]
 
 
+# Scale one column to 0-1 using its own min and max.
+# A flat column, or a column that is all missing, becomes 0.
 def minmax_positive(series: pd.Series) -> pd.Series:
     series = pd.to_numeric(series, errors="coerce")
     min_val, max_val = series.min(), series.max()
@@ -340,6 +370,9 @@ def minmax_positive(series: pd.Series) -> pd.Series:
     return (series - min_val) / (max_val - min_val)
 
 
+# Reverse min-max, so a larger value becomes a smaller score.
+# Elevation uses this so lower ground scores higher susceptibility.
+# A flat column becomes 0.
 def minmax_negative(series: pd.Series) -> pd.Series:
     series = pd.to_numeric(series, errors="coerce")
     min_val, max_val = series.min(), series.max()
@@ -348,6 +381,14 @@ def minmax_negative(series: pd.Series) -> pd.Series:
     return (max_val - series) / (max_val - min_val)
 
 
+# Entropy weight for each DPI component column.
+# Clip at 0, then min-max each column on its own range. A flat column becomes 0.
+# Turn the values into shares p. Entropy is -k * sum(p log p).
+# k is 1/log(number of rows). With one row that is undefined, so k is 1.
+# A share of 0 is left out of the log, so 0 log 0 counts as 0.
+# Diversification is 1 - entropy.
+# The weight is diversification divided by the sum of diversification.
+# If that sum is 0, every column gets an equal weight.
 def entropy_weights(dataframe: pd.DataFrame) -> tuple[pd.Series, pd.Series, pd.Series]:
     x = dataframe.copy().replace([np.inf, -np.inf], np.nan).fillna(0).clip(lower=0)
     for col in x.columns:
@@ -368,6 +409,7 @@ def entropy_weights(dataframe: pd.DataFrame) -> tuple[pd.Series, pd.Series, pd.S
     return weights, entropy, diversification
 
 
+# First candidate name that is a column. Raise if none of them exist.
 def find_first_existing_column(df: pd.DataFrame, candidates: list[str], label: str) -> str:
     col = next((c for c in candidates if c in df.columns), None)
     if not col:
@@ -375,12 +417,14 @@ def find_first_existing_column(df: pd.DataFrame, candidates: list[str], label: s
     return col
 
 
+# True for Barangay 1 or Barangay 202-A. Other names are false.
 def is_numbered_barangay(name) -> bool:
     if pd.isna(name):
         return False
     return bool(re.fullmatch(r"Barangay\s+\d+(-[A-Z])?", str(name).strip(), flags=re.IGNORECASE))
 
 
+# First elevation column that has any values, or None if none do.
 def detect_elevation_column(df: pd.DataFrame) -> Optional[str]:
     for col in ELEVATION_CANDIDATES:
         if col in df.columns and df[col].notna().any():
@@ -388,10 +432,12 @@ def detect_elevation_column(df: pd.DataFrame) -> Optional[str]:
     return None
 
 
+# Create the parent folder so a later save has somewhere to go.
 def ensure_output_dir(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+# Also write Excel when openpyxl is installed. Skip if it is missing.
 def _maybe_export_excel(df: pd.DataFrame, path: Path) -> None:
     """Write Excel when openpyxl is available (useful in Colab downloads)."""
     try:
@@ -407,6 +453,7 @@ def _maybe_export_excel(df: pd.DataFrame, path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+# Read one flood shapefile and record its CRS, row count, and columns.
 def inspect_layer(path: Path, rp: str) -> tuple:
     gpd = _import_geopandas()
     flood_raw = gpd.read_file(path)
@@ -423,6 +470,7 @@ def inspect_layer(path: Path, rp: str) -> tuple:
     return flood_raw, diagnostics
 
 
+# Drop features by an attribute rule only when that filter is turned on.
 def apply_hazard_filter(flood, rp: str = "") -> tuple:
     if not APPLY_HAZARD_ATTRIBUTE_FILTER:
         return flood, "No attribute filter applied"
@@ -436,6 +484,7 @@ def apply_hazard_filter(flood, rp: str = "") -> tuple:
     return flood, "Filter enabled but no configured hazard column found"
 
 
+# Merge flood polygons into one shape so overlap is not counted twice.
 def union_flood_geometries(flood, crs):
     gpd = _import_geopandas()
     if flood.empty:
@@ -454,6 +503,7 @@ def union_flood_geometries(flood, crs):
     return gpd.GeoDataFrame(geometry=[union_geom], crs=crs)
 
 
+# Clip each flood layer to Manila and save overlap area and percent.
 def run_shp_to_csv(paths: PipelinePaths) -> pd.DataFrame:
     """Process admin + flood shapefiles into a validated barangay flood CSV."""
     gpd = _import_geopandas()
@@ -578,6 +628,7 @@ def run_shp_to_csv(paths: PipelinePaths) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
+# Read the PSA 2024 population file. That file has no header row.
 def load_psa_2024_population(path: Path) -> pd.DataFrame:
     """Load PSA 2024 barangay population (Barangay, Population 2024)."""
     df_pop = pd.read_csv(path, header=None, names=["Barangay", POPULATION_COL])
@@ -593,6 +644,7 @@ def load_psa_2024_population(path: Path) -> pd.DataFrame:
     return df_pop
 
 
+# Read the flood CSV and rename columns to the names the merge expects.
 def load_flood_dataset(path: Path) -> pd.DataFrame:
     """Load flood CSV produced by stage 1 (or existing validated export)."""
     df = pd.read_csv(path)
@@ -613,6 +665,8 @@ def load_flood_dataset(path: Path) -> pd.DataFrame:
     return df
 
 
+# Build density, affected population, and district gaps from PSA 2024.
+# Flood ratios use the 5-year and 25-year percents. Density is per hectare.
 def engineer_psa2024_features(df: pd.DataFrame) -> pd.DataFrame:
     """Build exposure/vulnerability features using PSA 2024 population only."""
     area_sqm = df["Barangay Area Sqm"]
@@ -657,6 +711,7 @@ def engineer_psa2024_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# Keep id columns and feature columns that exist. Drop the rest.
 def build_ml_ready_dataset(df: pd.DataFrame) -> pd.DataFrame:
     id_cols = keep_existing(
         ["Barangay", "Barangay No", "psgc_10d", "city_name", "brgy_code", POPULATION_COL],
@@ -686,6 +741,7 @@ def build_ml_ready_dataset(df: pd.DataFrame) -> pd.DataFrame:
     return df[id_cols + feature_cols].copy()
 
 
+# Join population, flood area, admin fields, and elevation, then save.
 def run_merge_dataset(paths: PipelinePaths, flood_df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """Merge PSA 2024 population, flood areas, and admin base metadata."""
     print("\n=== Stage 2: Merge Dataset (PSA 2024) ===")
@@ -791,6 +847,20 @@ def run_merge_dataset(paths: PipelinePaths, flood_df: Optional[pd.DataFrame] = N
 # ---------------------------------------------------------------------------
 
 
+# Build Hazard, Exposure, and Vulnerability, then an entropy-weighted DPI.
+# Hazard, also stored as CSI Score, is the mean of four min-max flood indicators:
+# 5-year flood percent, 25-year flood percent, 5-to-25 escalation,
+# and the 5-to-25 increase in flooded square meters.
+# The 100-year flood percent is not part of that mean.
+# Exposure is the mean of the 5-year, 25-year, and 5-to-25 affected population.
+# Vulnerability averages the density indicators. Elevation is added when found.
+# That elevation score is reversed, so lower ground scores higher.
+# DPI Score is the entropy-weighted sum of Hazard, Exposure, and Vulnerability.
+# The 0.6 and 0.4 weights from the other script are not used.
+# DPI Score 0to100 rescales that sum to 0-100 with min-max.
+# qcut splits that 0-100 score into 3 quantile bins: Low, Medium, then High.
+# The lowest bin is Low and the highest bin is High.
+# duplicates="drop" can drop a bin when the cut edges are not unique.
 def compute_dpi_and_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute CSI, exposure/vulnerability scores, entropy-weighted DPI, and risk classes."""
     elevation_col = detect_elevation_column(df)
@@ -885,6 +955,7 @@ def compute_dpi_and_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame
     return df, weights_table
 
 
+# Score the labels, train three classifiers, and save the best predictions.
 def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """Train ML models on PSA 2024 features and export predictions."""
     print("\n=== Stage 3: Thesis ML (CSI / DPI / Models) ===")
@@ -950,6 +1021,8 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(y)
 
+    # random_state=42 keeps this split the same on a rerun.
+    # The same seed on the models keeps the trees the same too.
     x_train, x_test, y_train, y_test = train_test_split(
         x, y_encoded, test_size=0.20, random_state=42, stratify=y_encoded
     )
@@ -1059,6 +1132,7 @@ def run_thesis_ml(paths: PipelinePaths, df: Optional[pd.DataFrame] = None) -> pd
 # ---------------------------------------------------------------------------
 
 
+# Run the shapefile, merge, and model stages, or only the one requested.
 def run_pipeline(
     stage: str = "all",
     data_dir: Optional[Path] = None,
@@ -1147,6 +1221,7 @@ def run_pipeline(
 # ---------------------------------------------------------------------------
 
 
+# Read the stage and folder flags from the command line.
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     default_data, default_shp, default_out = get_default_paths()
     parser = argparse.ArgumentParser(
@@ -1195,6 +1270,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+# Set up Colab when asked, run the pipeline, and return 0 or 1.
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
 

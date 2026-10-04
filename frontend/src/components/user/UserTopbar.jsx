@@ -1,11 +1,17 @@
+// Top bar for the older user shell, with search and sign out.
+// UserLayout is the only parent. Current routes do not use it.
+// The name and email come from useAuth.
+
 import { Bell, LogOut, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 
+// Title, the signed-in name, and a sign-out button.
 export default function UserTopbar({ title, subtitle }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
+  // Signs out, then sends the reader to the login page.
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })

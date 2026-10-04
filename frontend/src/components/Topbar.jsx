@@ -1,5 +1,10 @@
+// Pinned top bar for the older components/Layout shell.
+// That layout is not used by the current routes.
+// Title and subtitle are props. The name shown is static.
+
 import { Bell, Search } from 'lucide-react'
 
+// Title on the left, search and a bell on the right.
 export default function Topbar({ title, subtitle }) {
   return (
     <header className="fixed left-64 right-0 top-0 z-20 flex h-[4.5rem] items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-6 backdrop-blur-md">

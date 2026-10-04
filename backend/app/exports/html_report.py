@@ -1,3 +1,9 @@
+# Single-file HTML report for a public export.
+# public_exports.py calls render_report with the same ranked rows as the CSV.
+# The logo, CSS, and pager script are inlined so the file opens on its own.
+# Class ranges and pillar labels come from class_guide. We do not score DPI here.
+# On screen the pager starts at 50 rows. Print CSS shows every row.
+
 """Self-contained public HTML report: inline CSS, embedded logo, one inline pager script."""
 
 from __future__ import annotations
@@ -12,12 +18,18 @@ from pathlib import Path
 from app.exports import class_guide
 from app.exports.records import district_short, place_label
 
+# Small label above the admin title in the header band.
 REPORT_TITLE = "AGOS Barangay Risk Report"
+# PNG shipped next to this module. It is embedded so the page needs no extra file.
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "agos-logo-white.png"
+# Frontend pager module. Its export keywords are stripped before we inline it.
 PAGER_LOGIC = Path(__file__).resolve().parents[3] / "frontend" / "src" / "utils" / "exportReportPager.js"
+# Boot file that connects those pager functions to the filters and the table.
 PAGER_BOOT = Path(__file__).resolve().parent / "report_pager_boot.js"
 
+# CSS class letter for each priority badge. Any other label uses the Low style.
 _BADGE = {"High": "h", "Medium": "m", "Low": "l"}
+# Pixel widths. Their sum is also the table min-width, so columns keep these sizes.
 _COL_WIDTHS = {
     "rank": "52px",
     "barangay": "110px",
@@ -35,6 +47,8 @@ _COL_WIDTHS = {
     "drrm_pillar": "200px",
 }
 
+# Styles for the whole file. Controls stay hidden until the boot script adds class js.
+# Print rules use landscape A4 and show rows the on-screen pager had hidden.
 _CSS = """
 :root{--teal:#024950;--ink:#003135;--body:#3d6265;--line:#d7e6e8;--tint:#e9f5f7;--sec:#0fa4af;
 --h:#964734;--h-bg:#f3e3df;--h-tx:#7a3426;--m:#b8893d;--m-bg:#f7ecd6;--m-tx:#6b4c12;--l:#024950;--l-bg:#d9eef1;--l-tx:#024950}
@@ -136,21 +150,26 @@ section:has(#hp:checked) .plan,.t td.plan,.t th.plan{display:table-cell !importa
 """
 
 
+# Read the logo once and cache the data URI the img tag uses.
 @lru_cache(maxsize=1)
 def _logo_data_uri() -> str:
     return "data:image/png;base64," + base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
 
 
+# Script-tag body: the frontend pager, then the local boot file.
 def _pager_script() -> str:
+    # Strip a leading export so const and function run in a plain script tag.
     logic = re.sub(r"^export ", "", PAGER_LOGIC.read_text(encoding="utf-8"), flags=re.M)
     boot = PAGER_BOOT.read_text(encoding="utf-8")
     return logic + "\n" + boot
 
 
+# Clock text for the header and footer. The day number is not zero-padded.
 def _generated_text(moment: datetime) -> str:
     return f"{moment:%b} {moment.day}, {moment:%Y %H:%M} (Asia/Manila)"
 
 
+# Chosen columns in display order. District and area share one place column.
 def _table_columns(columns: list[str]) -> list[tuple[str, str, str]]:
     """(key, header, extra class)."""
     selected = set(columns)
@@ -158,6 +177,7 @@ def _table_columns(columns: list[str]) -> list[tuple[str, str, str]]:
     if "barangay" in selected:
         spec.append(("barangay", "Barangay", ""))
     if "district" in selected or "area" in selected:
+        # The place heading depends on whether district, area, or both were selected.
         header = {(True, True): "District and Area", (True, False): "District", (False, True): "Area"}[
             ("district" in selected, "area" in selected)
         ]
@@ -197,10 +217,12 @@ def _table_columns(columns: list[str]) -> list[tuple[str, str, str]]:
     return spec
 
 
+# Blank when the value is missing, otherwise a fixed number of decimals.
 def _num(value, decimals: int) -> str:
     return "" if value is None else f"{float(value):.{decimals}f}"
 
 
+# One HTML cell. DRRM pills come from the class guide for that priority class.
 def _cell(key: str, row: dict, columns: set[str], extra: str) -> str:
     cls = f' class="{extra}"' if extra else ""
     if key == "place":
@@ -232,6 +254,7 @@ def _cell(key: str, row: dict, columns: set[str], extra: str) -> str:
     return f"<td{cls}>{escape(str(row[key]))}</td>"
 
 
+# Column width tags, plus the pixel total the table style needs.
 def _colgroup(spec: list[tuple[str, str, str]]) -> tuple[str, int]:
     cols = []
     total = 0
@@ -242,6 +265,7 @@ def _colgroup(spec: list[tuple[str, str, str]]) -> tuple[str, int]:
     return f'<colgroup>{"".join(cols)}</colgroup>', total
 
 
+# Status line the boot script replaces. The 50 matches the default page size.
 def _pager_bar(position: str, count: int) -> str:
     return (
         f'<div class="pager {position}">'
@@ -251,8 +275,10 @@ def _pager_bar(position: str, count: int) -> str:
     )
 
 
+# Filter controls. The element ids are the ones report_pager_boot.js looks up.
 def _controls(has_planning: bool) -> str:
     classes = "".join(f'<option value="{label}">{label}</option>' for label in class_guide.CLASS_ORDER)
+    # Manila districts I through VI, the same labels the pager script accepts.
     districts = "".join(f'<option value="{item}">{item}</option>' for item in ("I", "II", "III", "IV", "V", "VI"))
     hide = ""
     if has_planning:
@@ -287,6 +313,7 @@ def _controls(has_planning: bool) -> str:
 </div>"""
 
 
+# The barangay table. data-name, data-class, and data-district feed the pager.
 def _table(caption: str, spec: list[tuple[str, str, str]], rows: list[dict], columns: set[str]) -> str:
     head_cells = []
     for _key, label, extra in spec:
@@ -311,11 +338,13 @@ def _table(caption: str, spec: list[tuple[str, str, str]], rows: list[dict], col
     )
 
 
+# 2024 population as a whole number. A missing value counts as zero on the cards.
 def _population(row: dict) -> int:
     value = row.get("population_2024")
     return 0 if value is None else int(round(float(value)))
 
 
+# One card per class: barangay count, DPI range in these rows, and population.
 def _summary_cards(rows: list[dict], ranges: dict) -> str:
     counts = {label: 0 for label in class_guide.CLASS_ORDER}
     people = {label: 0 for label in class_guide.CLASS_ORDER}
@@ -338,6 +367,7 @@ def _summary_cards(rows: list[dict], ranges: dict) -> str:
     )
 
 
+# Assemble the document from the ranked rows and return UTF-8 bytes.
 def render_report(
     *,
     title: str,
@@ -349,6 +379,7 @@ def render_report(
     columns: list[str],
     rows: list[dict],
 ) -> bytes:
+    # Min and max scaled DPI inside each class, for the summary cards.
     ranges = class_guide.class_ranges(rows)
     spec = _table_columns(columns)
     selected = set(columns)
@@ -364,6 +395,7 @@ def render_report(
             ("Records", len(rows)),
         )
     )
+    # The hide-planning checkbox is added only when one of those columns is present.
     has_planning = "planning_reference" in selected or "drrm_pillar" in selected
     document = f"""<!DOCTYPE html>
 <html lang="en">

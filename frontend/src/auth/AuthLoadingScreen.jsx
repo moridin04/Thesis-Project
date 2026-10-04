@@ -1,5 +1,11 @@
+/*
+ * Full-screen splash that says the session is restoring.
+ * The live routes use components/shared/LoadingScreen instead.
+ * Nothing in App or AuthProvider imports this file.
+ */
 import { Waves } from 'lucide-react'
 
+// Static splash. It does not read the auth state itself.
 export default function AuthLoadingScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_#ecfeff_0%,_#f8fafc_42%,_#f1f5f9_100%)]">

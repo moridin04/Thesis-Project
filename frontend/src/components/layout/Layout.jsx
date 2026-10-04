@@ -1,3 +1,7 @@
+// Page frame that pairs the local Sidebar and Topbar.
+// Nothing in App.jsx mounts this layout. It is an earlier shell.
+// Titles come from the pageMeta object in this file.
+
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -25,6 +29,7 @@ const pageMeta = {
   },
 }
 
+// Picks a title from the path, then renders the page outlet.
 export default function Layout() {
   const { pathname } = useLocation()
   const meta = pageMeta[pathname] ?? pageMeta['/']

@@ -1,3 +1,7 @@
+// Read-only log of uploads, exports, reports, and account changes.
+// App.jsx mounts this at /admin/audit-log. Only admin can enter.
+// Rows come from fetchAuditLogs in adminService.
+// Date and action-group filters are sent with each request.
 import { useEffect, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import PageHeader from '../../components/shared/PageHeader'
@@ -11,11 +15,13 @@ import {
 
 const LOAD_ERROR = 'Unable to load audit log.'
 
+// Manila local time. A value that is not a date is shown unchanged.
 function formatTimestamp(value) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
 }
 
+// Filterable table. This page has no control that edits an entry.
 export default function AdminAuditLog() {
   const [filters, setFilters] = useState({ group: '', date: '' })
   const [entries, setEntries] = useState([])
@@ -40,11 +46,14 @@ export default function AdminAuditLog() {
     }
   }, [filters])
 
+  // Changing a filter reloads from the first row.
   function updateFilter(key, value) {
     setLoading(true)
     setFilters((current) => ({ ...current, [key]: value }))
   }
 
+  // offset skips rows already shown. Each request asks for at most 50.
+  // hasMore stays on when that response was a full page of 50.
   async function loadMore() {
     setLoadingMore(true)
     try {

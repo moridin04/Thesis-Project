@@ -43,17 +43,23 @@ SPOT_ROWS = {
 }
 
 
+# Read one CSV as a list of dicts. The source file and the published
+# file both go through here, so the column names stay as stored.
 def read_rows(path: Path) -> list[dict]:
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
 
 
+# Check names, the city prefix, area counts, and the spot rows.
+# Write the mapping only after every check passes.
+# --dry-run prints the same checks and writes nothing.
 def main() -> int:
     dry_run = "--dry-run" in sys.argv
     source = read_rows(SOURCE_CSV)
     published = [row["Barangay"] for row in read_rows(PUBLISHED_CSV)]
     failures: list[str] = []
 
+    # Print PASS or FAIL. Keep going after a failure so every check still prints.
     def check(ok: bool, label: str) -> None:
         print(f"[{'PASS' if ok else 'FAIL'}] {label}")
         if not ok:

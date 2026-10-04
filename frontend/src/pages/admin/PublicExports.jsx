@@ -1,3 +1,7 @@
+// Admin page for the CSV and report files offered on the public map.
+// App.jsx mounts this at /admin/public-exports. Only admin can enter.
+// Loading and status changes go through publicExportService.
+// An approved file is what the Priority Map can offer for download.
 import { Fragment, useCallback, useEffect, useId, useState } from 'react'
 import { ChevronDown, ChevronRight, Download, LoaderCircle, Plus } from 'lucide-react'
 import PageHeader from '../../components/shared/PageHeader'
@@ -78,6 +82,7 @@ const EMPTY_FORM = {
   disclaimer: DEFAULT_DISCLAIMER,
 }
 
+// Prefers a string, then the first validation message, then the fallback.
 function errorMessage(err, fallback) {
   const detail = err?.response?.data?.detail
   if (typeof detail === 'string') return detail
@@ -85,10 +90,12 @@ function errorMessage(err, fallback) {
   return fallback
 }
 
+// Philippines locale date and time, or blank when the value is missing.
 function formatDateTime(value) {
   return value ? new Date(value).toLocaleString('en-PH') : ''
 }
 
+// Draft editor: type, title, columns, disclaimer, and a preview for edits.
 function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
   const [form, setForm] = useState(() =>
     editing
@@ -102,8 +109,11 @@ function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
       : EMPTY_FORM,
   )
   const fieldId = useId()
+  // Copies one field into the form state.
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+  // Toggles a column. Required columns stay selected.
   const toggleColumn = (key) => update('columns', toggleExportColumn(form.columns, key))
+  // Planning or DRRM columns need Priority_Class before the draft can save.
   const planningHint = planningNeedsPriorityClass(form.columns)
 
   const valid = form.title.trim() && form.disclaimer.trim() && form.columns.length > 0 && !planningHint
@@ -221,6 +231,7 @@ function ExportForm({ editing, saving, error, onSubmit, onCancel, onPreview }) {
   )
 }
 
+// Per-export history from fetchPublicExportAudit.
 function AuditHistory({ exportId }) {
   const [state, setState] = useState({ loading: true, entries: [], error: '' })
 
@@ -254,6 +265,7 @@ function AuditHistory({ exportId }) {
   )
 }
 
+// Lists drafts and published files, and runs approve, reject, or unpublish.
 export default function PublicExports() {
   const [exports, setExports] = useState([])
   const [loading, setLoading] = useState(true)
@@ -268,6 +280,7 @@ export default function PublicExports() {
   const [historyVersion, setHistoryVersion] = useState(0)
   const [actionError, setActionError] = useState('')
 
+  // Replaces the table from one list request, or stores the load error.
   const applyLoad = useCallback((request) => {
     return request
       .then((data) => {
@@ -278,12 +291,14 @@ export default function PublicExports() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Reloads the export table.
   const load = () => applyLoad(fetchPublicExports())
 
   useEffect(() => {
     applyLoad(fetchPublicExports())
   }, [applyLoad])
 
+  // Creates a draft, or updates one, then reloads the table.
   async function handleSave(form) {
     setSaving(true)
     setFormError('')
@@ -309,6 +324,7 @@ export default function PublicExports() {
     }
   }
 
+  // Downloads one export through the preview call.
   async function handlePreview(item) {
     setActionError('')
     try {
@@ -319,6 +335,7 @@ export default function PublicExports() {
     }
   }
 
+  // Runs approve, reject, or unpublish, then reloads the table.
   async function handleDialogConfirm(reason) {
     const { action, item } = dialog
     setDialogBusy(true)
@@ -337,6 +354,7 @@ export default function PublicExports() {
     }
   }
 
+  // Closes the confirm dialog and clears its error.
   const closeDialog = useCallback(() => {
     setDialog(null)
     setDialogError('')

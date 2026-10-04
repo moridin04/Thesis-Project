@@ -1,3 +1,7 @@
+// Admin queue for files that staff submitted.
+// App.jsx mounts this at /admin/review-uploads. Only admin can enter.
+// The list, approve, and reject actions come from useUploadData.
+// The three buttons keep pending, approved, or rejected rows.
 import { useMemo, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { useUploadData } from '../../context/UploadDataContext'
@@ -6,6 +10,7 @@ import { dataTypeLabel } from '../../utils/uploadDataTypes'
 
 const filters = ['pending', 'approved', 'rejected']
 
+// Review table. Pending rows can be approved or rejected.
 export default function ReviewUploads() {
   const { uploads, approveUpload, rejectUpload, loading, error } = useUploadData()
   const [filter, setFilter] = useState('pending')
@@ -19,6 +24,7 @@ export default function ReviewUploads() {
     [filter, uploads],
   )
 
+  // Marks one upload approved.
   async function handleApprove(uploadId) {
     setActionError('')
     setBusyId(uploadId)
@@ -31,6 +37,7 @@ export default function ReviewUploads() {
     }
   }
 
+  // Marks one upload rejected. The reason text may be empty.
   async function handleReject(uploadId) {
     setActionError('')
     setBusyId(uploadId)

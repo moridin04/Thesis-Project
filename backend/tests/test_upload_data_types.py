@@ -1,3 +1,8 @@
+# Which data_type values a staff upload may use.
+# Covers VALID_DATA_TYPES in app.services.upload_service.
+# New submissions must use that list. Unknown text is rejected and not saved.
+# A row saved earlier with free text is still listed.
+
 from __future__ import annotations
 
 import pytest
@@ -15,6 +20,7 @@ def _staff_headers(client: TestClient) -> dict[str, str]:
     return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
+# The allowed values are the project datasets, plus other.
 def test_valid_data_types_are_the_project_datasets():
     assert VALID_DATA_TYPES == (
         "flood_hazard_5yr",
@@ -26,6 +32,7 @@ def test_valid_data_types_are_the_project_datasets():
     )
 
 
+# Each allowed data_type is accepted and returned on the created row.
 @pytest.mark.parametrize("data_type", VALID_DATA_TYPES)
 def test_submit_accepts_each_valid_data_type(client: TestClient, staff_account, data_type: str):
     response = client.post(
@@ -37,6 +44,8 @@ def test_submit_accepts_each_valid_data_type(client: TestClient, staff_account, 
     assert response.json()["data_type"] == data_type
 
 
+# Free text, a near miss, a blank, and the wrong case are 422.
+# Those requests do not insert an upload row.
 @pytest.mark.parametrize("data_type", ["Flood depth", "flood_depth", "", "FLOOD_HAZARD_5YR"])
 def test_submit_rejects_unknown_data_type(
     client: TestClient, db_session: Session, staff_account, data_type: str
@@ -50,6 +59,7 @@ def test_submit_rejects_unknown_data_type(
     assert db_session.query(DatasetUpload).count() == 0
 
 
+# A row saved earlier with free-text data_type is still returned by the list.
 def test_legacy_free_text_data_type_is_still_listed(client: TestClient, db_session: Session, staff_account):
     db_session.add(
         DatasetUpload(

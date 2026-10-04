@@ -1,3 +1,9 @@
+# Staff dataset uploads: save the file, then an admin approves or rejects it.
+# Approved rows keep a JSON copy of the matching barangay from barangay_data.
+# The operations router submits uploads. The admin router reviews them.
+# The public router returns only those approved JSON copies.
+# audit_service records submit, approve, and reject.
+
 from __future__ import annotations
 
 import json
@@ -15,7 +21,9 @@ from app.schemas.upload import UploadPublic
 from app.services.audit_service import record_audit_log
 from app.services.barangay_data import get_barangay_by_id
 
+# Saved files go in backend/uploads, beside the app package.
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
+# The only status values the queue filter and the review actions accept.
 VALID_STATUSES = {"pending", "approved", "rejected"}
 # Must match UPLOAD_DATA_TYPES in frontend/src/utils/uploadDataTypes.js. Older rows may hold
 # free-text values from before this list existed; they are still stored and returned as-is.
@@ -29,15 +37,19 @@ VALID_DATA_TYPES = (
 )
 
 
+# Create backend/uploads on the first save. Later saves reuse that folder.
 def _ensure_upload_dir() -> Path:
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     return UPLOAD_DIR
 
 
+# Lowercase text, turn other characters into hyphens, and strip end hyphens.
 def _slugify(value: str) -> str:
     return re.sub(r"(^-|-$)", "", re.sub(r"[^a-z0-9]+", "-", value.lower()))
 
 
+# Barangay fields copied at approval. The name must match the Barangay column.
+# An unknown name is still stored, marked for manual review.
 def _barangay_record_for_upload(upload: DatasetUpload) -> dict:
     matched = get_barangay_by_id(upload.barangay_name)
     if matched is None:
@@ -65,6 +77,7 @@ def _barangay_record_for_upload(upload: DatasetUpload) -> dict:
     }
 
 
+# API shape for one row. Snapshot JSON that cannot be parsed becomes null.
 def serialize_upload(upload: DatasetUpload) -> UploadPublic:
     barangay_record = None
     if upload.barangay_record_json:
@@ -88,6 +101,7 @@ def serialize_upload(upload: DatasetUpload) -> UploadPublic:
     )
 
 
+# Reject an unknown data type, store the file under a new name, and keep it pending.
 async def create_upload(
     db: Session,
     *,
@@ -109,7 +123,9 @@ async def create_upload(
 
     if file is not None and file.filename:
         upload_dir = _ensure_upload_dir()
+        # Drop any folder in the client filename so the write stays inside uploads.
         safe_name = Path(file.filename).name
+        # Random prefix so two uploads of the same filename do not overwrite.
         stored_name = f"{uuid4().hex}_{safe_name}"
         destination = upload_dir / stored_name
         content = await file.read()
@@ -143,6 +159,7 @@ async def create_upload(
     return serialize_upload(upload)
 
 
+# Uploads submitted by this account, newest first.
 def list_uploads_for_user(db: Session, account_id: int) -> list[UploadPublic]:
     rows = (
         db.query(DatasetUpload)
@@ -153,6 +170,7 @@ def list_uploads_for_user(db: Session, account_id: int) -> list[UploadPublic]:
     return [serialize_upload(row) for row in rows]
 
 
+# Full queue for an admin. A status filter has to be one of the known statuses.
 def list_uploads(
     db: Session,
     *,
@@ -170,6 +188,7 @@ def list_uploads(
     return [serialize_upload(row) for row in rows]
 
 
+# One upload by id, or 404. Approve and reject both start here.
 def get_upload(db: Session, upload_id: int) -> DatasetUpload:
     upload = db.query(DatasetUpload).filter(DatasetUpload.id == upload_id).first()
     if upload is None:
@@ -177,6 +196,7 @@ def get_upload(db: Session, upload_id: int) -> DatasetUpload:
     return upload
 
 
+# Pending rows only. We store the barangay snapshot and clear any old reason.
 def approve_upload(db: Session, upload_id: int, actor: Account) -> UploadPublic:
     upload = get_upload(db, upload_id)
     if upload.status != "pending":
@@ -204,6 +224,7 @@ def approve_upload(db: Session, upload_id: int, actor: Account) -> UploadPublic:
     return serialize_upload(upload)
 
 
+# Pending rows only. The snapshot is cleared and the reason is kept for the log.
 def reject_upload(
     db: Session,
     upload_id: int,
@@ -239,6 +260,7 @@ def reject_upload(
     return serialize_upload(upload)
 
 
+# Approved rows for the public page. The JSON saved at approval is preferred.
 def list_approved_barangay_records(db: Session) -> list[dict]:
     rows = (
         db.query(DatasetUpload)
@@ -253,6 +275,7 @@ def list_approved_barangay_records(db: Session) -> list[dict]:
                 records.append(json.loads(row.barangay_record_json))
                 continue
             except json.JSONDecodeError:
+                # Corrupt JSON falls through, and we rebuild from the current barangay table.
                 pass
         records.append(_barangay_record_for_upload(row))
     return records

@@ -1,3 +1,8 @@
+// Donut of how many barangays fall in each priority class.
+// The public overview page passes the counts and the colors.
+// Colors are the priority tokens: High #ef5f55, Medium #f6c25b, Low #5db36b.
+// A click tells the page which class to filter.
+
 import { useState } from 'react'
 
 const SIZE = 200
@@ -6,10 +11,12 @@ const OUTER = 82
 const INNER = 58
 const PAD = (3 * Math.PI) / 180
 
+// Point on the circle. Angle zero is the top, then clockwise.
 function point(radius, angle) {
   return [CENTER + radius * Math.sin(angle), CENTER - radius * Math.cos(angle)]
 }
 
+// Donut slice between two angles, with a hole in the middle.
 function sectorPath(start, end) {
   const large = end - start > Math.PI ? 1 : 0
   const [x0, y0] = point(OUTER, start)
@@ -19,21 +26,25 @@ function sectorPath(start, end) {
   return `M${x0} ${y0}A${OUTER} ${OUTER} 0 ${large} 1 ${x1} ${y1}L${x2} ${y2}A${INNER} ${INNER} 0 ${large} 0 ${x3} ${y3}Z`
 }
 
+// Full circle used when only one class has a count.
 function ringPath() {
   const half = (radius, sweep) =>
     `M${CENTER} ${CENTER - radius}A${radius} ${radius} 0 1 ${sweep} ${CENTER} ${CENTER + radius}A${radius} ${radius} 0 1 ${sweep} ${CENTER} ${CENTER - radius}Z`
   return `${half(OUTER, 1)}${half(INNER, 0)}`
 }
 
+// Whole-number percent of the filtered total.
 function percent(value, total) {
   return total ? Math.round((value / total) * 100) : 0
 }
 
+// Click a slice or a legend row. The page applies the filter.
 export default function RiskDistributionChart({ data, centerTotal, selected, onSelect }) {
   const [hovered, setHovered] = useState(null)
   const total = data.reduce((sum, item) => sum + item.value, 0)
   const visible = data.filter((item) => item.value > 0)
 
+  // One class draws a full circle. Several classes leave a small gap.
   const segments = visible.map((item, index) => {
     const before = visible.slice(0, index).reduce((sum, prev) => sum + prev.value, 0)
     const sweep = (item.value / total) * Math.PI * 2
@@ -49,6 +60,7 @@ export default function RiskDistributionChart({ data, centerTotal, selected, onS
   const active = segments.find((item) => item.name === hovered)
   const tipPos = active ? point((OUTER + INNER) / 2, active.mid) : null
 
+  // Sentence for assistive tech: class, count, and percent.
   function label(item) {
     return `${item.name} priority: ${item.value.toLocaleString()} barangays, ${percent(item.value, total)}% of filtered set`
   }
