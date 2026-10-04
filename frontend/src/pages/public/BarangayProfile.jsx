@@ -16,7 +16,7 @@ import BarangayPhoto from '../../components/shared/BarangayPhoto'
 import RiskBadge from '../../components/shared/RiskBadge'
 import { fetchPublicBarangay } from '../../services/publicService'
 import { barangayHeading } from '../../utils/barangayHeading'
-import { riskColors } from '../../theme/colors'
+import { riskColors, riskTextColors } from '../../theme/colors'
 
 const priorityCopy = {
   High: {
@@ -132,7 +132,7 @@ function ScoreBar({ icon: Icon, label, value, barClass }) {
   )
 }
 
-function PriorityGauge({ value }) {
+function PriorityGauge({ value, riskLevel }) {
   const radius = 58
   const circumference = Math.PI * radius
   const filled = circumference * (Math.max(0, Math.min(100, value)) / 100)
@@ -151,7 +151,7 @@ function PriorityGauge({ value }) {
           d="M16 88 A64 64 0 0 1 144 88"
           fill="none"
           className="text-accent"
-          stroke="currentColor"
+          stroke={riskColors[riskLevel] ?? 'currentColor'}
           strokeWidth="12"
           strokeLinecap="round"
           strokeDasharray={`${filled} ${circumference}`}
@@ -251,9 +251,13 @@ export default function BarangayProfile() {
         <div className="rounded-2xl border border-pale bg-white p-5 text-center">
           <h2 className="font-display text-lg font-semibold text-foundation">Relative Planning Priority</h2>
           <div className="mt-2">
-            <PriorityGauge value={priorityScore} />
+            <PriorityGauge value={priorityScore} riskLevel={profile.riskLevel} />
           </div>
-          {copy ? <p className="mt-2 text-sm font-semibold text-accent">{copy.gauge}</p> : null}
+          {copy ? (
+            <p className="mt-2 text-sm font-semibold" style={{ color: riskTextColors[profile.riskLevel] }}>
+              {copy.gauge}
+            </p>
+          ) : null}
           <p className="text-xs text-ocean">Compared to other Manila barangays</p>
         </div>
       </section>

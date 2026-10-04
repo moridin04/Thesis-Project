@@ -216,13 +216,13 @@ export default function PublicDashboard() {
               label="High priority"
               value={countLevel(filtered, 'High').toLocaleString()}
               icon={ShieldAlert}
-              tone="rose"
+              tone="priorityHigh"
             />
             <StatCard
               label="Medium priority"
               value={countLevel(filtered, 'Medium').toLocaleString()}
               icon={Waves}
-              tone="sky"
+              tone="priorityMedium"
             />
             <StatCard
               label="Population (2024)"

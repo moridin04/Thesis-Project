@@ -11,6 +11,13 @@ const toneStyles = {
   sky: 'from-brand-blue-400 to-brand-blue-400',
   amber: 'from-[color:var(--risk-moderate)] to-risk',
   rose: 'from-risk to-[color:var(--risk-very-high)]',
+  priorityHigh: 'from-[color:var(--color-priority-high)] to-[color:var(--color-priority-high)]',
+  priorityMedium: 'from-[color:var(--color-priority-medium)] to-[color:var(--color-priority-medium)]',
+}
+
+/* White icons fail 3:1 on the amber fill. */
+const iconTone = {
+  priorityMedium: 'text-foundation',
 }
 
 export default function StatCard({
@@ -39,7 +46,7 @@ export default function StatCard({
         </div>
         {Icon ? (
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} ${iconTone[tone] ?? 'text-white'} shadow-md`}
           >
             <Icon className="h-5 w-5" strokeWidth={2} />
           </div>

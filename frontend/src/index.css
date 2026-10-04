@@ -82,6 +82,21 @@
   --risk-high: var(--color-accent);
   --risk-very-high: color-mix(in srgb, var(--color-accent) 80%, black);
 
+  /* Priority classes (High / Medium / Low). White text fails AA on all three fills, so badges
+     use the soft tint as background and the text shade as foreground. */
+  --color-priority-high: #ef5f55;
+  --color-priority-medium: #f6c25b;
+  --color-priority-low: #5db36b;
+  --color-priority-high-soft: color-mix(in srgb, var(--color-priority-high) 22%, white);
+  --color-priority-medium-soft: color-mix(in srgb, var(--color-priority-medium) 22%, white);
+  --color-priority-low-soft: color-mix(in srgb, var(--color-priority-low) 22%, white);
+  --color-priority-high-ring: color-mix(in srgb, var(--color-priority-high) 50%, white);
+  --color-priority-medium-ring: color-mix(in srgb, var(--color-priority-medium) 50%, white);
+  --color-priority-low-ring: color-mix(in srgb, var(--color-priority-low) 50%, white);
+  --color-priority-high-text: color-mix(in srgb, var(--color-priority-high) 50%, black);
+  --color-priority-medium-text: color-mix(in srgb, var(--color-priority-medium) 50%, black);
+  --color-priority-low-text: color-mix(in srgb, var(--color-priority-low) 50%, black);
+
   /* Legacy aliases */
   --color-teal-darkest: var(--color-darkest);
   --color-teal-dark: var(--color-primary);

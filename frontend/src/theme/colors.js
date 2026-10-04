@@ -38,20 +38,27 @@ export const colors = {
 }
 
 /**
- * Semantic flood-risk scale (labels always accompany color).
- * Brand palette colors are not used for dangerous risk states.
+ * Priority class colors (labels always accompany color). Values are the
+ * --color-priority-* tokens in index.css; keep hex values there only.
  */
 export const riskColors = {
-  High: '#C2410C',
-  Medium: '#B8893D',
-  Low: colors.primary,
+  High: 'var(--color-priority-high)',
+  Medium: 'var(--color-priority-medium)',
+  Low: 'var(--color-priority-low)',
+}
+
+/* Shade of each class color that passes WCAG AA as text on white. */
+export const riskTextColors = {
+  High: 'var(--color-priority-high-text)',
+  Medium: 'var(--color-priority-medium-text)',
+  Low: 'var(--color-priority-low-text)',
 }
 
 export const riskBadgeClasses = {
-  High: 'bg-[color-mix(in_srgb,var(--risk-high)_12%,white)] text-[var(--risk-high)] ring-[color-mix(in_srgb,var(--risk-high)_28%,white)]',
+  High: 'bg-[color:var(--color-priority-high-soft)] text-[color:var(--color-priority-high-text)] ring-[color:var(--color-priority-high-ring)]',
   Medium:
-    'bg-[color-mix(in_srgb,var(--risk-moderate)_16%,white)] text-[color-mix(in_srgb,var(--risk-moderate)_82%,black)] ring-[color-mix(in_srgb,var(--risk-moderate)_38%,white)]',
-  Low: 'bg-[color-mix(in_srgb,var(--primary)_12%,white)] text-[var(--primary)] ring-[color-mix(in_srgb,var(--primary)_28%,white)]',
+    'bg-[color:var(--color-priority-medium-soft)] text-[color:var(--color-priority-medium-text)] ring-[color:var(--color-priority-medium-ring)]',
+  Low: 'bg-[color:var(--color-priority-low-soft)] text-[color:var(--color-priority-low-text)] ring-[color:var(--color-priority-low-ring)]',
 }
 
 export const riskLegend = [

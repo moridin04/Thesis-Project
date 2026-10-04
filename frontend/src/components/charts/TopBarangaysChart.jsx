@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { colors } from '../../theme/colors'
+import { colors, riskColors } from '../../theme/colors'
 
 const TICKS = [0, 25, 50, 75, 100]
 const VISIBLE_ROWS = 5
@@ -80,7 +80,10 @@ export default function TopBarangaysChart({ rows }) {
                     <span className="relative block h-[18px] border-r border-pale" style={{ backgroundImage: GRID_LINES }}>
                       <span
                         className="absolute inset-y-0 left-0 rounded-r-lg"
-                        style={{ width: `${Math.max(0, Math.min(100, row.priorityScore))}%`, backgroundColor: colors.action }}
+                        style={{
+                          width: `${Math.max(0, Math.min(100, row.priorityScore))}%`,
+                          backgroundColor: riskColors[row.riskLevel] ?? colors.action,
+                        }}
                       />
                     </span>
                   </Link>

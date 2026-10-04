@@ -222,7 +222,7 @@ export default function PriorityMap() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: riskColors.Low }} aria-hidden />
-                Low Priority
+                Lower Priority
               </li>
             </ul>
           </div>
