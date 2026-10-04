@@ -11,7 +11,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import admin, auth, ml_results, operations, public, public_exports, staff
+from app.routers import admin, auth, ml_results, operations, public, public_exports, reports, staff
 from app.security import GENERIC_AUTH_ERROR
 from app.services.barangay_data import load_barangays
 
@@ -61,6 +61,8 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 app.include_router(public.router, prefix="/api")
 app.include_router(public_exports.public_router, prefix="/api")
 app.include_router(public_exports.admin_router, prefix="/api")
+app.include_router(reports.staff_router, prefix="/api")
+app.include_router(reports.admin_router, prefix="/api")
 app.include_router(ml_results.router, prefix="/api")
 app.include_router(staff.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")

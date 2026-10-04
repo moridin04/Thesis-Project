@@ -26,11 +26,13 @@ import DashboardUpload from './pages/dashboard/DashboardUpload'
 import DashboardModelResults from './pages/dashboard/DashboardModelResults'
 import DashboardBarangays from './pages/dashboard/DashboardBarangays'
 import DashboardBarangayDetail from './pages/dashboard/DashboardBarangayDetail'
+import DashboardReports from './pages/dashboard/DashboardReports'
 import ReviewUploads from './pages/admin/ReviewUploads'
 import ManageUsers from './pages/admin/ManageUsers'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
 import PublicExports from './pages/admin/PublicExports'
 import { ADMIN_ROUTE_ROLES } from './config/adminNav'
+import { REPORT_ROUTE_ROLES } from './config/dashboardNav'
 
 export default function App() {
   return (
@@ -69,6 +71,9 @@ export default function App() {
             <Route path="recommendations" element={<DashboardRecommendations />} />
             <Route path="upload" element={<DashboardUpload />} />
             <Route path="model-results" element={<DashboardModelResults />} />
+            <Route element={<RoleRoute allowedRoles={REPORT_ROUTE_ROLES} />}>
+              <Route path="reports" element={<DashboardReports />} />
+            </Route>
             <Route path="barangays" element={<DashboardBarangays />} />
             <Route path="barangays/:id" element={<DashboardBarangayDetail />} />
           </Route>
