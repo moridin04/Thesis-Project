@@ -233,3 +233,13 @@ def test_approved_snapshot_is_not_rewritten_by_later_versions(client: TestClient
     _snapshot(client, admin_headers, db_session, "csv", approve=True)
     after = Path(db_session.get(PublicExport, first["id"]).file_path).read_bytes()
     assert after == before
+
+
+def test_export_disclaimer_matches_the_frontend_core_sentence():
+    from app.exports.disclaimer import EXPORT_DISCLAIMER
+
+    js = (Path(__file__).resolve().parents[2] / "frontend/src/content/disclaimer.js").read_text()
+    match = re.search(r"export const DISCLAIMER_CORE =\s*'([^']+)'", js)
+    assert match is not None
+    assert match.group(1) == EXPORT_DISCLAIMER
+    assert EXPORT_DISCLAIMER == DISCLAIMER

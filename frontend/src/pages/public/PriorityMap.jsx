@@ -17,6 +17,7 @@ import BarangayPhoto from '../../components/shared/BarangayPhoto'
 import { getBarangayPhoto } from '../../data/barangayPhotos'
 import { districtAreaParts } from '../../utils/districtLabel'
 import PublicHeader from '../../components/public/PublicHeader'
+import { DisclaimerReopenButton } from '../../components/public/DisclaimerGate'
 import { riskColors } from '../../theme/colors'
 import { usePublicBarangays } from '../../hooks/usePublicBarangays'
 import { kindLabel, publicExportButtonState, publishedExportsSummary } from '../../utils/publicExports'
@@ -377,6 +378,9 @@ export default function PriorityMap() {
             )}
           </div>
         </div>
+      </div>
+      <div className="shrink-0 border-t border-white/10 px-4 py-2">
+        <DisclaimerReopenButton className="text-sm font-medium text-pale underline-offset-4 hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus-ring)]" />
       </div>
     </div>
   )

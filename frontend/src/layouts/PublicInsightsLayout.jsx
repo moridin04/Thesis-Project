@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BarChart2, Database, FileText, LayoutDashboard, List, Menu } from 'lucide-react'
 import PublicHeader from '../components/public/PublicHeader'
 import SidebarSkyline from '../components/public/SidebarSkyline'
+import { DisclaimerReopenButton } from '../components/public/DisclaimerGate'
 
 const links = [
   { to: '/overview', label: 'Overview', icon: LayoutDashboard, match: '/overview' },
@@ -104,6 +105,9 @@ export default function PublicInsightsLayout() {
           <main className="flex-1 overflow-auto px-4 py-6 sm:px-8">
             <Outlet />
           </main>
+          <div className="border-t border-pale px-4 py-3 sm:px-8">
+            <DisclaimerReopenButton className="text-sm font-medium text-ocean underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus-ring)]" />
+          </div>
         </div>
       </div>
     </div>

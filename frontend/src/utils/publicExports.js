@@ -37,8 +37,7 @@ export const MANDATORY_EXPORT_COLUMNS = ['barangay', 'dpi_scaled', 'priority_cla
 
 const COLUMN_BY_KEY = Object.fromEntries(PUBLIC_EXPORT_COLUMNS.map((column) => [column.key, column]))
 
-export const DEFAULT_DISCLAIMER =
-  'For information purposes only. Not a warning system. Priority classes are relative tertiles across Manila barangays, not official flood warnings.'
+export { DISCLAIMER_CORE as DEFAULT_DISCLAIMER } from '../content/disclaimer.js'
 
 export const STATUS_LABELS = {
   draft: 'Draft',

@@ -6,6 +6,7 @@ import { UploadDataProvider } from './context/UploadDataContext'
 import ErrorBoundary from './components/shared/ErrorBoundary'
 import ScrollToTop from './components/shared/ScrollToTop'
 import './index.css'
+import DisclaimerGate from './components/public/DisclaimerGate'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')).render(
         <ScrollToTop />
         <AuthProvider>
           <UploadDataProvider>
-            <App />
+            <DisclaimerGate>
+              <App />
+            </DisclaimerGate>
           </UploadDataProvider>
         </AuthProvider>
       </BrowserRouter>

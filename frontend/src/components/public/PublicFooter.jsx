@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowUp, Phone } from 'lucide-react'
+import { DisclaimerReopenButton } from './DisclaimerGate'
 import agosLogoWhite from '../../assets/agos-logo-white.png'
 
 const siteMapLinks = [
@@ -157,10 +158,13 @@ export default function PublicFooter() {
           <p className="public-footer__copyright">
             © 2025-2026 AGOS Team, Thesis Project. All Rights Reserved.
           </p>
-          <button type="button" className="public-footer__back-to-top" onClick={scrollToTop}>
-            <ArrowUp className="h-3.5 w-3.5" aria-hidden />
-            Back to Top
-          </button>
+          <div className="public-footer__bottom-actions">
+            <DisclaimerReopenButton className="public-footer__back-to-top" />
+            <button type="button" className="public-footer__back-to-top" onClick={scrollToTop}>
+              <ArrowUp className="h-3.5 w-3.5" aria-hidden />
+              Back to Top
+            </button>
+          </div>
         </div>
       </div>
     </footer>
