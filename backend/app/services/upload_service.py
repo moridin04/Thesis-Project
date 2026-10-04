@@ -17,6 +17,16 @@ from app.services.barangay_data import get_barangay_by_id
 
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
 VALID_STATUSES = {"pending", "approved", "rejected"}
+# Must match UPLOAD_DATA_TYPES in frontend/src/utils/uploadDataTypes.js. Older rows may hold
+# free-text values from before this list existed; they are still stored and returned as-is.
+VALID_DATA_TYPES = (
+    "flood_hazard_5yr",
+    "flood_hazard_25yr",
+    "elevation_dtm",
+    "population",
+    "barangay_boundaries",
+    "other",
+)
 
 
 def _ensure_upload_dir() -> Path:
@@ -87,6 +97,13 @@ async def create_upload(
     notes: str,
     file: Optional[UploadFile],
 ) -> UploadPublic:
+    data_type = data_type.strip()
+    if data_type not in VALID_DATA_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Unknown data type.",
+        )
+
     file_name = None
     file_path = None
 
@@ -104,7 +121,7 @@ async def create_upload(
         uploader_id=account.id,
         uploader_name=account.full_name or account.username,
         barangay_name=barangay_name.strip(),
-        data_type=data_type.strip(),
+        data_type=data_type,
         notes=notes.strip() or None,
         file_name=file_name,
         file_path=file_path,

@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
 import { useUploadData } from '../../context/UploadDataContext'
 import PageHeader from '../../components/shared/PageHeader'
+import { UPLOAD_DATA_TYPES, dataTypeLabel } from '../../utils/uploadDataTypes'
 
 const statusStyles = {
   pending: 'upload-badge upload-badge--pending',
@@ -14,7 +15,7 @@ export default function DashboardUpload() {
   const { account } = useAuth()
   const { submitUpload, uploadsForUser, loading, error } = useUploadData()
   const [barangayName, setBarangayName] = useState('')
-  const [dataType, setDataType] = useState('Flood depth')
+  const [dataType, setDataType] = useState(UPLOAD_DATA_TYPES[0].value)
   const [notes, setNotes] = useState('')
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
@@ -95,10 +96,11 @@ export default function DashboardUpload() {
             value={dataType}
             onChange={(event) => setDataType(event.target.value)}
           >
-            <option>Flood depth</option>
-            <option>Population exposure</option>
-            <option>Infrastructure assets</option>
-            <option>Evacuation routes</option>
+            {UPLOAD_DATA_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -147,7 +149,7 @@ export default function DashboardUpload() {
                   myUploads.map((item) => (
                     <tr key={item.id} className="border-t border-[color:var(--border-subtle)]">
                       <td className="px-4 py-3">{item.barangayName}</td>
-                      <td className="px-4 py-3">{item.dataType}</td>
+                      <td className="px-4 py-3">{dataTypeLabel(item.dataType)}</td>
                       <td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-3">
                         <span className={statusStyles[item.status]}>

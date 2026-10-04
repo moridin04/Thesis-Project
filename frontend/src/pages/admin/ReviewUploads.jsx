@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { useUploadData } from '../../context/UploadDataContext'
 import PageHeader from '../../components/shared/PageHeader'
+import { dataTypeLabel } from '../../utils/uploadDataTypes'
 
 const filters = ['pending', 'approved', 'rejected']
 
@@ -103,7 +104,7 @@ export default function ReviewUploads() {
                   <tr key={item.id} className="border-t border-[color:var(--border-subtle)]">
                     <td className="px-4 py-3">{item.uploaderName}</td>
                     <td className="px-4 py-3">{item.barangayName}</td>
-                    <td className="px-4 py-3">{item.dataType}</td>
+                    <td className="px-4 py-3">{dataTypeLabel(item.dataType)}</td>
                     <td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td>
                     {filter === 'pending' ? (
                       <td className="px-4 py-3">
