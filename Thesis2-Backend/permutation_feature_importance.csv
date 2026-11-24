@@ -1,0 +1,9 @@
+Feature,Permutation_Importance_Mean,Permutation_Importance_Std,Model
+Affected_Population_25yr,0.44633658138957694,0.03423428385970141,Gradient Boosting
+Flood_PCT_25yr,0.20781486347476816,0.019009996084116635,Gradient Boosting
+Flood_Severity_Increase_5to25_Sqm,0.019945016408209306,0.012680578459819375,Gradient Boosting
+Population_Change_2020_2024_Pct,0.006473867448120474,0.004803223144370523,Gradient Boosting
+Flood_PCT_5yr,0.005407274825497029,0.01108107919782761,Gradient Boosting
+Elevation_Mean,0.005276504676380426,0.005702875308443126,Gradient Boosting
+Population_2024,0.00229436445925912,0.009352299043528226,Gradient Boosting
+Population_Density_per_Hectare,-0.0016019898031303362,0.006113382109517145,Gradient Boosting

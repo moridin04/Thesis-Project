@@ -1,0 +1,9 @@
+Feature,Importance,Model
+Affected_Population_25yr,0.7017139078989515,Gradient Boosting
+Flood_PCT_25yr,0.14135574276133472,Gradient Boosting
+Population_2024,0.09760887571840335,Gradient Boosting
+Flood_Severity_Increase_5to25_Sqm,0.02393065444371003,Gradient Boosting
+Flood_PCT_5yr,0.016779827127140285,Gradient Boosting
+Elevation_Mean,0.00893171979797339,Gradient Boosting
+Population_Density_per_Hectare,0.006529191734047715,Gradient Boosting
+Population_Change_2020_2024_Pct,0.0031500805184390477,Gradient Boosting

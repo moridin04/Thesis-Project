@@ -1,0 +1,12 @@
+Predictor,Code,r with DPI,Decision,Reason
+Flood_PCT_5yr,F5,0.413,RETAIN,distinct hazard information; VIF 5.39 in the retained set
+Flood_PCT_25yr,F25,0.549,RETAIN,distinct hazard information; VIF 5.64 in the retained set
+Flood_Escalation_5to25,ESC,0.164,REMOVE,exact identity (25yr pct - 5yr pct); design matrix becomes singular
+Flood_Severity_Increase_5to25_Sqm,SEV,0.326,RETAIN,"flooded area change in sqm, not captured by the percentages; VIF 1.98"
+Population_2024,POP24,0.521,RETAIN,population scale from which exposure is generated; VIF 2.73
+Affected_Population_5yr,AFF5,0.879,REMOVE,r = 0.931 with the 25yr exposure level; VIF 19.08; reproduced by Population 2024 x Flood PCT 5yr
+Affected_Population_25yr,AFF25,0.935,RETAIN,25yr planning horizon; VIF 3.32 once the 5yr level is removed
+Affected_Population_Increase_5to25,AFFINC,0.625,REMOVE,exact identity (25yr exposure - 5yr exposure); design matrix becomes singular
+Population_Density_per_Hectare,DENS,0.252,RETAIN,VIF 1.63
+Population_Change_2020_2024_Pct,PCHG,0.073,RETAIN,"VIF 1.01, carries the only temporal-change signal"
+Elevation_Mean,ELEV,-0.338,RETAIN,"VIF 1.24, negatively related to flood percentages as expected"

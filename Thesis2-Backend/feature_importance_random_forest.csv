@@ -1,0 +1,9 @@
+Feature,Importance,Model
+Affected_Population_25yr,0.3647581587078619,Random Forest
+Population_2024,0.19203506744671436,Random Forest
+Flood_PCT_25yr,0.18356219334541746,Random Forest
+Flood_PCT_5yr,0.08869032856388495,Random Forest
+Population_Density_per_Hectare,0.062067590344908316,Random Forest
+Flood_Severity_Increase_5to25_Sqm,0.047660156056762985,Random Forest
+Elevation_Mean,0.038130353978071206,Random Forest
+Population_Change_2020_2024_Pct,0.023096151556378956,Random Forest
